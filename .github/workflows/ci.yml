@@ -1,5 +1,5 @@
 on:
-  #pull_request:
+  pull_request:
   workflow_dispatch:
 
 permissions: write-all
@@ -27,17 +27,22 @@ jobs:
         with:
           node-version: 16
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: 📦 Install dependencies
+        working-directory: ./frontend
         run: npm ci
 
       - name: 🏗️ run compile
+        working-directory: ./frontend
         run: npm run compile
 
       - name: 👄 run prettier
+        working-directory: ./frontend
         run: npm run prettier-check
 
       - name: 🔎 run lint
+        working-directory: ./frontend
         run: npm run lint
 
   unitTests:
@@ -53,11 +58,14 @@ jobs:
         with:
           node-version: 16
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: 📦 Install dependencies
+        working-directory: ./frontend
         run: npm ci
 
       - name: 🧪 run tests
+        working-directory: ./frontend
         run: npm run test
 
       - name: 🚨 Publish Test Results
@@ -65,7 +73,7 @@ jobs:
         if: always()
         with:
           check_name: Unit Tests
-          files: 'vitest-results.xml'
+          files: 'frontend/vitest-results.xml'
 
   #skip e2e tests
   e2eTests:
@@ -83,14 +91,18 @@ jobs:
         with:
           node-version: 16
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: 📦 Install dependencies
+        working-directory: ./frontend
         run: npm ci
 
       - name: 🎭 Install Playwright Browsers
+        working-directory: ./frontend
         run: npx playwright install --with-deps
 
       - name: 🔨 Build Project
+        working-directory: ./frontend
         env:
           NODE_ENV: development
         run: |
@@ -98,9 +110,11 @@ jobs:
           npm i -g serve
 
       - name: 💻 Start frontend
+        working-directory: ./frontend
         run: nohup serve -s build -l 4000 &
 
       - name: 🧪 Run Playwright tests
+        working-directory: ./frontend
         env:
           NODE_ENV: development
         run: npm run test:e2e
@@ -110,7 +124,7 @@ jobs:
         if: always()
         with:
           name: playwright-report
-          path: playwright-report/
+          path: frontend/playwright-report/
           retention-days: 30
 
       - name: 🚨 Publish Test Results
