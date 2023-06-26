@@ -1,0 +1,9 @@
+venv
+.idea
+__pycache__
+*.log
+data/*.log
+.env
+!Group Projects.ipynb
+*.ipynb
+**/*.log
