@@ -9,18 +9,14 @@ jobs:
   pylint:
     name: Run Pylint
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.x  # Specify the Python version you need
-
+          python-version: 3.x
       - name: Install dependencies
-        run: pip install -r requirements.txt  # Update with your dependency installation command
-
+        run: pip install -r requirements.prod.txt
       - name: Run pylint
-        run: pylint --rcfile=.pylintrc mse app.py  # Update with the appropriate pylint command
+        run: pylint --rcfile=.pylintrc crawler backend

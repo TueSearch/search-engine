@@ -4,6 +4,7 @@ __pycache__
 *.log
 data/*.log
 .env
+docker.env
 !Group Projects.ipynb
 *.ipynb
 **/*.log

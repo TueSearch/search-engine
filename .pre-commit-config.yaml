@@ -4,6 +4,6 @@ repos:
       - id: Lint
         name: Lint
         language: system
-        entry: pylint --rcfile=.pylintrc mse  app
+        entry: pylint --rcfile=.pylintrc crawler  app
         pass_filenames: false
         always_run: true

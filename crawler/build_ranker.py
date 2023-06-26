@@ -1,5 +1,5 @@
 """
-mse/build_ranker.py
+crawler/build_ranker.py
 
 This script.js builds a ranker model using the TF-IDF vectorizer and relevant document tokens.
 The ranker model is trained using the TfidfVectorizer from scikit-learn.
@@ -16,8 +16,8 @@ from numpy.typing import ArrayLike
 from sklearn.feature_extraction.text import TfidfVectorizer
 from tqdm import tqdm
 
-from mse import utils
-from mse.models import Document
+from crawler import utils
+from crawler.models import Document
 
 load_dotenv()
 

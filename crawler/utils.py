@@ -1,5 +1,5 @@
 """
-mse/utils
+crawler/utils
 ~~~~~~~~~
 
 This module provides utility functions for the MSE project.

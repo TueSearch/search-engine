@@ -2,7 +2,7 @@
 This module implements a simple Flask application for searching and ranking documents.
 
 It provides a basic web interface where users can enter a search query, and the application
-will return ranked documents based on the query using the `rank()` function from the `mse.rank` module.
+will return ranked documents based on the query using the `rank()` function from the `crawler.rank` module.
 
 The application exposes the following endpoints:
 - GET /: Serves the index.html file as the frontend.
@@ -15,7 +15,7 @@ Usage:
 """
 
 from flask import Flask, request, jsonify, send_from_directory
-from mse.rank import rank
+from crawler.rank import rank
 
 app = Flask(__name__)
 

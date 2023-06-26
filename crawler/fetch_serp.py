@@ -1,5 +1,5 @@
 """
-mse/fetch_serp.py - SERP Fetching
+crawler/fetch_serp.py - SERP Fetching
 
 This module is responsible for fetching search engine results page (SERP) data using the SERP API.
 It defines functions to query the API, crawl SERP data for different keywords and topics,
@@ -10,7 +10,7 @@ import os
 
 from dotenv import load_dotenv
 import requests
-from mse import utils
+from crawler import utils
 
 load_dotenv()
 

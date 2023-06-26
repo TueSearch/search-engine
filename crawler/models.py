@@ -1,11 +1,11 @@
 """
-mse/models.py - Models for the Modern Search Engine
+crawler/models.py - Models for the Modern Search Engine
 
 This module defines the data models used by the Modern Search Engine for representing jobs
 in the crawler's queue and crawled documents.
 
 Usage:
-    python3 mse/models.py
+    python3 crawler/models.py
 """
 import datetime
 import functools
@@ -15,18 +15,18 @@ import os
 import peewee
 from dotenv import load_dotenv
 
-from mse import utils
+from crawler import utils
 
 load_dotenv()
 
 DATABASE_LOG_FILE = os.getenv("DATABASE_LOG_FILE")
 LOG = utils.get_logger(__name__, DATABASE_LOG_FILE)
 
-DATABASE = peewee.MySQLDatabase(database=os.getenv("DATABASE_DATABASE"),
-                                host=os.getenv("DATABASE_HOST"),
+DATABASE = peewee.MySQLDatabase(database=os.getenv("MYSQL_DATABASE"),
+                                host=os.getenv("MYSQL_HOST"),
                                 port=int(os.getenv("DATABASE_PORT")),
-                                user=os.getenv("DATABASE_USER"),
-                                password=os.getenv("DATABASE_PASSWORD"))
+                                user=os.getenv("MYSQL_USER"),
+                                password=os.getenv("MYSQL_PASSWORD"))
 
 
 class LongTextField(peewee.TextField):

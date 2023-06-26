@@ -1,22 +1,36 @@
-# Docker Compose file for calendarServer
+# Docker Compose file for TueSearch
 
 version: '3'
 services:
-  backendServer:
-    image: ghcr.io/coolusahd/comcal/calendar-backend-prod:latest
-    container_name: calendarServerProd
+  ####################################################
+  # MySQL database
+  ####################################################
+  mysql:
+    image: mysql:8.0-debian
+    container_name: mysql
     restart: unless-stopped
-    ports:
-      - 2000:2000
-
-
-  watchtower:
-    image: containrrr/watchtower
-    container_name: watchtower
-    restart: unless-stopped
+    env_file:
+      - .env
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.docker/config.json:/config.json
-    environment:
-      - WATCHTOWER_POLL_INTERVAL=30
-      - WATCHTOWER_CLEANUP=true
+      - mysql-data:/var/lib/mysql
+  ####################################################
+  # Initialize database
+  ####################################################
+  initialize_database:
+    build:
+      context: .
+      dockerfile: python.Dockerfile
+    container_name: crawler
+    restart: "no"
+    command:
+      - ls
+      - python3 -m crawler.initialize_database
+      - python3 -m crawler.crawl -n 10         # Crawl 10 initial documents
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /opt/tuesearch/log:/opt/tuesearch/log
+      - /opt/tuesearch/data:/opt/tuesearch/data
+volumes:
+  mysql-data:

@@ -1,11 +1,11 @@
 """
-mse/initialize_database.py - Database Initialization
+crawler/initialize_database.py - Database Initialization
 
 This module is responsible for initializing the database used by the Modern Search Engine. It defines functions to
 create jobs and documents in the database based on SERP (Search Engine Results Page) data and manual seeds.
 
 Usage:
-    python3 mse/initialize_database.py
+    python3 crawler/initialize_database.py
 """
 import json
 import os
@@ -14,9 +14,9 @@ import traceback
 from playhouse.shortcuts import model_to_dict
 import peewee
 from dotenv import load_dotenv
-from mse.models import DATABASE, Document, Job
+from crawler.models import DATABASE, Document, Job
 
-from mse import utils
+from crawler import utils
 
 load_dotenv()
 
@@ -98,5 +98,5 @@ def reset():
 
 
 if __name__ == '__main__':
-    reset()
+    DATABASE.create_tables([Job, Document])
     main()

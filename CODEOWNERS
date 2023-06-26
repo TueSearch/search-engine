@@ -3,3 +3,8 @@
 frontend/ @coolusaHD 
 crawler/ @longpollehn
 backend/ @longpollehn
+.pre-commit-config.yaml @longpollehn
+requirements.dev.txt @longpollehn
+requirements.prod.txt @longpollehn
+.github/workflows/python.yml @longpollehn
+.pylintrc @longpollehn

@@ -1,20 +1,6 @@
-# Tübingen Search Engine
-
-## Description
-
-The project is a web crawler designed to fetch and analyze english web pages about Tübingen. It employs a
-breadth-first search (BFS) approach to crawl web pages, fetching a single URL from each domain at a time to balance load
-and maximize parallelization.
+# TueSearch Crawler 
 
 ## Installation
-
-1. Clone the repository:
-
-```bash
-git clone git@github.com:longpollehn/mse-project.git
-```
-
-2. Install the required dependencies:
 
 ```bash
 pip install -r requirements.txt
@@ -37,31 +23,31 @@ Refer to the `.env.example` file for the required configuration variables.
 
 To use the web crawler, follow the workflow below:
 
-1. (Optional) If you want new SERP, delete the `data/serp.json` file, fetch a new search engine results page (SERP) using
+1. (Optional) If you want new SERP, delete the `crawler/data/serp.json` file, fetch a new search engine results page (SERP) using
    the `fetch_serp.py` script.
 
 ```bash
-python3 -m mse.fetch_serp
+python3 -m crawler.fetch_serp
 ```
 
 2. Run the `initialize_database.py` script. This script sets up the database
    and creates the necessary tables for storing crawled documents and job management.
 
 ```bash
-python3 -m mse.initialize_database
+python3 -m crawler.initialize_database
 ```
 
 3. Once you have the initialized database, you can start the crawling process using the `craw.py` script.
 
 ```bash
-python3 -m mse.crawl
+python3 -m crawler.crawl
 ```
 
 4. After crawling, you can build the inverted index using the `build_inverted_index.py` script. This script analyzes
    the crawled documents and constructs an inverted index to enable efficient searching.
 
 ```bash
-python3 -m mse.build_inverted_index
+python3 -m crawler.build_inverted_index
 ```
 
 5. Build the ranker using the `build_ranker.py` script.
@@ -69,13 +55,13 @@ python3 -m mse.build_inverted_index
    will be stored in paths defined in the `.env` file.
 
 ```bash
-python3 -m mse.build_ranker
+python3 -m crawler.build_ranker
 ```
 
 6. Finally, you can run the Flask application to search for documents using the `app.py` script.
 
 ```bash
-python3 app.py
+python3 -m backend.app
 ```
 
 Open the browser and navigate to `http://localhost:5000` to access the search engine.

@@ -1,5 +1,5 @@
 """
-mse/build_inverted_index.py
+crawler/build_inverted_index.py
 
 This script.js builds an inverted index from the crawled documents.
 The inverted index maps tokens to document IDs and token positions.
@@ -9,15 +9,15 @@ the tokenized text, and constructs the inverted index. The resulting
 inverted index is then saved as a pickle file for later use.
 
 Usage:
-    python3 mse/build_inverted_index.py
+    python3 crawler/build_inverted_index.py
 """
 import os
 from collections import defaultdict
 
 from tqdm import tqdm
 
-from mse import utils
-from mse.models import Document
+from crawler import utils
+from crawler.models import Document
 
 INVERTED_INDEX_FILE = os.getenv("INVERTED_INDEX_FILE")
 
