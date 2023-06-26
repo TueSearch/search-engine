@@ -33,7 +33,10 @@ jobs:
           npm run build
 
       - name: 📂 Sync files
-        uses: peaceiris/actions-gh-pages@v3
+        uses: SamKirkland/FTP-Deploy-Action@4.3.3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend/build
+          server: ${{ secrets.FTP_SERVER_ADRESS }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./frontend/build/
+          protocol: ftps
