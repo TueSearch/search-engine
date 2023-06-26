@@ -1,0 +1,22 @@
+# Docker Compose file for calendarServer
+
+version: '3'
+services:
+  backendServer:
+    image: ghcr.io/coolusahd/comcal/calendar-backend-prod:latest
+    container_name: calendarServerProd
+    restart: unless-stopped
+    ports:
+      - 2000:2000
+
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.docker/config.json:/config.json
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=30
+      - WATCHTOWER_CLEANUP=true

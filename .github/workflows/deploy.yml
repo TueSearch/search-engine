@@ -1,0 +1,39 @@
+on:
+  workflow_dispatch:
+  #push:
+  #  branches: [main]
+
+permissions: write-all
+
+name: 🚀 Deploy Infrastructure
+
+jobs:
+  deploy-frontend:
+    environment: production
+    name: 📱 Deploy Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v3
+
+      - name: 🖍️ Use Node.js 16
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: 📦 Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: 🔨 Build Project
+        working-directory: ./frontend
+        env:
+          NODE_ENV: production
+        run: |
+          npm run build
+
+      - name: 📂 Sync files
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend/build

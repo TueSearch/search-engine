@@ -1,0 +1,149 @@
+on:
+  #pull_request:
+  workflow_dispatch:
+
+permissions: write-all
+
+name: 🏗️ CI
+jobs:
+  validatePrTitle:
+    name: 🔎 Validate PR Title
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔎 Check PR Title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  validateCodyStyle:
+    name: 🔎 Validate Code Style
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v3
+
+      - name: 🖍️ Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🏗️ run compile
+        run: npm run compile
+
+      - name: 👄 run prettier
+        run: npm run prettier-check
+
+      - name: 🔎 run lint
+        run: npm run lint
+
+  unitTests:
+    name: 🧪 Unit Tests
+    needs: [validateCodyStyle]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v3
+
+      - name: 🖍️ Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧪 run tests
+        run: npm run test
+
+      - name: 🚨 Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action/composite@v2.4.2
+        if: always()
+        with:
+          check_name: Unit Tests
+          files: 'vitest-results.xml'
+
+  #skip e2e tests
+  e2eTests:
+    if: false
+    name: 🧪 E2E Tests
+    needs: [validateCodyStyle]
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v3
+
+      - name: 🖍️ Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🎭 Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: 🔨 Build Project
+        env:
+          NODE_ENV: development
+        run: |
+          npm run build
+          npm i -g serve
+
+      - name: 💻 Start frontend
+        run: nohup serve -s build -l 4000 &
+
+      - name: 🧪 Run Playwright tests
+        env:
+          NODE_ENV: development
+        run: npm run test:e2e
+
+      - name: 📤 Upload Playwright report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: 🚨 Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action/composite@v2.4.2
+        if: always()
+        with:
+          check_name: E2E Tests
+          files: 'playwright-results.xml'
+
+  notify-on-success:
+    name: 📧 Notify success
+    if: success()
+    needs: [validateCodyStyle, unitTests, e2eTests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📧 Comment Pull Request
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            Ready for Merge! :rocket:
+            _(execution **${{ github.run_id }}** / attempt **${{ github.run_attempt }}**)_
+          comment_tag: execution
+
+  notify-on-failure:
+    name: 📧 Notify failure
+    if: failure()
+    needs: [validateCodyStyle, unitTests, e2eTests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📧 Comment Pull Request
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            CI failed :cry:
+            _(execution **${{ github.run_id }}** / attempt **${{ github.run_attempt }}**)_
+          comment_tag: execution
