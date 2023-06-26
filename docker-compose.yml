@@ -2,35 +2,151 @@
 
 version: '3'
 services:
-  ####################################################
+  ############################################################
   # MySQL database
-  ####################################################
+  ############################################################
   mysql:
     image: mysql:8.0-debian
     container_name: mysql
     restart: unless-stopped
+    environment:
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3307:3306"
     env_file:
-      - .env
+      - .mysql.env
     volumes:
-      - mysql-data:/var/lib/mysql
-  ####################################################
-  # Initialize database
-  ####################################################
+      - tuesearch-mysql:/var/lib/mysql
+      - ./docker/my.cnf:/etc/mysql/my.cnf:ro # Mount project's MySQL configuration file
+      - ./docker/mysql.cnf:/etc/mysql/conf.d/mysql.cnf:ro # Mount project's MySQL configuration file
+    networks:
+      - mysql_net
+  ############################################################
+  # Initialize database.
+  # Feed the database with initial jobs (if not done yet).
+  # Will run once.
+  ############################################################
   initialize_database:
     build:
       context: .
-      dockerfile: python.Dockerfile
-    container_name: crawler
-    restart: "no"
-    command:
-      - ls
-      - python3 -m crawler.initialize_database
-      - python3 -m crawler.crawl -n 10         # Crawl 10 initial documents
+      dockerfile: docker/python.Dockerfile
+    container_name: initialize_database
+    depends_on:
+      - mysql
+    restart: "on-failure"
+    command: "python3 -m crawler.initialize_database"
     env_file:
-      - .env
+      - .docker.env
     volumes:
-      - .:/app
+      - ./crawler:/app/crawler
+      - ./.docker.env:/app/.env
       - /opt/tuesearch/log:/opt/tuesearch/log
       - /opt/tuesearch/data:/opt/tuesearch/data
+    networks:
+      - mysql_net
+  ############################################################
+  # Send the crawler 10 times to feed the database with some
+  # meaningful documents.
+  # Will run once.
+  ############################################################
+  crawl:
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+    container_name: crawl
+    restart: "on-failure"
+    depends_on:
+      - mysql
+      - initialize_database
+    command: "python3 -m crawler.crawl -n 20"
+    env_file:
+      - .docker.env
+    volumes:
+      - ./crawler:/app/crawler
+      - ./.docker.env:/app/.env
+      - /opt/tuesearch/log:/opt/tuesearch/log
+      - /opt/tuesearch/data:/opt/tuesearch/data
+    networks:
+      - mysql_net
+  ############################################################
+  # Build indexer.
+  # Will run once.
+  ############################################################
+  build_inverted_index:
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+    container_name: build_inverted_index
+    depends_on:
+      - mysql
+      - initialize_database
+      - crawl
+    restart: "on-failure"
+    command: "python3 -m crawler.build_inverted_index"
+    env_file:
+      - .docker.env
+    volumes:
+      - ./crawler:/app/crawler
+      - ./.docker.env:/app/.env
+      - /opt/tuesearch/log:/opt/tuesearch/log
+      - /opt/tuesearch/data:/opt/tuesearch/data
+    networks:
+      - mysql_net
+  ############################################################
+  # Build rankers.
+  # Will run once.
+  ############################################################
+  build_ranker:
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+    container_name: build_ranker
+    depends_on:
+      - mysql
+      - initialize_database
+      - crawl
+      - build_inverted_index
+    restart: "on-failure"
+    command: "python3 -m crawler.build_ranker"
+    env_file:
+      - .docker.env
+    volumes:
+      - ./crawler:/app/crawler
+      - ./.docker.env:/app/.env
+      - /opt/tuesearch/log:/opt/tuesearch/log
+      - /opt/tuesearch/data:/opt/tuesearch/data
+    networks:
+      - mysql_net
+  ############################################################
+  # Start backend.
+  # Persistent process.
+  ############################################################
+  backend_server:
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+    container_name: backend_server
+    ports:
+      - "5001:5000"
+    depends_on:
+      - mysql
+      - initialize_database
+      - crawl
+      - build_inverted_index
+      - build_ranker
+    restart: "always"
+    command: "python3 -m backend.app"
+    env_file:
+      - .docker.env
+    volumes:
+      - ./backend:/app/backend
+      - ./crawler:/app/crawler
+      - ./.docker.env:/app/.env
+      - /opt/tuesearch/log:/opt/tuesearch/log
+      - /opt/tuesearch/data:/opt/tuesearch/data
+    networks:
+      - mysql_net
 volumes:
-  mysql-data:
+  tuesearch-mysql:
+networks:
+  mysql_net:

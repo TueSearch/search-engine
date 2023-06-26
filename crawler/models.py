@@ -22,11 +22,11 @@ load_dotenv()
 DATABASE_LOG_FILE = os.getenv("DATABASE_LOG_FILE")
 LOG = utils.get_logger(__name__, DATABASE_LOG_FILE)
 
-DATABASE = peewee.MySQLDatabase(database=os.getenv("MYSQL_DATABASE"),
-                                host=os.getenv("MYSQL_HOST"),
-                                port=int(os.getenv("DATABASE_PORT")),
-                                user=os.getenv("MYSQL_USER"),
-                                password=os.getenv("MYSQL_PASSWORD"))
+DATABASE = peewee.MySQLDatabase(database=os.getenv("MYSQL_SEARCH_ENGINE_DATABASE"),
+                                host=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_HOST"),
+                                port=int(os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_PORT")),
+                                user=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_USER"),
+                                password=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_PASSWORD"))
 
 
 class LongTextField(peewee.TextField):

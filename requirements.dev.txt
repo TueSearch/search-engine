@@ -12,4 +12,11 @@ url-normalize==1.4.3
 xgboost==1.7.6
 scikit-learn==1.2.2
 scipy==1.10.1
-pylint=2.17.4
+pylint==2.17.4
+peewee==3.16.2
+python-dotenv==1.0.0
+tldextract==3.4.4
+url-normalize==1.4.3
+spacy==3.5.0
+pymysql==1.1.0
+cryptography==41.0.1

@@ -8,3 +8,6 @@ docker.env
 !Group Projects.ipynb
 *.ipynb
 **/*.log
+.docker.env
+.mysql.env
+.host.env

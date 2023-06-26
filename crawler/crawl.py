@@ -430,6 +430,7 @@ def main():
     args = parser.parse_args()
 
     document_retrieved = 0
+    LOG.info(f"Proceed to retrieve {args.number} jobs.")
     while len(jobs := PriorityQueue(
             args.bfs_layer).get_jobs_from_database_to_crawl()) > 0 and document_retrieved < args.number:
         with multiprocessing.Manager() as manager:

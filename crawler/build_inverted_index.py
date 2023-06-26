@@ -20,7 +20,7 @@ from crawler import utils
 from crawler.models import Document
 
 INVERTED_INDEX_FILE = os.getenv("INVERTED_INDEX_FILE")
-
+LOG = utils.get_logger(__name__, os.getenv("INVERTED_INDEX_LOG_FILE"))
 
 def build_inverted_index() -> defaultdict:
     """
@@ -36,6 +36,7 @@ def build_inverted_index() -> defaultdict:
             ...
         }
     """
+    LOG.info("Start building index")
     inverted_index = defaultdict(list)
     # Iterate over the documents
     for document in tqdm(Document.select().where(
@@ -55,6 +56,7 @@ def build_inverted_index() -> defaultdict:
             inverted_index[token].append(
                 (document.id, *positions))
 
+    LOG.info("Finished building index")
     return inverted_index
 
 
@@ -64,6 +66,7 @@ def main():
     """
     # Build and save the inverted index as a pickle file
     utils.write_pickle_file(build_inverted_index(), INVERTED_INDEX_FILE)
+    LOG.info(f"Wrote index file to {INVERTED_INDEX_FILE}")
 
 
 if __name__ == '__main__':

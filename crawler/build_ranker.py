@@ -23,6 +23,7 @@ load_dotenv()
 
 TFIDF_VECTORIZER_FILE = os.getenv("TFIDF_VECTORIZER_FILE")
 TFIDF_NGRAM_RANGE = tuple(json.loads(os.getenv("TFIDF_NGRAM_RANGE")))
+LOG = utils.get_logger(__name__, os.getenv("BUILD_RANKER_LOG_FILE"))
 
 
 class DocumentStreamer:
@@ -105,9 +106,13 @@ def train_global_tf_idf():
     The TF-IDF vectorizer is fitted on the concatenated sentences from the relevant documents.
     The fitted vectorizer is then saved as a pickle file.
     """
+    LOG.info("Start build global tfidf")
     tfidf = TfidfVectorizer(ngram_range=TFIDF_NGRAM_RANGE)
+    LOG.info("Initialized build global tfidf")
     tfidf.fit(DocumentTokensStreamer())
+    LOG.info("Fitted build global tfidf")
     utils.write_pickle_file(tfidf, TFIDF_VECTORIZER_FILE)
+    LOG.info(f"Wrote TF-IDF file to {TFIDF_VECTORIZER_FILE}")
 
 
 def construct_directed_link_graph_from_crawled_documents():

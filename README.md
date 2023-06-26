@@ -7,14 +7,27 @@ Tübingen.
 
 - [Project Structure](#project-structure)
 - [Crawler](#crawler)
-    - [Installation](#installation)
-    - [Usage](#usage)
-    - [Project Structure](#project-structure)
+    - [Crawler set up](#crawler-set-up)
+    - [Crawler usage](#crawler-usage)
+    - [Cheat cheatsheet](#crawler-cheatsheet)
+        - [Show directories' content](#show-directories-content)
+        - [Show logs](#show-logs)
 - [Backend](#backend)
-    - [Usage](#usage)
+    - [Backend set up](#backend-set-up)
+    - [Backend usage](#backend-usage)
+    - [Backend cheatsheet](#backend-cheatsheet)
+        - [Test the API](#test-the-api)
 - [Frontend](#frontend)
 - [Docker](#docker)
-- [Team](#team)
+    - [Docker set up](#docker-set-up)
+    - [Docker usage](#docker-usage)
+    - [Docker cheatsheet](#docker-cheatsheet)
+        - [Show containers](#show-containers)
+        - [Show logs](#show-logs)
+        - [Enter containers](#enter-containers)
+        - [Restart the services](#restart-the-services)
+        - [Clean everything](#clean-everything)
+- [Team Members](#team-members)
 
 # Project Structure
 
@@ -44,42 +57,90 @@ The project has the following structure:
 - `CODEOWNERS`. This file contains the GitHub code owners for the project.
 - `docker-compose.yml`: Configuration for docker-compose for local development and deployment.
 - `example.env`: This file contains the example environment variables for the project.
-- `requirements.dev.txt`: This file contains the required dependencies for the project for local development.
-- `requirements.prod.txt`: This file contains the required dependencies for the project for deployment.
+- `example.mysql.env`: This file is specifically for the MySQL's instance in the docker-compose file.
 - `package.json`: This file contains the required dependencies for the project's frontend.
 - `python.Dockerfile`: This file contains the Dockerfile for the Python crawler & backend.
-- `requirements.txt`: This file contains the required dependencies for the project's crawler & backend.
+- `requirements.dev.txt`: This file contains the required dependencies for the project's crawler & backend at local.
+- `requirements.prod.txt`: This file contains the required dependencies for the project's crawler & backend at
+  production. Should contain fewer dependencies.
 
 # Crawler
 
-## Set up
+## Crawler set up
 
-Install dependencies
+1. Create output directories
+
+```bash
+sudo mkdir -m 777 -p /opt/tuesearch/data /opt/tuesearch/log  && sudo chmod -R 777 /opt/tuesearch
+```
+
+2. Install dependencies
 
 ```bash
 pip install -r requirements.dev.txt
 ```
 
-3. Install MySQL and configure MySQL.
+3. Install MySQL
 
-4. Configure `.env` file to match your local development.
+```bash
+sudo apt-get install mysql-server mysql-client -y
+```
 
-6. Install pre-commit hooks:
+Start MySQL
+
+```bash
+sudo service mysql start
+```
+
+Enter MySQL
+
+```bash
+sudo mysql
+```
+
+Set password
+
+```mysql
+UPDATE mysql.user
+SET authentication_string=null
+WHERE User = 'root';
+FLUSH PRIVILEGES;
+exit;
+```
+
+and
+
+```bash
+ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'root';
+```
+
+Create a database `tuesearch`
+
+```mysql
+create database tuesearch; 
+```
+
+4. Initialize environment variables file `.env`
+
+```bash
+cp example.env .env
+```
+
+Note: you might need to change some variables in `.env` according to 
+your local developmente environment.
+
+5. (Optional) Install pre-commit hooks:
 
 ```bash
 pre-commit install
 ```
 
-## Usage
-
-Note: Before running the script, make sure to configure the database settings in the `.env file.
-Refer to the `.env.example` file for the required configuration variables.
+## Crawler usage
 
 To use the web crawler, follow the workflow below:
 
 1. (Optional) If you want new SERP, delete the `crawler/data/serp.json` file, fetch a new search engine results page (
-   SERP) using
-   the `fetch_serp.py` script.
+   SERP) using the `fetch_serp.py` script.
 
 ```bash
 python3 -m crawler.fetch_serp
@@ -95,7 +156,13 @@ python3 -m crawler.initialize_database
 3. Once you have the initialized database, you can start the crawling process using the `craw.py` script.
 
 ```bash
-python3 -m crawler.crawl
+python3 -m crawler.crawl -n 10 # Crawl 10 items
+```
+
+or simply
+
+```bash
+python3 -m crawler.crawl # Craw in loop
 ```
 
 4. After crawling, you can build the inverted index using the `build_inverted_index.py` script. This script analyzes
@@ -117,13 +184,51 @@ python3 -m crawler.build_ranker
 
 This step should be repeated regularly to keep the ranker fresh.
 
+## Crawler cheatsheet
+
+### Show directories' content
+
+```bash
+ls -lha /opt/tuesearch/data/
+```
+
+```bash
+ls -lha /opt/tuesearch/log/
+```
+
+### Show logs
+
+```bash
+cat /opt/tuesearch/log/crawler.log
+```
+
+```bash
+cat /opt/tuesearch/log/database.log
+```
+
+```bash
+cat /opt/tuesearch/log/fetch_serp.log
+```
+
+```bash
+cat /opt/tuesearch/log/initialize_queue.log
+```
+
+```bash
+cat /opt/tuesearch/log/inverted_index.log
+```
+
+```bash
+cat /opt/tuesearch/log/rank_builder.log
+```
+
 # Backend
 
-## Set up
+## Backend set up
 
 Same as described in the section [Crawler](#crawler).
 
-## Usage
+## Backend usage
 
 1. You can run the Flask application to search for documents using the `backend/app.py` script.
 
@@ -131,7 +236,13 @@ Same as described in the section [Crawler](#crawler).
 python3 -m backend.app
 ```
 
-Open the browser and navigate to `http://localhost:5000` to access the search engine.
+## Backend cheatsheet
+
+### Test the API
+
+```bash
+curl http://localhost:5000/search?q=test
+```
 
 # Frontend
 
@@ -139,13 +250,132 @@ TODO
 
 # Docker
 
-## Set up
+## Docker set up
 
-TODO
+1. Create output directories
+
+```bash
+sudo mkdir -m 777 -p /opt/tuesearch/data /opt/tuesearch/log && sudo chmod -R 777 /opt/tuesearch
+```
+
+2. Initialize `.mysql.env` for database
+
+```bash
+cp example.mysql.env .mysql.env
+```
+
+2. Initialize `.docker.env` for the containers
+
+```bash
+cp example.env .docker.env
+```
+
+## Docker usage
+
+1. Start the services
+
+```bash
+docker-compose up -d --build
+```
+
+and wait at first time about 60 seconds for the crawler to fill the database.
+
+2. If everything successes then
+
+```bash
+docker container ps
+```
+
+should show only 2 containers running, `mysql` and `backend_server`.
+
+3. Test the API with
+
+```bash
+curl http://localhost:5001/search?q=test
+```
+
+Note that port of the container's backend is not the same as
+the port of the host's backend.
+
+## Docker cheatsheet
+
+### Show containers
+
+```bash
+docker container ps
+```
+
+### Show logs
+
+```bash
+docker container logs mysql
+```
+
+```bash
+docker container logs initialize_database
+```
+
+```bash
+docker container logs crawl
+```
+
+```bash
+docker container logs build_inverted_index
+```
+
+```bash
+docker container logs build_ranker
+```
+
+```bash
+docker container logs backend_server
+```
+
+### Enter containers
+
+```bash
+docker exec -it mysql bash
+```
+
+```bash
+docker exec -it initialize_database bash
+```
+
+```bash
+docker exec -it crawl bash
+```
+
+```bash
+docker exec -it build_inverted_index bash
+```
+
+```bash
+docker exec -it build_ranker bash
+```
+
+```bash
+docker exec -it backend_server bash
+```
+
+### Restart the services
+
+```bash
+docker-compose down
+```
+
+```bash
+docker-compose up -d --build
+```
+
+### Clean everything
+
+```bash
+docker system prune -a
+```
 
 # Team Members
 
-- [Philipp Alber]()
-- [Lukas Listl]()
 - [Daniel Reimer]()
 - [Long Nguyen]()
+- [Lukas Listl]()
+- [Philipp Alber]()
