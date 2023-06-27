@@ -6,17 +6,17 @@ services:
   # MySQL database
   ############################################################
   mysql:
-    image: mysql:8.0-debian
+    image: percona/percona-server:8.0 # Enable MyRocks engine
     container_name: mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_HOST: '%'
     ports:
-      - '3307:3306'
+      - "3306:3306"
     env_file:
       - .mysql.env
     volumes:
-      - tuesearch-mysql:/var/lib/mysql
+      - tuesearch-percona-server:/var/lib/mysql
       - ./docker/my.cnf:/etc/mysql/my.cnf:ro # Mount project's MySQL configuration file
       - ./docker/mysql.cnf:/etc/mysql/conf.d/mysql.cnf:ro # Mount project's MySQL configuration file
     networks:
@@ -167,6 +167,6 @@ services:
       - mysql_net
 
 volumes:
-  tuesearch-mysql:
+  tuesearch-percona-server:
 networks:
   mysql_net:

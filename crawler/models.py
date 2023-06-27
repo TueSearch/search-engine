@@ -108,7 +108,7 @@ class Document(BaseModel):
 
     class Meta:
         """Metadata options for the Document model."""
-        table_options = {'engine': 'ARCHIVE'}
+        table_options = {'engine': 'RocksDB'}
         indexes = (
             peewee.SQL('create unique index url_index on document (url(750))'),
         )
