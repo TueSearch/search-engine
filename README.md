@@ -6,28 +6,30 @@ Tübingen.
 
 ## Table of Contents
 
+- [TueSearch](#tuesearch)
+  - [Table of Contents](#table-of-contents)
 - [Project Structure](#project-structure)
 - [Crawler](#crawler)
-    - [Crawler set up](#crawler-set-up)
-    - [Crawler usage](#crawler-usage)
-    - [Cheat cheatsheet](#crawler-cheatsheet)
-        - [Show directories' content](#show-directories-content)
-        - [Show logs](#show-logs)
+  - [Crawler set up](#crawler-set-up)
+  - [Crawler usage](#crawler-usage)
+  - [Crawler cheatsheet](#crawler-cheatsheet)
+    - [Show directories' content](#show-directories-content)
+    - [Show logs](#show-logs)
 - [Backend](#backend)
-    - [Backend set up](#backend-set-up)
-    - [Backend usage](#backend-usage)
-    - [Backend cheatsheet](#backend-cheatsheet)
-        - [Test the API](#test-the-api)
+  - [Backend set up](#backend-set-up)
+  - [Backend usage](#backend-usage)
+  - [Backend cheatsheet](#backend-cheatsheet)
+    - [Test the API](#test-the-api)
 - [Frontend](#frontend)
 - [Docker](#docker)
-    - [Docker set up](#docker-set-up)
-    - [Docker usage](#docker-usage)
-    - [Docker cheatsheet](#docker-cheatsheet)
-        - [Show containers](#show-containers)
-        - [Show logs](#show-logs)
-        - [Enter containers](#enter-containers)
-        - [Restart the services](#restart-the-services)
-        - [Clean everything](#clean-everything)
+  - [Docker set up](#docker-set-up)
+  - [Docker usage](#docker-usage)
+  - [Docker cheatsheet](#docker-cheatsheet)
+    - [Show containers](#show-containers)
+    - [Show logs](#show-logs-1)
+    - [Enter containers](#enter-containers)
+    - [Restart the services](#restart-the-services)
+    - [Clean everything](#clean-everything)
 - [Team Members](#team-members)
 
 # Project Structure
@@ -211,7 +213,19 @@ curl http://localhost:5000/search?q=test
 
 # Frontend
 
-TODO
+1. Install dependencies
+
+```bash
+npm install
+```
+
+2. Start the frontend
+
+```bash
+npm run dev
+```
+
+3. Open the browser at `http://localhost:4000/`
 
 # Docker
 
