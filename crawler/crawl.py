@@ -43,6 +43,7 @@ import os
 import random
 import time
 from collections import defaultdict
+from crawler import utilities
 
 import peewee
 import requests
@@ -283,7 +284,7 @@ class Crawler:
             Document: The generated Document object.
         """
         messy_text = utils.strip_text_title_and_tags_from_html(html)
-        tokens = utils.preprocess_text_and_tokenize(messy_text)
+        tokens = utilities.preprocess_text_and_tokenize(messy_text)
         text = utils.make_text_human_readable(messy_text)
         harvested_links = links
         title = utils.make_text_human_readable(utils.get_title_from_html(html))

@@ -9,7 +9,7 @@ import numpy as np
 from dotenv import load_dotenv
 from sklearn.metrics.pairwise import cosine_similarity
 
-from crawler import utils
+from crawler import utils, utilities
 from crawler.build_ranker import DocumentTokensStreamer
 from crawler.models import Document
 
@@ -57,7 +57,7 @@ def get_global_tfidf_naive_norm_distance_ranking(query: str) -> np.array:
 
     """
     # Preprocess the query
-    query_tokens = utils.preprocess_text_and_tokenize(query)
+    query_tokens = utilities.preprocess_text_and_tokenize(query)
     LOG.info(f"query_tokens: {query_tokens}")
     preprocessed_query = " ".join(query_tokens)
 
