@@ -375,7 +375,7 @@ docker system prune -a
 
 # Team Members
 
-- [Daniel Reimer]()
-- [Long Nguyen]()
-- [Lukas Listl]()
-- [Philipp Alber]()
+- [Daniel Reimer](https://github.com/Seskahin)
+- [Long Nguyen](https://github.com/longpollehn)
+- [Lukas Listl](https://github.com/LukasListl)
+- [Philipp Alber](https://github.com/coolusaHD)
