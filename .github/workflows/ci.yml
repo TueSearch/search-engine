@@ -31,23 +31,26 @@ jobs:
           key: ${{ hashFiles('requirements.txt') }}
       - name: Install dependencies
         run: |
-          python3 -m venv venv
+          if [ ! -d "venv" ]; then
+            python3 -m venv venv
+          fi
+          source venv/bin/activate
           pip install -r requirements.txt
       - name: Set up nltk.
         run: |
-          python3 -m venv venv
+          source venv/bin/activate
           python3 -c "import nltk; nltk.download('stopwords');"
       - name: Lint crawler.
         run: |
-          python3 -m venv venv
+          source venv/bin/activate
           pylint --rcfile=.pylintrc crawler
       - name: Lint backend.
         run: |
-          python3 -m venv venv
+          source venv/bin/activate
           pylint --rcfile=.pylintrc backend
       - name: Test crawler.
         run: |
-          python3 -m venv venv
+          source venv/bin/activate
           python3 -m unittest
 
   validatePrTitle:
