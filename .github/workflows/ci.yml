@@ -12,22 +12,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - name: Set up requirements.txt # actions/setup-python@v2 needs this, apparently.
+        run: mv requirements.prod.txt requirements.txt
+      - name: Setup python.
+        uses: actions/setup-python@v2
         with:
           python-version: '3.10.6'
           cache: 'pip'
-      - name: Cache node modules
+      - name: Cache virtual environment.
         id: cache-venv
         uses: actions/cache@v3
         env:
           cache-name: cache-venv
         with:
           path: ./venv
-          key: ${{ hashFiles('requirements.prod.txt') }}
+          key: ${{ hashFiles('requirements.txt') }}
       - name: Install dependencies
         run: |
           python3 -m venv venv
-          pip install -r requirements.prod.txt
+          pip install -r requirements.txt
       - name: Lint crawler.
         run: |
           python3 -m venv venv
@@ -82,7 +85,7 @@ jobs:
 
   unitTests:
     name: 🧪 Unit Tests
-    needs: [validateCodyStyle]
+    needs: [ validateCodyStyle ]
     runs-on: ubuntu-latest
     steps:
       - name: 🚚 Get latest code
@@ -114,7 +117,7 @@ jobs:
   e2eTests:
     if: false
     name: 🧪 E2E Tests
-    needs: [validateCodyStyle]
+    needs: [ validateCodyStyle ]
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
@@ -172,7 +175,7 @@ jobs:
   notify-on-success:
     name: 📧 Notify success
     if: success()
-    needs: [validateCodyStyle, unitTests, e2eTests]
+    needs: [ validateCodyStyle, unitTests, e2eTests ]
     runs-on: ubuntu-latest
     steps:
       - name: 📧 Comment Pull Request
@@ -186,7 +189,7 @@ jobs:
   notify-on-failure:
     name: 📧 Notify failure
     if: failure()
-    needs: [validateCodyStyle, unitTests, e2eTests]
+    needs: [ validateCodyStyle, unitTests, e2eTests ]
     runs-on: ubuntu-latest
     steps:
       - name: 📧 Comment Pull Request
