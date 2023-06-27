@@ -13,7 +13,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Set up requirements.txt # actions/setup-python@v2 needs this, apparently.
-        run: mv requirements.prod.txt requirements.txt
+        run: cp requirements.prod.txt requirements.txt
+      - name: Set up environemnt variables.
+        run: cp example.env .env
       - name: Setup python.
         uses: actions/setup-python@v2
         with:
