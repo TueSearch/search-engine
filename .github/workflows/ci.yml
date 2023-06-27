@@ -6,6 +6,50 @@ permissions: write-all
 
 name: 🏗️ CI
 jobs:
+  backend_and_crawler:
+    name: Lint and test backend and crawler.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up requirements.txt # actions/setup-python@v2 needs this, apparently.
+        run: cp requirements.prod.txt requirements.txt
+      - name: Set up environemnt variables.
+        run: cp example.env .env
+      - name: Setup python.
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10.6'
+          cache: 'pip'
+      - name: Cache virtual environment.
+        id: cache-venv
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-venv
+        with:
+          path: ./venv
+          key: ${{ hashFiles('requirements.txt') }}
+      - name: Install dependencies
+        run: |
+          python3 -m venv venv
+          pip install -r requirements.txt
+      - name: Set up nltk.
+        run: |
+          python3 -m venv venv
+          python3 -c "import nltk; nltk.download('stopwords');"
+      - name: Lint crawler.
+        run: |
+          python3 -m venv venv
+          pylint --rcfile=.pylintrc crawler
+      - name: Lint backend.
+        run: |
+          python3 -m venv venv
+          pylint --rcfile=.pylintrc backend
+      - name: Test crawler.
+        run: |
+          python3 -m venv venv
+          python3 -m unittest
+
   validatePrTitle:
     name: 🔎 Validate PR Title
     runs-on: ubuntu-latest
@@ -47,7 +91,7 @@ jobs:
 
   unitTests:
     name: 🧪 Unit Tests
-    needs: [validateCodyStyle]
+    needs: [ validateCodyStyle ]
     runs-on: ubuntu-latest
     steps:
       - name: 🚚 Get latest code
@@ -79,7 +123,7 @@ jobs:
   e2eTests:
     if: false
     name: 🧪 E2E Tests
-    needs: [validateCodyStyle]
+    needs: [ validateCodyStyle ]
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
@@ -137,7 +181,7 @@ jobs:
   notify-on-success:
     name: 📧 Notify success
     if: success()
-    needs: [validateCodyStyle, unitTests, e2eTests]
+    needs: [ validateCodyStyle, unitTests, e2eTests ]
     runs-on: ubuntu-latest
     steps:
       - name: 📧 Comment Pull Request
@@ -151,7 +195,7 @@ jobs:
   notify-on-failure:
     name: 📧 Notify failure
     if: failure()
-    needs: [validateCodyStyle, unitTests, e2eTests]
+    needs: [ validateCodyStyle, unitTests, e2eTests ]
     runs-on: ubuntu-latest
     steps:
       - name: 📧 Comment Pull Request

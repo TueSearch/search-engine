@@ -1,5 +1,20 @@
 # CODEOWNERSHIP
 
-frontend/ @coolusaHD 
-crawler/ @longpollehn
 backend/ @longpollehn
+
+crawler/ @longpollehn
+
+docker/my.cnf @longpollehn
+
+docker/mysql.cnf @longpollehn
+
+docker/python.Dockerfile @longpollehn
+
+frontend/ @coolusaHD
+
+.pylintrc @longpollehn
+
+.example.mysql.env @longpollehn
+
+requirements.dev.txt @longpollehn
+requirements.prod.txt @longpollehn

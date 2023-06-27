@@ -1,5 +1,5 @@
 """
-mse/crawl.py - SERP Fetching
+crawler/crawl.py - SERP Fetching
 
 
 The `crawl` module is responsible for crawling web pages and extracting relevant information.
@@ -33,10 +33,11 @@ is relevant, it is saved in the `document` table, and the new jobs are inserted 
 the database and processes them in parallel to accelerate the crawling process without overloading a single server.
 
 Usage:
-    python3 mse/crawl.py --bfs_layer=<nr, default = use database's minimal bfs layer.>
+    python3 crawler/crawl.py --bfs_layer=<nr, default = use database's minimal bfs layer.>
 """
 import argparse
 import json
+import math
 import multiprocessing
 import os
 import random
@@ -51,8 +52,8 @@ from playhouse.shortcuts import model_to_dict
 from requests.adapters import HTTPAdapter, Retry
 from requests_html import HTMLSession
 
-from mse import utils
-from mse.models import DATABASE, Document, Job
+from crawler import utils
+from crawler.models import DATABASE, Document, Job
 
 load_dotenv()
 
@@ -90,6 +91,7 @@ class PriorityQueue:
     """
     Manage which URL should be crawled as next.
     """
+
     def __init__(self, bfs_layer: int = None):
         """
         Initializes a priority queue for job scheduling.
@@ -158,7 +160,7 @@ class PriorityQueue:
         servers = Job.select(
             Job.server).where(
             (Job.done == False) & (
-                Job.bfs_layer == bfs_layer)).distinct().limit()
+                    Job.bfs_layer == bfs_layer)).distinct().limit()
         servers = [job.server for job in servers]
         page_rank = defaultdict(
             int, utils.read_json_file(
@@ -423,10 +425,14 @@ def main():
     parser = argparse.ArgumentParser(description="Web Crawler")
     parser.add_argument("-b", "--bfs_layer", type=int,
                         help="The BFS layer to crawl. If not specified, crawl the next smallest BFS layer.")
+    parser.add_argument("-n", "--number", type=int, default=math.inf,
+                        help="How many documents should be crawled")
     args = parser.parse_args()
 
+    document_retrieved = 0
+    LOG.info(f"Proceed to retrieve {args.number} jobs.")
     while len(jobs := PriorityQueue(
-            args.bfs_layer).get_jobs_from_database_to_crawl()) > 0:
+            args.bfs_layer).get_jobs_from_database_to_crawl()) > 0 and document_retrieved < args.number:
         with multiprocessing.Manager() as manager:
             shared_results = manager.list([(None, []) for _ in jobs])
             time.sleep(
@@ -466,6 +472,7 @@ def main():
                         LOG.error(
                             f"[Layer {job.bfs_layer}] Error saving document {new_document.url}: {error}")
                         transaction.rollback()
+                document_retrieved += 1
 
 
 if __name__ == '__main__':

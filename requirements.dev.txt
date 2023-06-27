@@ -1,0 +1,23 @@
+en-core-web-md @ https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.5.0/en_core_web_md-3.5.0-py3-none-any.whl#sha256=b492fd2dfeee931dd60232fd1a122bb5c3542ebcd5d614f11844647050aa539e
+en-core-web-lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.5.0/en_core_web_lg-3.5.0-py3-none-any.whl#sha256=c8ac64840c1eb3e3ca7bd38bd1e1c48fb0faeb2449d54d01d5ce629af4595775
+Flask==2.3.2
+gensim==4.3.1
+langdetect==1.0.9
+networkx==3.1
+nltk==3.8.1
+numpy==1.23.5
+requests==2.31.0
+requests-html==0.10.0
+tqdm==4.65.0
+url-normalize==1.4.3
+xgboost==1.7.6
+scikit-learn==1.2.2
+scipy==1.10.1
+pylint==2.17.4
+peewee==3.16.2
+python-dotenv==1.0.0
+tldextract==3.4.4
+url-normalize==1.4.3
+spacy==3.5.0
+pymysql==1.1.0
+cryptography==41.0.1

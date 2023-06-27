@@ -9,9 +9,9 @@ import numpy as np
 from dotenv import load_dotenv
 from sklearn.metrics.pairwise import cosine_similarity
 
-from mse import utils
-from mse.build_ranker import DocumentTokensStreamer
-from mse.models import Document
+from crawler import utils
+from crawler.build_ranker import DocumentTokensStreamer
+from crawler.models import Document
 
 load_dotenv()
 
