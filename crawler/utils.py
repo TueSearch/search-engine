@@ -5,25 +5,22 @@ crawler/utils
 This module provides utility functions for the MSE project.
 
 """
-import functools
+import _pickle as pickle
 import json
 import logging
 import os
 import re
 import shutil
 import sys
-import unicodedata
 from logging.handlers import RotatingFileHandler
-from urllib.parse import urljoin, urlparse, urlunparse
 from pathlib import Path
-import html
+from urllib.parse import urljoin, urlparse, urlunparse
 
-import _pickle as pickle
 import spacy
 import tldextract
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from langdetect import detect, detect_langs
+from langdetect import detect_langs
 from nltk.corpus import stopwords
 from url_normalize import url_normalize
 

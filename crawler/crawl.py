@@ -43,7 +43,6 @@ import os
 import random
 import time
 from collections import defaultdict
-from crawler import utilities
 
 import peewee
 import requests
@@ -53,6 +52,7 @@ from playhouse.shortcuts import model_to_dict
 from requests.adapters import HTTPAdapter, Retry
 from requests_html import HTMLSession
 
+from crawler import utilities
 from crawler import utils
 from crawler.models import DATABASE, Document, Job
 
