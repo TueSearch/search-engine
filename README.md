@@ -5,28 +5,30 @@ Tübingen.
 
 ## Table of Contents
 
+- [TueSearch](#tuesearch)
+  - [Table of Contents](#table-of-contents)
 - [Project Structure](#project-structure)
 - [Crawler](#crawler)
-    - [Crawler set up](#crawler-set-up)
-    - [Crawler usage](#crawler-usage)
-    - [Cheat cheatsheet](#crawler-cheatsheet)
-        - [Show directories' content](#show-directories-content)
-        - [Show logs](#show-logs)
+  - [Crawler set up](#crawler-set-up)
+  - [Crawler usage](#crawler-usage)
+  - [Crawler cheatsheet](#crawler-cheatsheet)
+    - [Show directories' content](#show-directories-content)
+    - [Show logs](#show-logs)
 - [Backend](#backend)
-    - [Backend set up](#backend-set-up)
-    - [Backend usage](#backend-usage)
-    - [Backend cheatsheet](#backend-cheatsheet)
-        - [Test the API](#test-the-api)
+  - [Backend set up](#backend-set-up)
+  - [Backend usage](#backend-usage)
+  - [Backend cheatsheet](#backend-cheatsheet)
+    - [Test the API](#test-the-api)
 - [Frontend](#frontend)
 - [Docker](#docker)
-    - [Docker set up](#docker-set-up)
-    - [Docker usage](#docker-usage)
-    - [Docker cheatsheet](#docker-cheatsheet)
-        - [Show containers](#show-containers)
-        - [Show logs](#show-logs)
-        - [Enter containers](#enter-containers)
-        - [Restart the services](#restart-the-services)
-        - [Clean everything](#clean-everything)
+  - [Docker set up](#docker-set-up)
+  - [Docker usage](#docker-usage)
+  - [Docker cheatsheet](#docker-cheatsheet)
+    - [Show containers](#show-containers)
+    - [Show logs](#show-logs-1)
+    - [Enter containers](#enter-containers)
+    - [Restart the services](#restart-the-services)
+    - [Clean everything](#clean-everything)
 - [Team Members](#team-members)
 
 # Project Structure
@@ -35,23 +37,23 @@ The project has the following structure:
 
 - `.github`: This directory contains the GitHub workflow files for the project.
 - `backend`: This directory contains the Flask application for the search engine.
-    - `app.py`: This script contains the Flask API for the search engine.
+  - `app.py`: This script contains the Flask API for the search engine.
 - `crawler`: This directory contains the main source code of the web crawler.
-    - `data`: This directory contains the data files for the project.
-        - `serp.json`: This file contains the search engine results page (SERP) for the query "Tübingen".
-    - `tests`: This directory contains the test files for the project. (Note: The test directory could be improved
-      further
-      to include more comprehensive testing scenarios and coverage.)
-    - `build_inverted_index.py`: The script for building the inverted index from the crawled documents.
-    - `build_ranker.py`: The script for building the ranker from the inverted index and query.
-    - `fetch_serp.py`: The script for fetching the search engine results page (SERP) and saving it as a JSON file.
-    - `initialize_database.py`: The script for initializing the database and creating the necessary tables.
-    - `crawl.py`: The script for the web crawling process, which fetches web pages, classifies their relevance, and
-      stores them in the database.
-    - `models.py`: This module defines the database models used for storing crawled documents and job management.
-    - `rank.py`: This module contains the ranker class, which uses the built ranker to rank the documents based on the
-      query.
-    - `utils.py`: This module contains utility functions used in the crawling process.
+  - `data`: This directory contains the data files for the project.
+    - `serp.json`: This file contains the search engine results page (SERP) for the query "Tübingen".
+  - `tests`: This directory contains the test files for the project. (Note: The test directory could be improved
+    further
+    to include more comprehensive testing scenarios and coverage.)
+  - `build_inverted_index.py`: The script for building the inverted index from the crawled documents.
+  - `build_ranker.py`: The script for building the ranker from the inverted index and query.
+  - `fetch_serp.py`: The script for fetching the search engine results page (SERP) and saving it as a JSON file.
+  - `initialize_database.py`: The script for initializing the database and creating the necessary tables.
+  - `crawl.py`: The script for the web crawling process, which fetches web pages, classifies their relevance, and
+    stores them in the database.
+  - `models.py`: This module defines the database models used for storing crawled documents and job management.
+  - `rank.py`: This module contains the ranker class, which uses the built ranker to rank the documents based on the
+    query.
+  - `utils.py`: This module contains utility functions used in the crawling process.
 - `.pre-commit-config.yaml`: This file contains the configuration for the pre-commit hooks.
 - `.pylintrc`: This file contains the configuration for the pylint linter.
 - `CODEOWNERS`. This file contains the GitHub code owners for the project.
@@ -117,7 +119,7 @@ ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'root';
 Create a database `tuesearch`
 
 ```mysql
-create database tuesearch; 
+create database tuesearch;
 ```
 
 4. Initialize environment variables file `.env`
@@ -126,7 +128,7 @@ create database tuesearch;
 cp example.env .env
 ```
 
-Note: you might need to change some variables in `.env` according to 
+Note: you might need to change some variables in `.env` according to
 your local developmente environment.
 
 5. (Optional) Install pre-commit hooks:

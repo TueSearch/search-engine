@@ -12,7 +12,7 @@ services:
     environment:
       MYSQL_ROOT_HOST: '%'
     ports:
-      - "3307:3306"
+      - '3307:3306'
     env_file:
       - .mysql.env
     volumes:
@@ -33,8 +33,8 @@ services:
     container_name: initialize_database
     depends_on:
       - mysql
-    restart: "on-failure"
-    command: "python3 -m crawler.initialize_database"
+    restart: 'on-failure'
+    command: 'python3 -m crawler.initialize_database'
     env_file:
       - .docker.env
     volumes:
@@ -54,11 +54,11 @@ services:
       context: .
       dockerfile: docker/python.Dockerfile
     container_name: crawl
-    restart: "on-failure"
+    restart: 'on-failure'
     depends_on:
       - mysql
       - initialize_database
-    command: "python3 -m crawler.crawl -n 20"
+    command: 'python3 -m crawler.crawl -n 20'
     env_file:
       - .docker.env
     volumes:
@@ -81,8 +81,8 @@ services:
       - mysql
       - initialize_database
       - crawl
-    restart: "on-failure"
-    command: "python3 -m crawler.build_inverted_index"
+    restart: 'on-failure'
+    command: 'python3 -m crawler.build_inverted_index'
     env_file:
       - .docker.env
     volumes:
@@ -106,8 +106,8 @@ services:
       - initialize_database
       - crawl
       - build_inverted_index
-    restart: "on-failure"
-    command: "python3 -m crawler.build_ranker"
+    restart: 'on-failure'
+    command: 'python3 -m crawler.build_ranker'
     env_file:
       - .docker.env
     volumes:
@@ -127,15 +127,15 @@ services:
       dockerfile: docker/python.Dockerfile
     container_name: backend_server
     ports:
-      - "5001:5000"
+      - '5001:5000'
     depends_on:
       - mysql
       - initialize_database
       - crawl
       - build_inverted_index
       - build_ranker
-    restart: "always"
-    command: "python3 -m backend.app"
+    restart: 'always'
+    command: 'python3 -m backend.app'
     env_file:
       - .docker.env
     volumes:
@@ -146,6 +146,26 @@ services:
       - /opt/tuesearch/data:/opt/tuesearch/data
     networks:
       - mysql_net
+  ############################################################
+  # Start frontend.
+  # Persistent process.
+  ############################################################
+  frontend_server:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    container_name: frontend_server
+    ports:
+      - '4000:4000'
+    restart: 'always'
+    command: serve -s build -l 4000
+    volumes:
+      - ./.docker.env:/app/.env
+      - /opt/tuesearch/log:/opt/tuesearch/log
+      - /opt/tuesearch/data:/opt/tuesearch/data
+    networks:
+      - mysql_net
+
 volumes:
   tuesearch-mysql:
 networks:
