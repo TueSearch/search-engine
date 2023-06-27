@@ -15,7 +15,7 @@ Usage:
 """
 
 from flask import Flask, request, jsonify
-from crawler.rank import rank
+from backend.rank import rank
 
 app = Flask(__name__)
 

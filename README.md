@@ -1,3 +1,4 @@
+
 # TueSearch
 
 This project contains the source code of the final project from the course modern search engines at the University of
@@ -36,12 +37,15 @@ The project has the following structure:
 - `.github`: This directory contains the GitHub workflow files for the project.
 - `backend`: This directory contains the Flask application for the search engine.
     - `app.py`: This script contains the Flask API for the search engine.
+    - `rank.py`: This module contains the ranker class, which uses the built ranker to rank the documents based on the
+      query.
 - `crawler`: This directory contains the main source code of the web crawler.
     - `data`: This directory contains the data files for the project.
         - `serp.json`: This file contains the search engine results page (SERP) for the query "Tübingen".
     - `tests`: This directory contains the test files for the project. (Note: The test directory could be improved
-      further
-      to include more comprehensive testing scenarios and coverage.)
+      further to include more comprehensive testing scenarios and coverage.)
+    - `utilities`:
+      - `tokenizer`: Contains the function to preprocess text before feed it to ranker and classifier.
     - `build_inverted_index.py`: The script for building the inverted index from the crawled documents.
     - `build_ranker.py`: The script for building the ranker from the inverted index and query.
     - `fetch_serp.py`: The script for fetching the search engine results page (SERP) and saving it as a JSON file.
@@ -49,8 +53,6 @@ The project has the following structure:
     - `crawl.py`: The script for the web crawling process, which fetches web pages, classifies their relevance, and
       stores them in the database.
     - `models.py`: This module defines the database models used for storing crawled documents and job management.
-    - `rank.py`: This module contains the ranker class, which uses the built ranker to rank the documents based on the
-      query.
     - `utils.py`: This module contains utility functions used in the crawling process.
 - `.pre-commit-config.yaml`: This file contains the configuration for the pre-commit hooks.
 - `.pylintrc`: This file contains the configuration for the pylint linter.

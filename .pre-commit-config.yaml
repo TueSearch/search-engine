@@ -1,9 +1,15 @@
 repos:
   - repo: local
     hooks:
-      - id: Lint
-        name: Lint
+      - id: Lint crawler
+        name: Lint crawler.
         language: system
-        entry: pylint --rcfile=.pylintrc crawler backend
+        entry: pylint --rcfile=.pylintrc crawler
+        pass_filenames: false
+        always_run: true
+      - id: Lint backend
+        name: Lint backend.
+        language: system
+        entry: pylint --rcfile=.pylintrc backend
         pass_filenames: false
         always_run: true
