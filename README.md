@@ -1,4 +1,3 @@
-
 # TueSearch
 
 This project contains the source code of the final project from the course modern search engines at the University of
@@ -39,23 +38,41 @@ The project has the following structure:
 - `.github`: This directory contains the GitHub workflow files for the project.
 - `backend`: This directory contains the Flask application for the search engine.
     - `app.py`: This script contains the Flask API for the search engine.
+    - `build_inverted_index.py`: The script for building the inverted index from the crawled documents.
+    - `build_ranker.py`: The script for building the ranker from the inverted index and query.
     - `rank.py`: This module contains the ranker class, which uses the built ranker to rank the documents based on the
       query.
+    - `streamers.py`: This module contains the streamers class, which is used to stream the documents from the database
+      to the ranker.
 - `crawler`: This directory contains the main source code of the web crawler.
     - `data`: This directory contains the data files for the project.
         - `serp.json`: This file contains the search engine results page (SERP) for the query "Tübingen".
+        - `documents.json`: This file contains some initial crawled documents so local development gets a bit easier.
+    - `models`: SQL models for the database.
+        - `base.py`: This file contains the base model for the database.
+        - `document.py`: This file contains the model for the documents table.
+        - `job.py`: This file contains the model for the jobs table.
+    - `relevance_classification`: Classify URL's, document's and job's relevance.
+        - `document_relevance.py`: Determines if a document should be indexed.
+        - `job_relevance.py`: Determines if a job should be executed.
+        - `url_relevance.py`: Determines if a URL should be crawled and when it should be crawled.
     - `tests`: This directory contains the test files for the project. (Note: The test directory could be improved
       further to include more comprehensive testing scenarios and coverage.)
-    - `utilities`:
-      - `tokenizer`: Contains the function to preprocess text before feed it to ranker and classifier.
-    - `build_inverted_index.py`: The script for building the inverted index from the crawled documents.
-    - `build_ranker.py`: The script for building the ranker from the inverted index and query.
+    - `utils`:
+        - `io`: This module contains the functions for reading and writing data to files.
+        - `log`: This module contains the functions for logging the crawling process.
+        - `text`: Contains the function to preprocess text before feed it to ranker and classifier.
+    - `crawl.py`: Determine a crawler. A crawler is a single process that crawls a single URL.
     - `fetch_serp.py`: The script for fetching the search engine results page (SERP) and saving it as a JSON file.
-    - `initialize_database.py`: The script for initializing the database and creating the necessary tables.
-    - `crawl.py`: The script for the web crawling process, which fetches web pages, classifies their relevance, and
-      stores them in the database.
-    - `models.py`: This module defines the database models used for storing crawled documents and job management.
-    - `utils.py`: This module contains utility functions used in the crawling process.
+    - `initialize_database.py`: The script for initializing the database and creating the necessary tables and add
+      initial data.
+    - `main.py`: Start the crawler.
+    - `priority_queue.py`: Contains the priority queue class, which is used to determine which server and which link is
+      preferred.
+- `docker`: This directory contains the docker files for the project.
+    - `my.cnf`: This file contains the configuration for the MySQL database.
+    - `mysql.cnf`: This file contains the configuration for the MySQL database.
+    - `python.Dockerfile`: This file contains the Dockerfile for the Python crawler & backend.
 - `.pre-commit-config.yaml`: This file contains the configuration for the pre-commit hooks.
 - `.pylintrc`: This file contains the configuration for the pylint linter.
 - `CODEOWNERS`. This file contains the GitHub code owners for the project.
@@ -72,13 +89,22 @@ The project has the following structure:
 
 ## Crawler set up
 
-1. Create output directories and initialize environment variables
+1. Create output directories 
 
 ```bash
 sudo mkdir -m 777 -p /opt/tuesearch/data /opt/tuesearch/log  && sudo chmod -R 777 /opt/tuesearch
-cp example.mysql.env .mysql.env
-cp example.env .env
-cp example.env .docker.env
+```
+
+and initialize environment variables
+
+```bash
+cp -rf example.mysql.env .mysql.env
+cp -rf example.env .env
+cp -rf example.env .docker.env
+sed -i "s@SERP_FILE=/app/crawler/data/serp.json@SERP_FILE=$PWD/crawler/data/serp.json@" .env
+sed -i "s@MYSQL_SEARCH_ENGINE_CONNECTION_HOST=mysql@MYSQL_SEARCH_ENGINE_CONNECTION_HOST=localhost@" .env
+sed -i "s@INITIAL_DOCUMENTS_FILE=/app/crawler/data/documents.json@INITIAL_DOCUMENTS_FILE=$PWD/crawler/data/documents.json @" .env
+
 ```
 
 Note: you might need to change some variables in `.env` according to
@@ -87,6 +113,10 @@ your local developmente environment.
 2. Install dependencies
 
 ```bash
+if [ -d venv ]; then 
+  python3 -m venv venv 
+fi
+source venv/bin/activate
 pip install -r requirements.dev.txt
 ```
 
@@ -123,33 +153,14 @@ python3 -m crawler.initialize_database
 3. Once you have the initialized database, you can start the crawling process using the `craw.py` script.
 
 ```bash
-python3 -m crawler.crawl -n 10 # Crawl 10 items
+python3 -m crawler.main -n 10 # Crawl 10 items
 ```
 
 or simply
 
 ```bash
-python3 -m crawler.crawl # Craw in loop
+python3 -m crawler.main # Craw in loop
 ```
-
-4. After crawling, you can build the inverted index using the `build_inverted_index.py` script. This script analyzes
-   the crawled documents and constructs an inverted index to enable efficient searching.
-
-```bash
-python3 -m crawler.build_inverted_index
-```
-
-This step should be repeated regularly to keep the index fresh.
-
-5. Build the ranker using the `build_ranker.py` script.
-   This script builds the models needed to rank websites. After training, the model
-   will be stored in paths defined in the `.env` file.
-
-```bash
-python3 -m crawler.build_ranker
-```
-
-This step should be repeated regularly to keep the ranker fresh.
 
 ## Crawler cheatsheet
 
@@ -160,33 +171,7 @@ ls -lha /opt/tuesearch/data/
 ```
 
 ```bash
-ls -lha /opt/tuesearch/log/
-```
-
-### Show logs
-
-```bash
-cat /opt/tuesearch/log/crawl.log
-```
-
-```bash
-cat /opt/tuesearch/log/database.log
-```
-
-```bash
-cat /opt/tuesearch/log/fetch_serp.log
-```
-
-```bash
-cat /opt/tuesearch/log/initialize_database.log
-```
-
-```bash
-cat /opt/tuesearch/log/build_inverted_index.log
-```
-
-```bash
-cat /opt/tuesearch/log/build_ranker.log
+ls -lha /opt/tuesearch/logs/
 ```
 
 # Backend
@@ -197,7 +182,26 @@ Same as described in the section [Crawler](#crawler).
 
 ## Backend usage
 
-1. You can run the Flask application to search for documents using the `backend/app.py` script.
+1. After crawling, you can build the inverted index using the `build_inverted_index.py` script. This script analyzes
+   the crawled documents and constructs an inverted index to enable efficient searching.
+
+```bash
+python3 -m backend.build_inverted_index
+```
+
+This step should be repeated regularly to keep the index fresh.
+
+2. Build the ranker using the `build_ranker.py` script.
+   This script builds the models needed to rank websites. After training, the model
+   will be stored in paths defined in the `.env` file.
+
+```bash
+python3 -m backend.build_ranker
+```
+
+This step should be repeated regularly to keep the ranker fresh.
+
+3. You can run the Flask application to search for documents using the `backend/app.py` script.
 
 ```bash
 python3 -m backend.app
@@ -208,7 +212,7 @@ python3 -m backend.app
 ### Test the API
 
 ```bash
-curl http://localhost:5000/search?q=test
+curl http://localhost:5000/search?q=tübingen
 ```
 
 # Frontend
@@ -254,7 +258,7 @@ should show only 2 containers running, `mysql` and `backend_server`.
 3. Test the API with
 
 ```bash
-curl http://localhost:5001/search?q=test
+curl http://localhost:5001/search?q=tübingen
 ```
 
 Note that port of the container's backend is not the same as
@@ -266,6 +270,24 @@ the port of the host's backend.
 
 ```bash
 docker container ps
+```
+
+### Run only one service
+
+```bash
+docker-compose up initialize_database
+```
+
+```bash
+docker-compose up crawl
+```
+
+```bash
+docker-compose up build_inverted_index
+```
+
+```bash
+docker-compose up build_ranker
 ```
 
 ### Show logs
@@ -324,16 +346,15 @@ docker exec -it backend_server bash
 
 ```bash
 docker-compose down
-```
-
-```bash
 docker-compose up -d --build
 ```
 
 ### Clean everything
 
 ```bash
+docker-compose down
 docker system prune -a
+docker volume prune --force
 ```
 
 # Team Members

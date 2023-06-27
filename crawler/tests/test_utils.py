@@ -1,21 +1,16 @@
 """Test utility"""
+import json
 import unittest
 
-from crawler import utilities
+from crawler import utils
 
 
 class TestUtils(unittest.TestCase):
-    def test_preprocess_and_tokenize(self):
-        """Test if non-unicode ü is treated correctly"""
-        text = "From the Neckar Bridge you have the most beautiful view of TÃ¼bingen."
-        tokens = utilities.preprocess_text_and_tokenize(text)
-        self.assertTrue("tubingen" in tokens)
-
-    def test_lemmatization(self):
+    def test_tokenize(self):
         """Test if html is escaped"""
-        text = "Seminar&#32;&#124;"
-        tokens = utilities.preprocess_text_and_tokenize(text)
-        print(tokens)
+        text = "Tübingen (German) is a traditional university city in central Baden-Württemberg, Germany. In the season of autumn."
+        tokens = utils.text.tokenize(text)
+        self.assertTrue("tubingen" in tokens[0])
 
 
 if __name__ == '__main__':

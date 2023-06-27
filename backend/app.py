@@ -13,7 +13,6 @@ Usage:
 - Start the Flask application by running this script.
 - Open a web browser and access http://localhost:5000/ to access the search interface.
 """
-
 from flask import Flask, request, jsonify
 from backend.rank import rank
 
@@ -29,11 +28,13 @@ def search():
         page = int(request.args.get('page', 0))  # Get the page parameter from the request
         page_size = int(request.args.get('page_size', 10))  # Get the page_size parameter from the request
 
-        documents = rank(query, page=page, page_size=page_size)  # Call the rank() function to get ranked documents
+        query_tokens, documents = rank(query, page=page,
+                                       page_size=page_size)  # Call the rank() function to get ranked documents
 
         # Prepare the JSON response
         response = {
             'query': query,
+            'query_tokens': query_tokens,
             'page': page,
             'page_size': page_size,
             'results': []
@@ -41,9 +42,11 @@ def search():
 
         for doc in documents:
             result = {
-                'id': doc.id,
                 'title': doc.title,
+                'body': doc.body,
                 'url': doc.url,
+                'server': doc.server,
+                'relevant': doc.relevant
             }
             response['results'].append(result)
 

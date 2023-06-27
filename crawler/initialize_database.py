@@ -1,14 +1,15 @@
 """
 crawler/initialize_database.py - Database Initialization
 
-This module is responsible for initializing the database used by the Modern Search Engine. It defines functions to
-create jobs and documents in the database based on SERP (Search Engine Results Page) data and manual seeds.
+This module is responsible for initializing the models used by the Modern Search Engine. It defines functions to
+create jobs and documents in the models based on SERP (Search Engine Results Page) data and manual seeds.
 
 Usage:
-    python3 crawler/initialize_database.py
+    python3 -m crawler.initialize_database
 """
 import json
 import os
+import sys
 import traceback
 
 from playhouse.shortcuts import model_to_dict
@@ -21,10 +22,9 @@ from crawler import utils
 load_dotenv()
 
 SERP_FILE = os.getenv("SERP_FILE")
-QUEUE_LOG_FILE = os.getenv("QUEUE_LOG_FILE")
 QUEUE_MANUAL_SEEDS = json.loads(os.getenv("QUEUE_MANUAL_SEEDS"))
 QUEUE_INITIAL_BLACK_LIST = json.loads(os.getenv("QUEUE_INITIAL_BLACK_LIST"))
-LOG = utils.get_logger(__name__, QUEUE_LOG_FILE)
+LOG = utils.get_logger(__file__)
 
 
 def create_serper_job_batch(result) -> list[dict]:
@@ -40,11 +40,9 @@ def create_serper_job_batch(result) -> list[dict]:
     """
     batch = []
     for entry in result[("news" if "news" in result else "organic")]:
-        url = utils.normalize_url(entry["link"])
-        server = utils.get_domain_name_without_subdomain_and_suffix_from_url(
-            url)
-        domain = utils.get_domain_name_without_subdomain_from_url(url)
-        job = Job(bfs_layer=1, url=url, server=server, domain=domain)
+        url = utils.url.normalize_url(entry["link"])
+        server = utils.url.get_server_name_from_url(url)
+        job = Job(url=url, server=server, priority=sys.maxsize)
         if server not in QUEUE_INITIAL_BLACK_LIST:
             batch.append(model_to_dict(job))
             LOG.info(f"Added {job}")
@@ -59,44 +57,47 @@ def create_manual_job_batch():
     """
     batch = []
     for url in QUEUE_MANUAL_SEEDS:
-        job = Job(
-            bfs_layer=0,
-            url=url,
-            server=utils.get_domain_name_without_subdomain_and_suffix_from_url(
-                url),
-            domain=utils.get_domain_name_without_subdomain_from_url(url))
+        job = Job(url=url, server=utils.url.get_server_name_from_url(url), priority=sys.maxsize)
         batch.append(model_to_dict(job))
     try:
-        Job.insert_many(batch).on_conflict_ignore().execute()
+        Job.insert_many(batch).on_conflict_replace().execute()
     except peewee.IntegrityError as error:
         LOG.error(f"Error: {str(error)}")
         print(traceback.format_exc())
 
 
+def create_manual_document_batch():
+    """
+    Creates a batch of jobs based on manual seeds.
+    """
+    json_docs = utils.io.read_json_file(os.getenv("INITIAL_DOCUMENTS_FILE"))
+    for json_doc in json_docs:
+        doc = Document(**json_doc)
+        doc.title_tokens = json.dumps(utils.text.tokenize(doc.title))
+        doc.body_tokens = json.dumps(utils.text.tokenize(doc.body))
+        doc.save()
+        LOG.info(f"Added document: {str(doc.url)}")
+
+
 def main():
     """
-    Main function to initialize the database by creating jobs and documents.
-    """
-    with DATABASE.atomic() as transaction:
-        try:
-            create_manual_job_batch()
-            for serp in utils.read_json_file(SERP_FILE).values():
-                batch = create_serper_job_batch(serp)
-                Job.insert_many(batch).on_conflict_ignore().execute()
-        except Exception as error:
-            LOG.error(f"Error while parsing SERP's result. Error: '{str(error)}'.")
-            transaction.rollback()
-            print(traceback.format_exc())
-
-
-def reset():
-    """
-    Resets the database by dropping and recreating the tables.
+    Main function to initialize the models by creating jobs and documents.
     """
     DATABASE.drop_tables([Job, Document])
-    DATABASE.create_tables([Job, Document])
+    if not DATABASE.table_exists("job") and not DATABASE.table_exists("document"):
+        DATABASE.create_tables([Job, Document])
+        with DATABASE.atomic() as transaction:
+            try:
+                create_manual_job_batch()
+                for serp in utils.io.read_json_file(SERP_FILE).values():
+                    batch = create_serper_job_batch(serp)
+                    Job.insert_many(batch).on_conflict_replace().execute()
+                create_manual_document_batch()
+            except Exception as error:
+                LOG.error(f"Error while parsing SERP's result. Error: '{str(error)}'.")
+                transaction.rollback()
+                print(traceback.format_exc())
 
 
 if __name__ == '__main__':
-    DATABASE.create_tables([Job, Document])
     main()

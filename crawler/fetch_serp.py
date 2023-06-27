@@ -18,8 +18,7 @@ load_dotenv()
 # List of topics for SERP queries
 SERP_TOPICS = json.loads(os.getenv("SERP_TOPICS"))
 SERP_FILE = os.getenv("SERP_FILE")  # Output file to store the SERP results
-LOG = utils.get_logger(__name__, os.getenv(
-    "SERP_LOG_FILE"))  # Logger for logging messages
+LOG = utils.get_logger(__file__)  # Logger for logging messages
 SERP_API_KEY = os.getenv("SERP_API_KEY")  # API key for the SERP API
 # Number of results per page
 SERP_GOOGLE_PAGE_SIZE = int(os.getenv("SERP_GOOGLE_PAGE_SIZE"))
@@ -136,7 +135,7 @@ class SERPCrawler:
             dict: Dictionary containing the SERP results
         """
         try:
-            return utils.read_json_file(SERP_FILE)
+            return utils.io.read_json_file(SERP_FILE)
         except Exception as error:
             LOG.error(
                 f"Error reading current SERP files. {str(error)}. Use empty initial SERP and start download new SERP.")
@@ -194,14 +193,14 @@ def main():
     except Exception as error:
         LOG.info(
             f"Unknown exception {str(error)}. Store downloaded data and exit!")
-    utils.write_json_file(serp_crawler.results, SERP_FILE)
+    utils.io.write_json_file(serp_crawler.results, SERP_FILE)
 
 
 def reset():
     """
     Reset function to delete the SERP output file.
     """
-    utils.delete_file(SERP_FILE)
+    utils.io.delete_file(SERP_FILE)
 
 
 if __name__ == '__main__':
