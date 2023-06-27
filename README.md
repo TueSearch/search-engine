@@ -211,7 +211,19 @@ curl http://localhost:5000/search?q=test
 
 # Frontend
 
-TODO
+1. Install dependencies
+
+```bash
+npm install
+```
+
+2. Start the frontend
+
+```bash
+npm run dev
+```
+
+3. Open the browser at `http://localhost:4000/`
 
 # Docker
 

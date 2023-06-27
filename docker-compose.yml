@@ -12,7 +12,7 @@ services:
     environment:
       MYSQL_ROOT_HOST: '%'
     ports:
-      - "3306:3306"
+      - '3306:3306'
     env_file:
       - .mysql.env
     volumes:
@@ -40,8 +40,8 @@ services:
     volumes:
       - ./crawler:/app/crawler
       - ./.docker.env:/app/.env
-      - /opt/tuesearch/log:/opt/tuesearch/log
-      - /opt/tuesearch/data:/opt/tuesearch/data
+      - ./opt/tuesearch/log:/opt/tuesearch/log
+      - ./opt/tuesearch/data:/opt/tuesearch/data
     networks:
       - mysql_net
   ############################################################
@@ -64,8 +64,8 @@ services:
     volumes:
       - ./crawler:/app/crawler
       - ./.docker.env:/app/.env
-      - /opt/tuesearch/log:/opt/tuesearch/log
-      - /opt/tuesearch/data:/opt/tuesearch/data
+      - ./opt/tuesearch/log:/opt/tuesearch/log
+      - ./opt/tuesearch/data:/opt/tuesearch/data
     networks:
       - mysql_net
   ############################################################
@@ -88,8 +88,8 @@ services:
     volumes:
       - ./crawler:/app/crawler
       - ./.docker.env:/app/.env
-      - /opt/tuesearch/log:/opt/tuesearch/log
-      - /opt/tuesearch/data:/opt/tuesearch/data
+      - ./opt/tuesearch/log:/opt/tuesearch/log
+      - ./opt/tuesearch/data:/opt/tuesearch/data
     networks:
       - mysql_net
   ############################################################
@@ -113,8 +113,8 @@ services:
     volumes:
       - ./crawler:/app/crawler
       - ./.docker.env:/app/.env
-      - /opt/tuesearch/log:/opt/tuesearch/log
-      - /opt/tuesearch/data:/opt/tuesearch/data
+      - ./opt/tuesearch/log:/opt/tuesearch/log
+      - ./opt/tuesearch/data:/opt/tuesearch/data
     networks:
       - mysql_net
   ############################################################
@@ -142,8 +142,8 @@ services:
       - ./backend:/app/backend
       - ./crawler:/app/crawler
       - ./.docker.env:/app/.env
-      - /opt/tuesearch/log:/opt/tuesearch/log
-      - /opt/tuesearch/data:/opt/tuesearch/data
+      - ./opt/tuesearch/log:/opt/tuesearch/log
+      - ./opt/tuesearch/data:/opt/tuesearch/data
     networks:
       - mysql_net
   ############################################################
@@ -161,8 +161,6 @@ services:
     command: serve -s build -l 4000
     volumes:
       - ./.docker.env:/app/.env
-      - /opt/tuesearch/log:/opt/tuesearch/log
-      - /opt/tuesearch/data:/opt/tuesearch/data
     networks:
       - mysql_net
 
