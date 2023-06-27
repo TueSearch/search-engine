@@ -16,6 +16,7 @@ import unicodedata
 from logging.handlers import RotatingFileHandler
 from urllib.parse import urljoin, urlparse, urlunparse
 from pathlib import Path
+import html
 
 import _pickle as pickle
 import spacy
@@ -313,8 +314,10 @@ def remove_umlaute(tokens):
         remove_umlaute(tokens)
         Output: ['uber', 'mussen', 'horen']
     """
-    return [t.lower().replace("ä", "a").replace("ö", "o").replace("ü", "u").replace("ß", "s").replace("ã¼", "u").replace("Ã¼", "u") for t
-            in tokens]
+    return [
+        t.lower().replace("ä", "a").replace("ö", "o").replace("ü", "u").replace("ß", "s").replace("ã¼", "u").replace(
+            "Ã¼", "u") for t
+        in tokens]
 
 
 def remove_very_long_words(tokens, threshold=int(os.getenv("REMOVE_LONG_WORD_THRESHOLD"))):
@@ -454,46 +457,48 @@ def preprocess_text_and_tokenize(text: str) -> list[str]:
     Returns:
         list[str]: List of preprocessed tokens.
     """
+    text = html.unescape(text)
+
     text = remove_emojis_from_text(text)
 
     text = remove_hyperlinks_from_text(text)
 
     words = tokenize(text)
-    # print(("#" * 20) + f"Tokenize and lower case {words}", file=sys.stderr)
+    #print(("#" * 20) + f"Tokenize and lower case {words}", file=sys.stderr)
 
     words = lower_and_strip(words)
-    # print(("#" * 20) + f"Lower and strip {words}", file=sys.stderr)
+    #print(("#" * 20) + f"Lower and strip {words}", file=sys.stderr)
 
     words = remove_empty_token(words)
-    # print(("#" * 20) + f"Remove empty tokens {words}", file=sys.stderr)
+    #print(("#" * 20) + f"Remove empty tokens {words}", file=sys.stderr)
 
     words = remove_umlaute(words)
-    # print(("#" * 20) + f"Remove german umlaute {words}", file=sys.stderr)
+    #print(("#" * 20) + f"Remove german umlaute {words}", file=sys.stderr)
 
     words = remove_stop_words(words)
-    # print(("#" * 20) + f"Remove EN stop words {words}", file=sys.stderr)
+    #print(("#" * 20) + f"Remove EN stop words {words}", file=sys.stderr)
 
     words = remove_non_ascii_from_text(words)
-    # print(("#" * 20) + f"Remove non-ascii {words}", file=sys.stderr)
+    #print(("#" * 20) + f"Remove non-ascii {words}", file=sys.stderr)
 
     words = remove_punctation(words)
-    # print(("#" * 20) + f"Remove punctuation {words}", file=sys.stderr)
+    #print(("#" * 20) + f"Remove punctuation {words}", file=sys.stderr)
 
     words = stem_words_of_tokens(words)
-    # print(("#" * 20) + f"Stem english {words}", file=sys.stderr)
+    #print(("#" * 20) + f"Stem english {words}", file=sys.stderr)
 
     words = remove_umlaute(words)  # Remove Umlaute, again. Yes, intended!
-    # print(("#" * 20) + f"Remove german umlaute {words}", file=sys.stderr)
+    #print(("#" * 20) + f"Remove german umlaute {words}", file=sys.stderr)
 
     words = remove_very_long_words(words)
-    # print(("#" * 20) + f"Remove very long words {words}", file=sys.stderr)
+    #print(("#" * 20) + f"Remove very long words {words}", file=sys.stderr)
 
     # Remove punctuation, again. Yes, intended!
     words = remove_punctation(words)
-    # print(("#" * 20) + f"Remove punctuation {words}", file=sys.stderr)
+    #print(("#" * 20) + f"Remove punctuation {words}", file=sys.stderr)
 
     words = unify_tuebingen(words)  # Only one university name
-    # print(("#" * 20) + f"Unify tuebingen {words}", file=sys.stderr)
+    #print(("#" * 20) + f"Unify tuebingen {words}", file=sys.stderr)
 
     return words
 

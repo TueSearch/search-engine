@@ -33,6 +33,10 @@ jobs:
         run: |
           python3 -m venv venv
           pip install -r requirements.txt
+      - name: Set up nltk.
+        run: |
+          python3 -m venv venv
+          python3 -c "import nltk; nltk.download('stopwords');"
       - name: Lint crawler.
         run: |
           python3 -m venv venv
