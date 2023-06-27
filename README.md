@@ -68,11 +68,17 @@ The project has the following structure:
 
 ## Crawler set up
 
-1. Create output directories
+1. Create output directories and initialize environment variables
 
 ```bash
 sudo mkdir -m 777 -p /opt/tuesearch/data /opt/tuesearch/log  && sudo chmod -R 777 /opt/tuesearch
+cp example.mysql.env .mysql.env
+cp example.env .env
+cp example.env .docker.env
 ```
+
+Note: you might need to change some variables in `.env` according to
+your local developmente environment.
 
 2. Install dependencies
 
@@ -80,56 +86,13 @@ sudo mkdir -m 777 -p /opt/tuesearch/data /opt/tuesearch/log  && sudo chmod -R 77
 pip install -r requirements.dev.txt
 ```
 
-3. Install MySQL
+3. Start MySQL database
 
 ```bash
-sudo apt-get install mysql-server mysql-client -y
+docker-compose up -d --build mysql
 ```
 
-Start MySQL
-
-```bash
-sudo service mysql start
-```
-
-Enter MySQL
-
-```bash
-sudo mysql
-```
-
-Set password
-
-```mysql
-UPDATE mysql.user
-SET authentication_string=null
-WHERE User = 'root';
-FLUSH PRIVILEGES;
-exit;
-```
-
-and
-
-```bash
-ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'root';
-```
-
-Create a database `tuesearch`
-
-```mysql
-create database tuesearch; 
-```
-
-4. Initialize environment variables file `.env`
-
-```bash
-cp example.env .env
-```
-
-Note: you might need to change some variables in `.env` according to 
-your local developmente environment.
-
-5. (Optional) Install pre-commit hooks:
+4. (Optional) Install pre-commit hooks:
 
 ```bash
 pre-commit install
@@ -252,23 +215,7 @@ TODO
 
 ## Docker set up
 
-1. Create output directories
-
-```bash
-sudo mkdir -m 777 -p /opt/tuesearch/data /opt/tuesearch/log && sudo chmod -R 777 /opt/tuesearch
-```
-
-2. Initialize `.mysql.env` for database
-
-```bash
-cp example.mysql.env .mysql.env
-```
-
-2. Initialize `.docker.env` for the containers
-
-```bash
-cp example.env .docker.env
-```
+Same as described in the section [Crawler](#crawler).
 
 ## Docker usage
 
