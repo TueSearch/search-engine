@@ -1,7 +1,5 @@
 # CODEOWNERSHIP
 
-.github/workflows/python.yml @longpollehn
-
 backend/ @longpollehn
 
 crawler/ @longpollehn

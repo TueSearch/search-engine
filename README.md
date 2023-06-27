@@ -199,7 +199,7 @@ ls -lha /opt/tuesearch/log/
 ### Show logs
 
 ```bash
-cat /opt/tuesearch/log/crawler.log
+cat /opt/tuesearch/log/crawl.log
 ```
 
 ```bash
@@ -211,15 +211,15 @@ cat /opt/tuesearch/log/fetch_serp.log
 ```
 
 ```bash
-cat /opt/tuesearch/log/initialize_queue.log
+cat /opt/tuesearch/log/initialize_database.log
 ```
 
 ```bash
-cat /opt/tuesearch/log/inverted_index.log
+cat /opt/tuesearch/log/build_inverted_index.log
 ```
 
 ```bash
-cat /opt/tuesearch/log/rank_builder.log
+cat /opt/tuesearch/log/build_ranker.log
 ```
 
 # Backend

@@ -313,7 +313,7 @@ def remove_umlaute(tokens):
         remove_umlaute(tokens)
         Output: ['uber', 'mussen', 'horen']
     """
-    return [t.lower().replace("ä", "a").replace("ö", "o").replace("ü", "u").replace("ß", "s").replace("ã¼", "u") for t
+    return [t.lower().replace("ä", "a").replace("ö", "o").replace("ü", "u").replace("ß", "s").replace("ã¼", "u").replace("Ã¼", "u") for t
             in tokens]
 
 

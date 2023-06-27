@@ -6,6 +6,41 @@ permissions: write-all
 
 name: 🏗️ CI
 jobs:
+  backend_and_crawler:
+    name: Lint and test backend and crawler.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.10.6'
+          cache: 'pip'
+      - name: Cache node modules
+        id: cache-venv
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-venv
+        with:
+          path: ./venv
+          key: ${{ hashFiles('requirements.prod.txt') }}
+      - name: Install dependencies
+        run: |
+          python3 -m venv venv
+          pip install -r requirements.prod.txt
+      - name: Lint crawler.
+        run: |
+          python3 -m venv venv
+          pylint --rcfile=.pylintrc crawler
+      - name: Lint backend.
+        run: |
+          python3 -m venv venv
+          pylint --rcfile=.pylintrc backend
+      - name: Test crawler.
+        run: |
+          python3 -m venv venv
+          python3 -m unittest
+
   validatePrTitle:
     name: 🔎 Validate PR Title
     runs-on: ubuntu-latest
