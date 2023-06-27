@@ -1,24 +1,14 @@
 import functools
 import json
-import logging
 import os
 import re
-import shutil
-import sys
 import unicodedata
-from logging.handlers import RotatingFileHandler
-from urllib.parse import urljoin, urlparse, urlunparse
-from pathlib import Path
 import html
 
-import _pickle as pickle
 import spacy
-import tldextract
-from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from langdetect import detect, detect_langs
+from langdetect import detect
 from nltk.corpus import stopwords
-from url_normalize import url_normalize
 
 # Load environment variables and other stuff
 load_dotenv()
@@ -27,15 +17,6 @@ load_dotenv()
 NLP_TOKENIZER = spacy.load(os.getenv("SPACY_TOKENIZER_MODEL"))
 NLP_LEMMATIZER = spacy.load(os.getenv("SPACY_ENGLISH_LEMMATIZATION_MODEL"))
 ENGLISH_STOP_WORDS = set(stopwords.words('english'))
-CRAWL_EXCLUDED_EXTENSIONS = set(json.loads(
-    os.getenv("CRAWL_EXCLUDED_EXTENSIONS")))
-CRAWL_BLACK_LIST = set(json.loads(os.getenv("CRAWL_BLACK_LIST")))
-INVERTED_INDEX_TUEBINGEN_WRITING_STYLES = set(json.loads(
-    os.getenv("INVERTED_INDEX_TUEBINGEN_WRITING_STYLES")))
-CRAWL_ENGLISH_CLASSIFICATION_THRESHOLD = float(
-    os.getenv("CRAWL_ENGLISH_CLASSIFICATION_THRESHOLD"))
-CRAWL_ENGLISH_CLASSIFICATION_MULTI_THRESHOLD = float(
-    os.getenv("CRAWL_ENGLISH_CLASSIFICATION_MULTI_THRESHOLD"))
 
 
 @functools.cache

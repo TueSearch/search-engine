@@ -1,6 +1,3 @@
-
-
-
 # TueSearch
 
 This project contains the source code of the final project from the course modern search engines at the University of
