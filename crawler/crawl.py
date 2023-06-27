@@ -52,6 +52,7 @@ from playhouse.shortcuts import model_to_dict
 from requests.adapters import HTTPAdapter, Retry
 from requests_html import HTMLSession
 
+from crawler import utilities
 from crawler import utils
 from crawler.models import DATABASE, Document, Job
 
@@ -283,7 +284,7 @@ class Crawler:
             Document: The generated Document object.
         """
         messy_text = utils.strip_text_title_and_tags_from_html(html)
-        tokens = utils.preprocess_text_and_tokenize(messy_text)
+        tokens = utilities.preprocess_text_and_tokenize(messy_text)
         text = utils.make_text_human_readable(messy_text)
         harvested_links = links
         title = utils.make_text_human_readable(utils.get_title_from_html(html))

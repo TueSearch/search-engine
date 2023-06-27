@@ -52,6 +52,7 @@ class Job(BaseModel):
     """
     Represents a job in the crawler's queue.
     """
+    id = peewee.BigIntegerField(primary_key=True)
     bfs_layer = peewee.IntegerField()
     url = LongTextField()
     server = LongTextField()
@@ -92,6 +93,7 @@ class Document(BaseModel):
     """
     Represents a crawled document.
     """
+    id = peewee.BigIntegerField(primary_key=True)
     bfs_layer = peewee.IntegerField()
     url = LongTextField()
     server = LongTextField()
