@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 
 from crawler import utils
-from crawler.models import Job
+from crawler.models.job import Job
 
 load_dotenv()
 CRAWL_BATCH_SIZE = int(os.getenv("CRAWL_BATCH_SIZE"))

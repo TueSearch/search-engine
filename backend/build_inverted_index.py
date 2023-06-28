@@ -35,8 +35,8 @@ def recompute_tokens():
             doc.title_tokens = json.dumps(utils.text.tokenize(doc.title))
             doc.body_tokens = json.dumps(utils.text.tokenize(doc.body))
             doc.save()
-        except Exception as e:
-            LOG.error(f"Error while writing TF-IDF vector to database for document {doc.id}: {e}")
+        except Exception as error:
+            LOG.error(f"Error while writing TF-IDF vector to database for document {doc.id}: {error}")
 
 
 def build_inverted_index() -> defaultdict:

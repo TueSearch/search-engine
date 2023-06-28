@@ -13,7 +13,8 @@ from requests.adapters import HTTPAdapter, Retry
 from requests_html import HTMLSession
 
 from crawler import utils, relevance_classification
-from crawler.models import Document, Job
+from crawler.models.document import Document
+from crawler.models.job import Job
 
 load_dotenv()
 
@@ -57,26 +58,6 @@ class Crawler:
             job (Job): The job representing the URL to be crawled.
         """
         self.job: Job = job
-
-    @staticmethod
-    def harvest_jobs_from_relevant_document(
-            document: Document) -> list[dict]:
-        """Extract relevant jobs from a crawled document.
-
-        Args:
-            document (Document): The crawled document.
-
-        Returns:
-            list[dict]: A list of job dictionaries representing the relevant URLs found in the document.
-        """
-        batch = []
-        for new_harvested_url in document.relevant_links_list:
-            new_harvested_server = utils.url.get_server_name_from_url(new_harvested_url)
-            job = Job(url=new_harvested_url,
-                      server=new_harvested_server,
-                      priority=relevance_classification.get_url_priority(new_harvested_url))
-            batch.append(model_to_dict(job))
-        return batch
 
     def generate_document_from_html(self, html: str, links: list[str]) -> Document:
         """Generate a Document object from the HTML content of a crawled page.
@@ -170,7 +151,7 @@ class Crawler:
         new_document.relevant = relevance_classification.is_document_relevant(new_document)
         return new_document
 
-    def crawl(self) -> (Document, list[dict]):
+    def crawl(self) -> Document:
         """Perform the crawling process for the given job.
 
         This procedure tries to crawl the website at least twice.
@@ -184,7 +165,7 @@ class Crawler:
         Since we use two different libraries, this code is a bit messy.
 
         Returns:
-            Tuple[Document, list[dict]]: A tuple containing the crawled Document and a list of new job dictionaries.
+            The crawled document.
         """
         if relevance_classification.is_job_relevant(self.job):
             new_document = None
@@ -204,11 +185,9 @@ class Crawler:
 
             if new_document is not None:  # Retrieved document successfully.
                 if new_document.relevant:  # Document is relevant. Queue its children.
-                    return new_document, self.harvest_jobs_from_relevant_document(
-                        new_document)
+                    return new_document
                 # Document is not relevant. Do not queue its children.
-                return new_document, []
+                return new_document
         else:
-            LOG.info(
-                f"Job {self.job.url} is not relevant.")
-        return None, []  # Document could not be retrieved.
+            LOG.info(f"Job {self.job.url} is not relevant.")
+        return None  # Document could not be retrieved.

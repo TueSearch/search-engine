@@ -3,7 +3,7 @@ Streamers for streaming sentences from relevant documents.
 """
 import functools
 from numpy.typing import ArrayLike
-from crawler.models import Document
+from crawler.models.document import Document
 
 
 class DocumentStreamer:

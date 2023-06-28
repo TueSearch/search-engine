@@ -93,8 +93,8 @@ def construct_page_rank():
         LOG.info("Finished constructing page rank")
         utils.io.write_json_file(ranking, os.getenv("PAGERANK_FILE"))
         LOG.info("Wrote page rank")
-    except Exception as e:
-        LOG.error(f"Error while constructing page rank. Properly too little data. Try again, later: {e}")
+    except Exception as error:
+        LOG.error(f"Error while constructing page rank. Properly too little data. Try again, later: {error}")
         traceback.print_exc()
 
 

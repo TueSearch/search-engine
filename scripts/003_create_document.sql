@@ -11,5 +11,6 @@ CREATE TABLE IF NOT EXISTS document
     relevant_links           TEXT,
     body_global_tfidf_vector BLOB,
     relevant                 BOOLEAN DEFAULT TRUE,
+    created_date  DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (job_id) REFERENCES job(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE = RocksDB;

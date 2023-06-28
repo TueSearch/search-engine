@@ -46,7 +46,7 @@ def tokenize(text: str) -> list[str]:
         "Ã¼", "u")
     # print(("#" * 20) + f"Remove german umlaute {tokens}", file=sys.stderr)
 
-    tokens = [token for token in NLP(text)]
+    tokens = list(NLP(text))
     # print(("#" * 20) + f"Tokenize and lower case {tokens}", file=sys.stderr)
 
     tokens = [token for token in tokens if not token._.is_emoji]
@@ -69,22 +69,6 @@ def tokenize(text: str) -> list[str]:
     tokens = [token for token in tokens if len(token.text) > 1]
 
     return [f"{t.lemma_}_{t.pos_}" for t in tokens]
-
-
-def get_title_from_html(html):
-    """
-    Extracts the title from HTML content.
-
-    Args:
-        html (str): HTML content.
-
-    Returns:
-        str: Title of the HTML content.
-    """
-    soup = BeautifulSoup(html, 'html.parser')
-    title = soup.title.string
-    return title
-
 
 def do_text_contain_english_content(text: str) -> bool:
     """

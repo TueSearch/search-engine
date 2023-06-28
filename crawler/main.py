@@ -8,10 +8,11 @@ import time
 
 import peewee
 from dotenv import load_dotenv
-from requests.adapters import Retry
 
-from crawler import utils
-from crawler.models import DATABASE, Job
+from crawler import utils, relevance_classification
+from crawler.models.base import DATABASE
+from crawler.models.document import Document
+from crawler.models.job import Job
 from crawler.crawl import Crawler
 from crawler.priority_queue import PriorityQueue
 
@@ -31,14 +32,20 @@ class Loop:
         self.queue = PriorityQueue()
         LOG.info(f"Proceed to retrieve {number_to_crawl} jobs.")
 
-    def store_results(self, jobs, results):
-        for job, (new_document, new_jobs) in zip(jobs, results):
+    def store_results(self, jobs: list[Job], results: list[Document]):
+        """
+        Store the results of the crawl in the database.
+        Args:
+            jobs: input jobs.
+            results: results of the jobs.
+        """
+        for job, new_document in zip(jobs, results):
             with DATABASE.atomic() as transaction:
                 try:
                     success = new_document is not None
                     if success:
                         new_document.save()
-                        Job.insert_many(new_jobs).on_conflict_ignore().execute()
+                        Job.create_jobs(new_document.relevant_links_list)
                     Job.update(done=True, success=success).where(Job.id == job.id).execute()
                 except peewee.IntegrityError as error:
                     LOG.error(f"Error saving document {new_document.url}: {error}")
@@ -46,20 +53,23 @@ class Loop:
             self.number_crawled += 1
 
     def loop(self):
+        """
+        Run the crawler until the queue is exhausted.
+        """
         while len(jobs := self.queue.get_jobs_to_crawl()) > 0 and self.number_crawled < self.number_to_crawl:
             with multiprocessing.Manager() as manager:
-                shared_results = manager.list([(None, []) for _ in jobs])
+                results = manager.list([None for _ in jobs])
                 time.sleep(random.uniform(*CRAWL_RANDOM_SLEEP_INTERVAL))  # Random delay
 
                 def process_job(j_idx, j):
-                    shared_results[j_idx] = Crawler(j).crawl()
+                    results[j_idx] = Crawler(j).crawl()
 
                 processes = [multiprocessing.Process(target=process_job, args=(i, job)) for i, job in enumerate(jobs)]
                 for process in processes:
                     process.start()
                 for process in processes:
                     process.join()
-                self.store_results(jobs, shared_results)
+                self.store_results(jobs, results)
 
 
 def main():

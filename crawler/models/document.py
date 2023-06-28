@@ -9,6 +9,7 @@ import numpy as np
 import peewee
 
 from crawler.models.base import BaseModel, LongTextField
+from crawler.models.job import Job
 
 
 class Document(BaseModel):
@@ -16,8 +17,7 @@ class Document(BaseModel):
     Represents a crawled document.
     """
     id = peewee.BigAutoField(primary_key=True)
-    url = LongTextField()
-    server = LongTextField()
+    job = peewee.ForeignKeyField(Job, backref="job_id")
     title = LongTextField()
     body = LongTextField()
     title_tokens = LongTextField()
@@ -49,6 +49,10 @@ class Document(BaseModel):
 
     @property
     def numpy_body_global_tfidf_vector(self) -> np.array:
+        """
+        Get the body global tfidf vector as a numpy array.
+        Returns: The body global tfidf vector as a numpy array.
+        """
         return pickle.loads(self.body_global_tfidf_vector)
 
     def __str__(self):

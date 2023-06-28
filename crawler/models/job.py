@@ -2,7 +2,8 @@
 This module contains the Job model. It represents a job in the crawler's queue.
 """
 import peewee
-from crawler.models.base import BaseModel, LongTextField
+from crawler.models.base import BaseModel, LongTextField, DATABASE
+from crawler.models.server import Server
 
 
 class Job(BaseModel):
@@ -11,7 +12,7 @@ class Job(BaseModel):
     """
     id = peewee.BigAutoField(primary_key=True)
     url = LongTextField()
-    server = LongTextField()
+    server = peewee.ForeignKeyField(Server, backref="server_id")
     priority = peewee.IntegerField(default=0)
     done = peewee.BooleanField(default=False)
     success = peewee.BooleanField(default=None, null=True)
@@ -30,4 +31,25 @@ class Job(BaseModel):
 
     def __hash__(self):
         return hash(self.url)
-    
+
+    @staticmethod
+    def create_job(url: str, priority):
+        from crawler import utils
+        server = utils.url.get_server_name_from_url(url)
+        server_entity = Server.get_or_create(name=server)[0]
+        Job.insert(url=url, server=server_entity, priority=priority).on_conflict_ignore().execute()
+
+    @staticmethod
+    def create_jobs(urls: list[str]):
+        from crawler import utils
+        from crawler import relevance_classification
+        servers = list(set([utils.url.get_server_name_from_url(url) for url in urls]))
+        servers = [Server.get_or_create(name=server)[0] for server in servers]
+        servers = {server.name: server for server in servers}
+        urls = {url: servers[utils.url.get_server_name_from_url(url)] for url in urls}
+        jobs = []
+        for url, server in urls.items():
+            jobs.append(Job.get_or_create(url=url,
+                                          server=server,
+                                          priority=relevance_classification.get_url_priority(url))[0])
+        return jobs

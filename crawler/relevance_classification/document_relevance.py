@@ -12,7 +12,7 @@ import os
 from dotenv import load_dotenv
 
 from crawler import utils
-from crawler.models import Document
+from crawler.models.document import Document
 from crawler.relevance_classification.url_relevance import is_url_relevant
 
 load_dotenv()

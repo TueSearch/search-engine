@@ -5,7 +5,7 @@ import os
 import json
 
 from dotenv import load_dotenv
-from crawler.models import Job
+from crawler.models.job import Job
 from crawler.relevance_classification.url_relevance import get_url_priority
 
 load_dotenv()

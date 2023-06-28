@@ -5,11 +5,11 @@ import json
 import os
 
 import peewee
-
-from crawler import utils
-from crawler.models.base import BaseModel, DATABASE as db
-from crawler.utils.log import get_logger
 from dotenv import load_dotenv
+
+from crawler.models.base import BaseModel, DATABASE as db
+from crawler.models.job import Job
+from crawler.utils.log import get_logger
 
 load_dotenv()
 LOG = get_logger(__name__)
@@ -60,15 +60,7 @@ def initialize_database():
     """
     Initializes the database.
     """
-    for url in QUEUE_MANUAL_SEEDS:
-        server = utils.url.get_server_name_from_url(url)
-        query = "SELECT insert_job(%s, %s, 10);"
-        params = (url, server)
-        LOG.info(f'Executing query: {query}')
-        try:
-            db.execute_sql(query, params)
-        except Exception as e:
-            LOG.error(f'Error while inserting job for {url}: {e}')
+    Job.create_jobs(QUEUE_MANUAL_SEEDS)
 
 
 def main():

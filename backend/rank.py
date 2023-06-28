@@ -108,7 +108,7 @@ def rank(query: str, page=0, page_size=10) -> list[Document]:
     documents = Document.select().where(
         Document.id.in_(document_ids)).paginate(
         page + 1, page_size)
-    return query_tokens, list([doc for doc in documents])
+    return query_tokens, list(documents)
 
 
 if __name__ == '__main__':
