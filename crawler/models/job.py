@@ -33,10 +33,12 @@ class Job(BaseModel):
         return hash(self.url)
 
     @staticmethod
-    def create_job(url: str, priority):
+    def create_job(url: str):
+        from crawler import relevance_classification
         from crawler import utils
         server = utils.url.get_server_name_from_url(url)
         server_entity = Server.get_or_create(name=server)[0]
+        priority = relevance_classification.get_url_priority(url)
         Job.insert(url=url, server=server_entity, priority=priority).on_conflict_ignore().execute()
 
     @staticmethod

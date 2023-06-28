@@ -14,6 +14,7 @@ load_dotenv()
 CRAWL_EXCLUDED_EXTENSIONS = set(json.loads(
     os.getenv("CRAWL_EXCLUDED_EXTENSIONS")))
 CRAWL_BLACK_LIST = set(json.loads(os.getenv("CRAWL_BLACK_LIST")))
+QUEUE_MANUAL_SEEDS = json.loads(os.getenv('QUEUE_MANUAL_SEEDS'))
 
 
 def get_url_extension(url):
@@ -55,13 +56,15 @@ def get_url_priority(url: str) -> int:
     if utils.url.get_server_name_from_url(url) in CRAWL_BLACK_LIST:
         return 0
 
-    count = 0
+    count = 1
     if "bingen" in url:
-        count += 1
+        count += 2
     if "/en/" in url:
         count += 1
     if "en." in url:
         count += 1
+    if url in QUEUE_MANUAL_SEEDS:
+        count += 100
     return count
 
 
