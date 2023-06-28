@@ -44,8 +44,8 @@ def search():
             result = {
                 'title': doc.title,
                 'body': doc.body,
-                'url': doc.url,
-                'server': doc.server,
+                'url': doc.job.url,
+                'server': doc.job.server.name,
                 'relevant': doc.relevant
             }
             response['results'].append(result)
