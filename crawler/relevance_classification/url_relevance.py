@@ -1,12 +1,13 @@
 """
 This module contains functions to check if a URL is relevant for the crawler.
 """
-import os
 import json
+import os
+from urllib.parse import urlparse
+
+from dotenv import load_dotenv
 
 from crawler import utils
-from dotenv import load_dotenv
-from urllib.parse import urlparse
 
 load_dotenv()
 

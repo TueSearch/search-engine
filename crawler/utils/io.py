@@ -1,11 +1,11 @@
 """
 This module contains functions for reading and writing files.
 """
-import _pickle as pickle
 import json
 import os
 import shutil
 from pathlib import Path
+import _pickle as pickle
 
 from crawler.utils.log import get_logger
 
