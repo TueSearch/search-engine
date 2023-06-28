@@ -13,3 +13,9 @@ repos:
         entry: pylint --rcfile=.pylintrc backend
         pass_filenames: false
         always_run: true
+      - id: Test
+        name: Test.
+        language: system
+        entry: python3 -m unittest
+        pass_filenames: false
+        always_run: true
