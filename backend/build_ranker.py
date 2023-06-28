@@ -10,6 +10,7 @@ Usage:
 import json
 import os
 import pickle
+import traceback
 
 import networkx as nx
 from dotenv import load_dotenv
@@ -83,14 +84,18 @@ def construct_page_rank():
     """
     Construct the page rank of the servers.
     """
-    LOG.info("Start constructing page rank")
-    network_graph = utils.io.read_pickle_file(os.getenv("DIRECTED_LINK_GRAPH_FILE"))
-    ranking = nx.pagerank(network_graph,
-                          max_iter=int(os.getenv("PAGERANK_MAX_ITER")),
-                          personalization=json.loads(os.getenv("PAGERANK_PERSONALIZATION")))
-    LOG.info("Finished constructing page rank")
-    utils.io.write_json_file(ranking, os.getenv("PAGERANK_FILE"))
-    LOG.info("Wrote page rank")
+    try:
+        LOG.info("Start constructing page rank")
+        network_graph = utils.io.read_pickle_file(os.getenv("DIRECTED_LINK_GRAPH_FILE"))
+        ranking = nx.pagerank(network_graph,
+                              max_iter=int(os.getenv("PAGERANK_MAX_ITER")),
+                              personalization=json.loads(os.getenv("PAGERANK_PERSONALIZATION")))
+        LOG.info("Finished constructing page rank")
+        utils.io.write_json_file(ranking, os.getenv("PAGERANK_FILE"))
+        LOG.info("Wrote page rank")
+    except Exception as e:
+        LOG.error(f"Error while constructing page rank. Properly too little data. Try again, later: {e}")
+        traceback.print_exc()
 
 
 if __name__ == '__main__':

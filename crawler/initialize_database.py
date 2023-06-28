@@ -83,7 +83,6 @@ def main():
     """
     Main function to initialize the models by creating jobs and documents.
     """
-    DATABASE.drop_tables([Job, Document])
     if not DATABASE.table_exists("job") and not DATABASE.table_exists("document"):
         DATABASE.create_tables([Job, Document])
         with DATABASE.atomic() as transaction:

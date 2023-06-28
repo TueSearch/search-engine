@@ -174,7 +174,7 @@ ls -lha /opt/tuesearch/data/
 ```
 
 ```bash
-ls -lha /opt/tuesearch/logs/
+ls -lha /opt/tuesearch/log/
 ```
 
 # Backend
@@ -238,7 +238,11 @@ npm run dev
 
 ## Docker set up
 
-Same as described in the section [Crawler](#crawler).
+Same as described in the section [Crawler](#crawler). Try this command if you have permission issues:
+
+```bash
+sudo mkdir -m 777 -p /opt/tuesearch/data /opt/tuesearch/log  && sudo chmod -R 777 /opt/tuesearch
+```
 
 ## Docker usage
 
