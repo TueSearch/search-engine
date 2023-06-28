@@ -22,6 +22,6 @@ repos:
       - id: Test
         name: Test.
         language: system
-        entry: python3 -m unittest
+        entry: python -m unittest discover -s crawler.tests -p 'test_*.py'
         pass_filenames: false
         always_run: true
