@@ -34,13 +34,12 @@ services:
     depends_on:
       - mysql
     restart: 'on-failure'
-    command: 'python3 -m crawler.initialize_database'
+    command: 'python3 -m scripts.migration'
     env_file:
       - .docker.env
     volumes:
       - ./crawler:/app/crawler:ro
-      - /opt/tuesearch/log:/opt/tuesearch/log
-      - /opt/tuesearch/data:/opt/tuesearch/data
+      - ./scripts:/app/scripts:ro
     networks:
       - mysql_net
   ############################################################
@@ -53,17 +52,15 @@ services:
       context: .
       dockerfile: docker/python.Dockerfile
     container_name: crawl
-    restart: 'on-failure'
+    restart: 'unless-stopped'
     depends_on:
       - mysql
       - initialize_database
-    command: 'python3 -m crawler.main -n 0' # 0 = no crawling. Change 0 to a higher numbers or just remove 0 to start crawling.
+    command: 'python3 -m crawler.main'
     env_file:
       - .docker.env
     volumes:
       - ./crawler:/app/crawler:ro
-      - /opt/tuesearch/log:/opt/tuesearch/log
-      - /opt/tuesearch/data:/opt/tuesearch/data
     networks:
       - mysql_net
   ############################################################
@@ -85,8 +82,7 @@ services:
     volumes:
       - ./backend:/app/backend:ro
       - ./crawler:/app/crawler:ro
-      - /opt/tuesearch/log:/opt/tuesearch/log
-      - /opt/tuesearch/data:/opt/tuesearch/data
+      - tuesearch-models:/app/opt/tuesearch/data/
     networks:
       - mysql_net
   ############################################################
@@ -109,8 +105,7 @@ services:
     volumes:
       - ./backend:/app/backend:ro
       - ./crawler:/app/crawler:ro
-      - /opt/tuesearch/log:/opt/tuesearch/log
-      - /opt/tuesearch/data:/opt/tuesearch/data
+      - tuesearch-models:/app/opt/tuesearch/data/
     networks:
       - mysql_net
   ############################################################
@@ -137,8 +132,7 @@ services:
     volumes:
       - ./backend:/app/backend:ro
       - ./crawler:/app/crawler:ro
-      - /opt/tuesearch/log:/opt/tuesearch/log
-      - /opt/tuesearch/data:/opt/tuesearch/data
+      - tuesearch-models:/app/opt/tuesearch/data/
     networks:
       - mysql_net
   ############################################################
@@ -161,5 +155,6 @@ services:
 
 volumes:
   tuesearch-percona-server:
+  tuesearch-models:
 networks:
   mysql_net:

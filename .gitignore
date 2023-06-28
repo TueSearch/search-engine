@@ -12,3 +12,4 @@ docker.env
 .mysql.env
 .host.env
 **/.pytest_cache/
+./opt/

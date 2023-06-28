@@ -20,6 +20,3 @@ pip install -r requirements.txt
 
 REM Install pre-commit hooks
 pre-commit install
-
-REM Install nltk stopwords
-python -c "import nltk; nltk.download('stopwords');"

@@ -63,7 +63,7 @@ def construct_directed_link_graph_from_crawled_documents():
     LOG.info("Start constructing directed link graph")
     graph = nx.DiGraph()
     for doc in tqdm(DocumentStreamer()):
-        from_server = doc.server
+        from_server = str(doc.job.server.name)
         for url in doc.relevant_links_list:
             to_server = utils.url.get_server_name_from_url(url)
             if not graph.has_edge(

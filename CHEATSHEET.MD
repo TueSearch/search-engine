@@ -1,38 +1,10 @@
-# Table of Contents
-- [Table of Contents](#table-of-contents)
-- [Crawler cheatsheet](#crawler-cheatsheet)
-    - [Show directories' content](#show-directories-content)
-    - [Show logs](#show-logs)
-- [Backend cheatsheet](#backend-cheatsheet)
-    - [Test the API](#test-the-api)
-- [Docker cheatsheet](#docker-cheatsheet)
-    - [Show containers](#show-containers)
-    - [Show logs](#show-logs-1)
-    - [Enter containers](#enter-containers)
-    - [Restart the services](#restart-the-services)
-- [Clean up everything](#clean-up-everything)
-
-# Crawler cheatsheet
-
-## Show directories' content
-
-```bash
-ls -lha /opt/tuesearch/data/
-```
-
-```bash
-ls -lha /opt/tuesearch/log/
-```
-
-# Backend cheatsheet
-
-## Test the API
-
-```bash
-curl http://localhost:5000/search?q=tübingen
-```
-
 # Docker cheatsheet
+
+## Restart
+
+```bash
+docker-compose up -d --build
+```
 
 ## Show containers
 
@@ -43,11 +15,11 @@ docker container ps
 ## Run only one service
 
 ```bash
-docker-compose up initialize_database
+docker-compose up -d initialize_database
 ```
 
 ```bash
-docker-compose up crawl
+docker-compose up -d crawl
 ```
 
 ```bash
@@ -57,6 +29,11 @@ docker-compose up build_inverted_index
 ```bash
 docker-compose up build_ranker
 ```
+
+```bash
+docker-compose up -d backend_server
+```
+
 
 ## Show logs
 
@@ -114,6 +91,9 @@ docker exec -it backend_server bash
 
 ```bash
 docker-compose down
+```
+
+```bash
 docker-compose up -d --build
 ```
 
@@ -123,7 +103,17 @@ In case of unexplainable errors, try to clean up everything and start from scrat
 
 ```bash
 docker-compose down
+```
+
+```bash
 docker system prune -a
+```
+
+```bash
 docker volume prune --force
+```
+
+```bash
+sudo rm -rf ./opt/tuesearch
 sudo rm -rf /opt/tuesearch
 ```
