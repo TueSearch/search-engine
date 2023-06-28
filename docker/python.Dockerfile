@@ -14,7 +14,7 @@ WORKDIR /app
 COPY requirements.prod.txt .
 
 # Install the project dependencies
-RUN python3 -m pip install -r requirements.prod.txt
+RUN python3 -m pip install -r requirements.txt
 
 # Download data for nltk
 RUN python3 -c "import nltk; nltk.download('stopwords')"
