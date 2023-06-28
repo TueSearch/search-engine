@@ -7,13 +7,13 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy the package.json and package lockfile file into the container at /app
-COPY frontend/package*.json .
+COPY frontend/package*.json ./
 
 # Install the project dependencies
 RUN npm ci
 
 # Copy the rest of the code into the container at /app
-COPY ./frontend .
+COPY ./frontend ./
 
 # Build the project
 RUN npm run build

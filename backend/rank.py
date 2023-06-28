@@ -9,17 +9,17 @@ import numpy as np
 from dotenv import load_dotenv
 from sklearn.metrics.pairwise import cosine_similarity
 
-from crawler import utils, utilities
-from crawler.build_ranker import DocumentTokensStreamer
-from crawler.models import Document
+from crawler import utils
+from crawler.models.document import Document
+from backend.streamers import DocumentBodyGlobalTfidfVectorStreamer
 
 load_dotenv()
 
 TFIDF_VECTORIZER_FILE = os.getenv("TFIDF_VECTORIZER_FILE")
-TFIDF_VECTORIZER = utils.read_pickle_file(TFIDF_VECTORIZER_FILE)
+TFIDF_VECTORIZER = utils.io.read_pickle_file(TFIDF_VECTORIZER_FILE)
 INVERTED_INDEX_FILE = os.getenv("INVERTED_INDEX_FILE")
-INVERTED_INDEX = utils.read_pickle_file(INVERTED_INDEX_FILE)
-LOG = utils.get_logger(__name__)
+INVERTED_INDEX = utils.io.read_pickle_file(INVERTED_INDEX_FILE)
+LOG = utils.get_logger(__file__)
 
 
 def get_matches_for_tokens(tokens: list[str]) -> defaultdict[str, list]:
@@ -57,7 +57,7 @@ def get_global_tfidf_naive_norm_distance_ranking(query: str) -> np.array:
 
     """
     # Preprocess the query
-    query_tokens = utilities.preprocess_text_and_tokenize(query)
+    query_tokens = utils.text.tokenize(query)
     LOG.info(f"query_tokens: {query_tokens}")
     preprocessed_query = " ".join(query_tokens)
 
@@ -74,11 +74,13 @@ def get_global_tfidf_naive_norm_distance_ranking(query: str) -> np.array:
     query_vector = TFIDF_VECTORIZER.transform([preprocessed_query])
 
     # Compute cosine similarities between the query vector and document vectors
-    similarities = cosine_similarity(query_vector, TFIDF_VECTORIZER.transform(
-        DocumentTokensStreamer(matched_document_ids)), dense_output=True)[0]
+    matched_vectors = [vec for vec in DocumentBodyGlobalTfidfVectorStreamer(matched_document_ids)]
+    similarities = [cosine_similarity(query_vector, v, dense_output=True)[0][0] for v in matched_vectors]
 
     # Create a dictionary to store document ranks
-    return matched_document_ids[np.argsort(similarities)[::-1]]
+    sorted_sims = np.argsort(similarities)
+    sorted_document_ids = matched_document_ids[sorted_sims]
+    return query_tokens, sorted_document_ids
 
 
 def rank(query: str, page=0, page_size=10) -> list[Document]:
@@ -99,16 +101,16 @@ def rank(query: str, page=0, page_size=10) -> list[Document]:
     Example:
         documents = rank("search query", page=0, page_size=10)
     """
-    document_ids: np.array = get_global_tfidf_naive_norm_distance_ranking(query)
+    query_tokens, document_ids = get_global_tfidf_naive_norm_distance_ranking(query)
     # Convert the document_ids array to a list
     document_ids = document_ids.tolist()
     # Retrieve the documents based on the ranked document IDs
     documents = Document.select().where(
         Document.id.in_(document_ids)).paginate(
         page + 1, page_size)
-    return list(documents)
+    return query_tokens, list(documents)
 
 
 if __name__ == '__main__':
-    for doc in rank("ai/ml"):
+    for doc in rank("Tübingen"):
         print(doc)

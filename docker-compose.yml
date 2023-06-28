@@ -3,7 +3,7 @@
 version: '3'
 services:
   ############################################################
-  # MySQL database
+  # MySQL models
   ############################################################
   mysql:
     image: percona/percona-server:8.0 # Enable MyRocks engine
@@ -22,8 +22,8 @@ services:
     networks:
       - mysql_net
   ############################################################
-  # Initialize database.
-  # Feed the database with initial jobs (if not done yet).
+  # Initialize models.
+  # Feed the models with initial jobs and initial documents.
   # Will run once.
   ############################################################
   initialize_database:
@@ -34,18 +34,16 @@ services:
     depends_on:
       - mysql
     restart: 'on-failure'
-    command: 'python3 -m crawler.initialize_database'
+    command: 'python3 -m scripts.migration'
     env_file:
       - .docker.env
     volumes:
-      - ./crawler:/app/crawler
-      - ./.docker.env:/app/.env
-      - ./opt/tuesearch/log:/opt/tuesearch/log
-      - ./opt/tuesearch/data:/opt/tuesearch/data
+      - ./crawler:/app/crawler:ro
+      - ./scripts:/app/scripts:ro
     networks:
       - mysql_net
   ############################################################
-  # Send the crawler 10 times to feed the database with some
+  # Send the crawler 10 times to feed the models with some
   # meaningful documents.
   # Will run once.
   ############################################################
@@ -54,23 +52,19 @@ services:
       context: .
       dockerfile: docker/python.Dockerfile
     container_name: crawl
-    restart: 'on-failure'
+    restart: 'unless-stopped'
     depends_on:
       - mysql
       - initialize_database
-    command: 'python3 -m crawler.crawl -n 20'
+    command: 'python3 -m crawler.main'
     env_file:
       - .docker.env
     volumes:
-      - ./crawler:/app/crawler
-      - ./.docker.env:/app/.env
-      - ./opt/tuesearch/log:/opt/tuesearch/log
-      - ./opt/tuesearch/data:/opt/tuesearch/data
+      - ./crawler:/app/crawler:ro
     networks:
       - mysql_net
   ############################################################
   # Build indexer.
-  # Will run once.
   ############################################################
   build_inverted_index:
     build:
@@ -82,19 +76,17 @@ services:
       - initialize_database
       - crawl
     restart: 'on-failure'
-    command: 'python3 -m crawler.build_inverted_index'
+    command: 'python3 -m backend.build_inverted_index'
     env_file:
       - .docker.env
     volumes:
-      - ./crawler:/app/crawler
-      - ./.docker.env:/app/.env
-      - ./opt/tuesearch/log:/opt/tuesearch/log
-      - ./opt/tuesearch/data:/opt/tuesearch/data
+      - ./backend:/app/backend:ro
+      - ./crawler:/app/crawler:ro
+      - tuesearch-models:/app/opt/tuesearch/data/
     networks:
       - mysql_net
   ############################################################
   # Build rankers.
-  # Will run once.
   ############################################################
   build_ranker:
     build:
@@ -107,14 +99,13 @@ services:
       - crawl
       - build_inverted_index
     restart: 'on-failure'
-    command: 'python3 -m crawler.build_ranker'
+    command: 'python3 -m backend.build_ranker'
     env_file:
       - .docker.env
     volumes:
-      - ./crawler:/app/crawler
-      - ./.docker.env:/app/.env
-      - ./opt/tuesearch/log:/opt/tuesearch/log
-      - ./opt/tuesearch/data:/opt/tuesearch/data
+      - ./backend:/app/backend:ro
+      - ./crawler:/app/crawler:ro
+      - tuesearch-models:/app/opt/tuesearch/data/
     networks:
       - mysql_net
   ############################################################
@@ -139,11 +130,9 @@ services:
     env_file:
       - .docker.env
     volumes:
-      - ./backend:/app/backend
-      - ./crawler:/app/crawler
-      - ./.docker.env:/app/.env
-      - ./opt/tuesearch/log:/opt/tuesearch/log
-      - ./opt/tuesearch/data:/opt/tuesearch/data
+      - ./backend:/app/backend:ro
+      - ./crawler:/app/crawler:ro
+      - tuesearch-models:/app/opt/tuesearch/data/
     networks:
       - mysql_net
   ############################################################
@@ -166,5 +155,6 @@ services:
 
 volumes:
   tuesearch-percona-server:
+  tuesearch-models:
 networks:
   mysql_net:

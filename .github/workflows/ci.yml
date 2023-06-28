@@ -12,8 +12,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Set up requirements.txt # actions/setup-python@v2 needs this, apparently.
-        run: cp requirements.prod.txt requirements.txt
       - name: Set up environemnt variables.
         run: cp example.env .env
       - name: Setup python.
@@ -30,28 +28,11 @@ jobs:
           path: ./venv
           key: ${{ hashFiles('requirements.txt') }}
       - name: Install dependencies
-        run: |
-          if [ ! -d "venv" ]; then
-            python3 -m venv venv
-          fi
-          source venv/bin/activate
-          pip install -r requirements.txt
-      - name: Set up nltk.
+        run: bash scripts/init.sh
+      - name: Run pre-commit hook
         run: |
           source venv/bin/activate
-          python3 -c "import nltk; nltk.download('stopwords');"
-      - name: Lint crawler.
-        run: |
-          source venv/bin/activate
-          pylint --rcfile=.pylintrc crawler
-      - name: Lint backend.
-        run: |
-          source venv/bin/activate
-          pylint --rcfile=.pylintrc backend
-      - name: Test crawler.
-        run: |
-          source venv/bin/activate
-          python3 -m unittest
+          pre-commit run --all-files
 
   validatePrTitle:
     name: 🔎 Validate PR Title

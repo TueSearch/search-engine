@@ -1,26 +1,43 @@
 """
-crawler/build_inverted_index.py
+backend/build_inverted_index.py
 
-This script.js builds an inverted index from the crawled documents.
+This script builds an inverted index from the crawled documents.
 The inverted index maps tokens to document IDs and token positions.
 
-This script.js fetches the crawled documents from the database, processes
+This script.js fetches the crawled documents from the models, processes
 the tokenized text, and constructs the inverted index. The resulting
 inverted index is then saved as a pickle file for later use.
 
 Usage:
-    python3 crawler/build_inverted_index.py
+    python3 backend/build_inverted_index.py
 """
+import json
 import os
 from collections import defaultdict
 
 from tqdm import tqdm
+from dotenv import load_dotenv
 
 from crawler import utils
-from crawler.models import Document
+from backend.streamers import DocumentStreamer
 
+load_dotenv()
+LOG = utils.get_logger(__file__)
 INVERTED_INDEX_FILE = os.getenv("INVERTED_INDEX_FILE")
-LOG = utils.get_logger(__name__, os.getenv("INVERTED_INDEX_LOG_FILE"))
+
+
+def recompute_tokens():
+    """
+    Recompute the tokens for the documents in the database.
+    """
+    for doc in tqdm(DocumentStreamer()):
+        try:
+            doc.title_tokens = json.dumps(utils.text.tokenize(doc.title))
+            doc.body_tokens = json.dumps(utils.text.tokenize(doc.body))
+            doc.save()
+        except Exception as error:
+            LOG.error(f"Error while writing TF-IDF vector to database for document {doc.id}: {error}")
+
 
 def build_inverted_index() -> defaultdict:
     """
@@ -39,13 +56,11 @@ def build_inverted_index() -> defaultdict:
     LOG.info("Start building index")
     inverted_index = defaultdict(list)
     # Iterate over the documents
-    for document in tqdm(Document.select().where(
-            Document.relevant == True).iterator()):
+    for document in tqdm(DocumentStreamer()):
         tokens_position = defaultdict(list)
 
         # Iterate over the tokens and their positions in the document
-        for token_position_in_document, token in enumerate(
-                document.tokens_list):
+        for token_position_in_document, token in enumerate(document.body_tokens_list):
             # Append the token position to the list of positions for the token
             tokens_position[token].append(token_position_in_document)
 
@@ -64,8 +79,9 @@ def main():
     """
     Main function to build the inverted index and save it as a pickle file.
     """
+    recompute_tokens()
     # Build and save the inverted index as a pickle file
-    utils.write_pickle_file(build_inverted_index(), INVERTED_INDEX_FILE)
+    utils.io.write_pickle_file(build_inverted_index(), INVERTED_INDEX_FILE)
     LOG.info(f"Wrote index file to {INVERTED_INDEX_FILE}")
 
 
