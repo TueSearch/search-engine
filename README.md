@@ -28,7 +28,7 @@ Tübingen.
         - [Show logs](#show-logs-1)
         - [Enter containers](#enter-containers)
         - [Restart the services](#restart-the-services)
-        - [Clean everything](#clean-everything)
+- [Clean up everything](#clean-up-everything)
 - [Team Members](#team-members)
 
 # Project Structure
@@ -332,12 +332,15 @@ docker-compose down
 docker-compose up -d --build
 ```
 
-### Clean everything
+# Clean up everything
+
+In case of unexplainable errors, try to clean up everything and start from scratch.
 
 ```bash
 docker-compose down
 docker system prune -a
 docker volume prune --force
+sudo rm -rf /opt/tuesearch
 ```
 
 # Team Members
