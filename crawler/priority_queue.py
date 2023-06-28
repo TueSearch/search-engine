@@ -1,3 +1,6 @@
+"""
+This module manages the priority queue of URLs to be crawled.
+"""
 import os
 
 from dotenv import load_dotenv

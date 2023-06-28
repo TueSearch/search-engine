@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 
-# Initialize output directories and environment variables
-sudo mkdir -m 777 -p /opt/tuesearch/data /opt/tuesearch/log  && sudo chmod -R 777 /opt/tuesearch
+# Initialize environment variables
 cp -rf example.mysql.env .mysql.env
 cp -rf example.env .env
 cp -rf example.env .docker.env
-sed -i "s@SERP_FILE=/app/crawler/data/serp.json@SERP_FILE=$PWD/crawler/data/serp.json@" .env
+sed -i "s@WORKING_DIR=/app@WORKING_DIR=$PWD@" .env
 sed -i "s@MYSQL_SEARCH_ENGINE_CONNECTION_HOST=mysql@MYSQL_SEARCH_ENGINE_CONNECTION_HOST=localhost@" .env
-sed -i "s@INITIAL_DOCUMENTS_FILE=/app/crawler/data/documents.json@INITIAL_DOCUMENTS_FILE=$PWD/crawler/data/documents.json @" .env
+
+# https://stackoverflow.com/questions/43267413/how-to-set-environment-variables-from-env-file
+set -a # automatically export all variables
+source .env
+set +a
+
+# Initialize output directories and environment variables
+sudo mkdir -m 777 -p ${LOG_FILES_PATH} ${MODELS_PATH}
+sudo chmod -R 777 ${LOG_FILES_PATH} ${MODELS_PATH}
 
 # Install dependencies
 if [ ! -d venv ]; then

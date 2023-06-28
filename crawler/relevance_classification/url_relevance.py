@@ -40,6 +40,14 @@ def is_url_media_link(url):
 
 
 def get_url_priority(url: str) -> int:
+    """
+    Get the priority of a URL.
+    Args:
+        url: The URL to get the priority of.
+
+    Returns: The priority of the URL. The higher the number, the higher the priority.
+
+    """
     if is_url_media_link(url):
         return 0
 
@@ -57,4 +65,10 @@ def get_url_priority(url: str) -> int:
 
 
 def is_url_relevant(url: str) -> bool:
+    """
+    Check if a URL is relevant for the crawler.
+    Args:
+        url: The URL to check.
+    Returns: True if the URL is relevant, False otherwise.
+    """
     return get_url_priority(url) > 0

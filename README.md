@@ -11,24 +11,13 @@ Tübingen.
 - [Crawler](#crawler)
     - [Crawler set up](#crawler-set-up)
     - [Crawler usage](#crawler-usage)
-    - [Crawler cheatsheet](#crawler-cheatsheet)
-        - [Show directories' content](#show-directories-content)
-        - [Show logs](#show-logs)
 - [Backend](#backend)
     - [Backend set up](#backend-set-up)
     - [Backend usage](#backend-usage)
-    - [Backend cheatsheet](#backend-cheatsheet)
-        - [Test the API](#test-the-api)
 - [Frontend](#frontend)
 - [Docker](#docker)
     - [Docker set up](#docker-set-up)
     - [Docker usage](#docker-usage)
-    - [Docker cheatsheet](#docker-cheatsheet)
-        - [Show containers](#show-containers)
-        - [Show logs](#show-logs-1)
-        - [Enter containers](#enter-containers)
-        - [Restart the services](#restart-the-services)
-- [Clean up everything](#clean-up-everything)
 - [Team Members](#team-members)
 
 # Project Structure
@@ -80,6 +69,7 @@ The project has the following structure:
     - `*.sql`: These files contain the SQL queries for the project's migration.
 - `.pre-commit-config.yaml`: This file contains the configuration for the pre-commit hooks.
 - `.pylintrc`: This file contains the configuration for the pylint linter.
+- `CHEATSHEET.md`: This file contains the cheatsheet for the project.
 - `CODEOWNERS`. This file contains the GitHub code owners for the project.
 - `docker-compose.yml`: Configuration for docker-compose for local development and deployment.
 - `example.env`: This file contains the example environment variables for the project.
@@ -95,11 +85,19 @@ The project has the following structure:
 The following set up was tested under Ubuntu 22.04. LTS and Windows WSL2 (although the WSL seems to
 have some performance issues).
 
-1. Create output directories and initialize environment variables
+1. Create output directories and initialize environment variables on LInux
 
 ```bash
 bash scripts/init.sh
 ```
+
+and on windows
+
+```powershell
+scripts\init.bat
+```
+
+Then configure the two environment variables `OUTPUT_DIR` and `WORKING_DIR` in the `.env` file.
 
 2. Start MySQL database
 
@@ -117,21 +115,7 @@ python3 -m scripts.migration
 
 To use the web crawler, follow the workflow below:
 
-1. (Optional) If you want new SERP, delete the `crawler/data/serp.json` file, fetch a new search engine results page (
-   SERP) using the `crawler/fetch_serp.py` script.
-
-```bash
-python3 -m crawler.fetch_serp
-```
-
-2. Run the `crawler/initialize_database.py` script. This script sets up the database
-   and creates the necessary tables for storing crawled documents and job management.
-
-```bash
-python3 -m crawler.initialize_database
-```
-
-3. Once you have the initialized database, you can start the crawling process using the `crawler/main.py` script.
+1. Once the set up is done, you can start the crawling process using the `crawler/main.py` script.
 
 ```bash
 python3 -m crawler.main -n 10 # Crawl 10 items
@@ -141,18 +125,6 @@ or simply
 
 ```bash
 python3 -m crawler.main # Craw in loop
-```
-
-## Crawler cheatsheet
-
-### Show directories' content
-
-```bash
-ls -lha /opt/tuesearch/data/
-```
-
-```bash
-ls -lha /opt/tuesearch/log/
 ```
 
 # Backend
@@ -181,20 +153,18 @@ This step should be repeated regularly to keep the index fresh.
 python3 -m backend.build_ranker
 ```
 
+3. Test the API with
+
+```bash
+curl http://localhost:5000/search?q=tübingen
+```
+
 This step should be repeated regularly to keep the ranker fresh.
 
 3. You can run the Flask application to search for documents using the `backend/app.py` script.
 
 ```bash
 python3 -m backend.app
-```
-
-## Backend cheatsheet
-
-### Test the API
-
-```bash
-curl http://localhost:5000/search?q=tübingen
 ```
 
 # Frontend
@@ -249,102 +219,6 @@ curl http://localhost:5001/search?q=tübingen
 
 Note that port of the container's backend is not the same as
 the port of the host's backend.
-
-## Docker cheatsheet
-
-### Show containers
-
-```bash
-docker container ps
-```
-
-### Run only one service
-
-```bash
-docker-compose up initialize_database
-```
-
-```bash
-docker-compose up crawl
-```
-
-```bash
-docker-compose up build_inverted_index
-```
-
-```bash
-docker-compose up build_ranker
-```
-
-### Show logs
-
-```bash
-docker container logs mysql
-```
-
-```bash
-docker container logs initialize_database
-```
-
-```bash
-docker container logs crawl
-```
-
-```bash
-docker container logs build_inverted_index
-```
-
-```bash
-docker container logs build_ranker
-```
-
-```bash
-docker container logs backend_server
-```
-
-### Enter containers
-
-```bash
-docker exec -it mysql bash
-```
-
-```bash
-docker exec -it initialize_database bash
-```
-
-```bash
-docker exec -it crawl bash
-```
-
-```bash
-docker exec -it build_inverted_index bash
-```
-
-```bash
-docker exec -it build_ranker bash
-```
-
-```bash
-docker exec -it backend_server bash
-```
-
-### Restart the services
-
-```bash
-docker-compose down
-docker-compose up -d --build
-```
-
-# Clean up everything
-
-In case of unexplainable errors, try to clean up everything and start from scratch.
-
-```bash
-docker-compose down
-docker system prune -a
-docker volume prune --force
-sudo rm -rf /opt/tuesearch
-```
 
 # Team Members
 

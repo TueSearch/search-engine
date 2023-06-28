@@ -4,6 +4,7 @@ from crawler import utils
 
 
 class TestUtils(unittest.TestCase):
+    """Test utility"""
     def test_tokenize(self):
         """Test if html is escaped"""
         text = "Tübingen (German) is a traditional university city in central Baden-Württemberg, Germany. In the season of autumn."
