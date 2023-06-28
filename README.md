@@ -73,14 +73,17 @@ The project has the following structure:
     - `my.cnf`: This file contains the configuration for the MySQL database.
     - `mysql.cnf`: This file contains the configuration for the MySQL database.
     - `python.Dockerfile`: This file contains the Dockerfile for the Python crawler & backend.
+- `frontend`: This directory contains the frontend application for the search engine.
+- `scripts`: This directory contains the scripts for the project. Wil run only on Ubuntu at the time of writing.
+    - `migration.py`: This script contains the migration for the database.
+    - `init.sh`: This script contains the initialization for the project.
+    - `*.sql`: These files contain the SQL queries for the project's migration.
 - `.pre-commit-config.yaml`: This file contains the configuration for the pre-commit hooks.
 - `.pylintrc`: This file contains the configuration for the pylint linter.
 - `CODEOWNERS`. This file contains the GitHub code owners for the project.
 - `docker-compose.yml`: Configuration for docker-compose for local development and deployment.
 - `example.env`: This file contains the example environment variables for the project.
 - `example.mysql.env`: This file is specifically for the MySQL's instance in the docker-compose file.
-- `package.json`: This file contains the required dependencies for the project's frontend.
-- `python.Dockerfile`: This file contains the Dockerfile for the Python crawler & backend.
 - `requirements.dev.txt`: This file contains the required dependencies for the project's crawler & backend at local.
 - `requirements.prod.txt`: This file contains the required dependencies for the project's crawler & backend at
   production. Should contain fewer dependencies.
