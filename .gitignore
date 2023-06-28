@@ -11,9 +11,4 @@ docker.env
 .docker.env
 .mysql.env
 .host.env
-<<<<<<< HEAD
-
-opt/
-=======
 **/.pytest_cache/
->>>>>>> 2b555c9 (Refactored crawler and backend to adapt more ideas.)
