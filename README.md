@@ -140,20 +140,20 @@ pre-commit install
 To use the web crawler, follow the workflow below:
 
 1. (Optional) If you want new SERP, delete the `crawler/data/serp.json` file, fetch a new search engine results page (
-   SERP) using the `fetch_serp.py` script.
+   SERP) using the `crawler/fetch_serp.py` script.
 
 ```bash
 python3 -m crawler.fetch_serp
 ```
 
-2. Run the `initialize_database.py` script. This script sets up the database
+2. Run the `crawler/initialize_database.py` script. This script sets up the database
    and creates the necessary tables for storing crawled documents and job management.
 
 ```bash
 python3 -m crawler.initialize_database
 ```
 
-3. Once you have the initialized database, you can start the crawling process using the `craw.py` script.
+3. Once you have the initialized database, you can start the crawling process using the `crawler/main.py` script.
 
 ```bash
 python3 -m crawler.main -n 10 # Crawl 10 items
@@ -185,7 +185,7 @@ Same as described in the section [Crawler](#crawler).
 
 ## Backend usage
 
-1. After crawling, you can build the inverted index using the `build_inverted_index.py` script. This script analyzes
+1. After crawling, you can build the inverted index using the `backend/build_inverted_index.py` script. This script analyzes
    the crawled documents and constructs an inverted index to enable efficient searching.
 
 ```bash
@@ -194,7 +194,7 @@ python3 -m backend.build_inverted_index
 
 This step should be repeated regularly to keep the index fresh.
 
-2. Build the ranker using the `build_ranker.py` script.
+2. Build the ranker using the `backend/build_ranker.py` script.
    This script builds the models needed to rank websites. After training, the model
    will be stored in paths defined in the `.env` file.
 
