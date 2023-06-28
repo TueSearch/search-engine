@@ -92,47 +92,16 @@ The project has the following structure:
 The following set up was tested under Ubuntu 22.04. LTS and Windows WSL2 (although the WSL seems to 
 have some performance issues).
 
-1. Create output directories
+1. Create output directories and initialize environment variables
 
 ```bash
-sudo mkdir -m 777 -p /opt/tuesearch/data /opt/tuesearch/log  && sudo chmod -R 777 /opt/tuesearch
+bash scripts/init.sh
 ```
 
-and initialize environment variables
-
-```bash
-cp -rf example.mysql.env .mysql.env
-cp -rf example.env .env
-cp -rf example.env .docker.env
-sed -i "s@SERP_FILE=/app/crawler/data/serp.json@SERP_FILE=$PWD/crawler/data/serp.json@" .env
-sed -i "s@MYSQL_SEARCH_ENGINE_CONNECTION_HOST=mysql@MYSQL_SEARCH_ENGINE_CONNECTION_HOST=localhost@" .env
-sed -i "s@INITIAL_DOCUMENTS_FILE=/app/crawler/data/documents.json@INITIAL_DOCUMENTS_FILE=$PWD/crawler/data/documents.json @" .env
-
-```
-
-Note: you might need to change some variables in `.env` according to
-your local developmente environment.
-
-2. Install dependencies
-
-```bash
-if [ -d venv ]; then 
-  python3 -m venv venv 
-fi
-source venv/bin/activate
-pip install -r requirements.dev.txt
-```
-
-3. Start MySQL database
+2. Start MySQL database
 
 ```bash
 docker-compose up -d --build mysql
-```
-
-4. (Optional) Install pre-commit hooks:
-
-```bash
-pre-commit install
 ```
 
 ## Crawler usage
@@ -241,7 +210,7 @@ npm run dev
 Same as described in the section [Crawler](#crawler). Try this command if you have permission issues:
 
 ```bash
-sudo mkdir -m 777 -p /opt/tuesearch/data /opt/tuesearch/log  && sudo chmod -R 777 /opt/tuesearch
+bash scripts/init.sh
 ```
 
 ## Docker usage

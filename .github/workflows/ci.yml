@@ -30,21 +30,11 @@ jobs:
           path: ./venv
           key: ${{ hashFiles('requirements.txt') }}
       - name: Install dependencies
-        run: |
-          if [ ! -d "venv" ]; then
-            python3 -m venv venv
-          fi
-          source venv/bin/activate
-          pip install -r requirements.txt
-      - name: Set up nltk.
-        run: |
-          source venv/bin/activate
-          python3 -c "import nltk; nltk.download('stopwords');"
+        run: bash scripts/init.sh
       - name: Run pre-commit hook
-        run: | 
-            source venv/bin/activate
-            pre-commit install
-            pre-commit run --all-files
+        run: |
+          source venv/bin/activate
+          pre-commit run --all-files
 
   validatePrTitle:
     name: 🔎 Validate PR Title

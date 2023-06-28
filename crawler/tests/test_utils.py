@@ -1,7 +1,5 @@
 """Test utility"""
-import json
 import unittest
-
 from crawler import utils
 
 
