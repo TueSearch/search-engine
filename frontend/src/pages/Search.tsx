@@ -1,7 +1,6 @@
 import { SearchResults, SingleDoc } from '@SearchTue/components/searchResults/singleDoc';
 import { Box, Typography } from '@mui/material';
 import axios from 'axios';
-import { set } from 'date-fns';
 import React from 'react';
 
 /**

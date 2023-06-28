@@ -1,7 +1,6 @@
 import SearchTueLogo from '@SearchTue/assets/images/logo.svg';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, TextField } from '@mui/material';
-import useTheme from '@mui/material/styles/useTheme';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,7 +9,6 @@ import { useNavigate } from 'react-router-dom';
  * @return {React.ReactElement} The Search page.
  */
 export default function Home(): React.ReactElement {
-  const theme = useTheme();
   const navigate = useNavigate();
   const [searchText, setSearchText] = React.useState('');
 
