@@ -66,36 +66,20 @@ def create_manual_job_batch():
         print(traceback.format_exc())
 
 
-def create_manual_document_batch():
-    """
-    Creates a batch of jobs based on manual seeds.
-    """
-    json_docs = utils.io.read_json_file(os.getenv("INITIAL_DOCUMENTS_FILE"))
-    for json_doc in json_docs:
-        doc = Document(**json_doc)
-        doc.title_tokens = json.dumps(utils.text.tokenize(doc.title))
-        doc.body_tokens = json.dumps(utils.text.tokenize(doc.body))
-        doc.save()
-        LOG.info(f"Added document: {str(doc.url)}")
-
-
 def main():
     """
     Main function to initialize the models by creating jobs and documents.
     """
-    if not DATABASE.table_exists("job") and not DATABASE.table_exists("document"):
-        DATABASE.create_tables([Job, Document])
-        with DATABASE.atomic() as transaction:
-            try:
-                create_manual_job_batch()
-                for serp in utils.io.read_json_file(SERP_FILE).values():
-                    batch = create_serper_job_batch(serp)
-                    Job.insert_many(batch).on_conflict_replace().execute()
-                create_manual_document_batch()
-            except Exception as error:
-                LOG.error(f"Error while parsing SERP's result. Error: '{str(error)}'.")
-                transaction.rollback()
-                print(traceback.format_exc())
+    with DATABASE.atomic() as transaction:
+        try:
+            create_manual_job_batch()
+            for serp in utils.io.read_json_file(SERP_FILE).values():
+                batch = create_serper_job_batch(serp)
+                Job.insert_many(batch).on_conflict_replace().execute()
+        except Exception as error:
+            LOG.error(f"Error while parsing SERP's result. Error: '{str(error)}'.")
+            transaction.rollback()
+            print(traceback.format_exc())
 
 
 if __name__ == '__main__':

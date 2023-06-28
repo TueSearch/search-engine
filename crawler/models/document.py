@@ -27,13 +27,6 @@ class Document(BaseModel):
     body_global_tfidf_vector = peewee.BlobField()
     relevant = peewee.BooleanField(default=True)
 
-    class Meta:
-        """Metadata options for the Document model."""
-        table_options = {'engine': 'RocksDB'}
-        indexes = (
-            peewee.SQL('create unique index url_index on document (url(750))'),
-        )
-
     @functools.cached_property
     def all_harvested_links_list(self) -> list[str]:
         """Get a list of all harvested links."""

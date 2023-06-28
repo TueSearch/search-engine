@@ -89,7 +89,7 @@ The project has the following structure:
 
 ## Crawler set up
 
-The following set up was tested under Ubuntu 22.04. LTS and Windows WSL2 (although the WSL seems to 
+The following set up was tested under Ubuntu 22.04. LTS and Windows WSL2 (although the WSL seems to
 have some performance issues).
 
 1. Create output directories and initialize environment variables
@@ -102,6 +102,12 @@ bash scripts/init.sh
 
 ```bash
 docker-compose up -d --build mysql
+```
+
+3. Start the migration scripts to create the database tables.
+
+```bash
+python3 -m scripts.migration
 ```
 
 ## Crawler usage
@@ -154,7 +160,8 @@ Same as described in the section [Crawler](#crawler).
 
 ## Backend usage
 
-1. After crawling, you can build the inverted index using the `backend/build_inverted_index.py` script. This script analyzes
+1. After crawling, you can build the inverted index using the `backend/build_inverted_index.py` script. This script
+   analyzes
    the crawled documents and constructs an inverted index to enable efficient searching.
 
 ```bash

@@ -13,6 +13,12 @@ repos:
         entry: pylint --rcfile=.pylintrc backend
         pass_filenames: false
         always_run: true
+      - id: Lint scripts
+        name: Lint scripts.
+        language: system
+        entry: pylint --rcfile=.pylintrc scripts
+        pass_filenames: false
+        always_run: true
       - id: Test
         name: Test.
         language: system
