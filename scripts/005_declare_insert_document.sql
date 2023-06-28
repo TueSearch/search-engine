@@ -1,5 +1,5 @@
 -- Function to insert a document and create a server if not exists
-CREATE FUNCTION insert_document(url VARCHAR(750), server VARCHAR(128), title TEXT, body LONGTEXT, title_tokens LONGTEXT,
+CREATE FUNCTION IF NOT EXISTS insert_document(url VARCHAR(750), server VARCHAR(128), title TEXT, body LONGTEXT, title_tokens LONGTEXT,
                                 body_tokens LONGTEXT, all_harvested_links TEXT, relevant_links TEXT, relevant BOOLEAN)
     RETURNS INT
     DETERMINISTIC

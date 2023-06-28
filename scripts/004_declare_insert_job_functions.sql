@@ -1,5 +1,5 @@
 -- Function to insert a job and create a server if not exists
-CREATE FUNCTION insert_job(url VARCHAR(1024), server_name VARCHAR(128), priority INT)
+CREATE FUNCTION IF NOT EXISTS insert_job(url VARCHAR(1024), server_name VARCHAR(128), priority INT)
 RETURNS INT
 DETERMINISTIC
 BEGIN
@@ -15,7 +15,7 @@ BEGIN
         SET server_id = LAST_INSERT_ID();
     ELSEIF is_blacklist = 1 THEN
         -- Server exists and is blacklisted, do not add the job
-        RETURN 0;
+        RETURN -1;
     END IF;
     
     -- Insert the job

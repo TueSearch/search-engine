@@ -1,17 +1,22 @@
 """
 Methods to execute SQL scripts in order. This is useful for database migrations.
 """
+import json
 import os
 
 import peewee
 
+from crawler import utils
 from crawler.models.base import BaseModel, DATABASE as db
 from crawler.utils.log import get_logger
+from dotenv import load_dotenv
 
+load_dotenv()
 LOG = get_logger(__name__)
 
 # SQL scripts directory path
 SCRIPTS_DIRECTORY = 'scripts'
+QUEUE_MANUAL_SEEDS = json.loads(os.getenv('QUEUE_MANUAL_SEEDS'))
 
 
 # Create a model to represent the migration table
@@ -22,7 +27,7 @@ class Migration(BaseModel):
     name = peewee.CharField(unique=True)
 
 
-def main():
+def run_migration_scripts():
     """
     Executes SQL scripts in order. This is useful for database migrations.
     """
@@ -49,8 +54,29 @@ def main():
             Migration.create(name=migration_name)
 
             LOG.info(f'Migration {migration_name} executed successfully')
-    # Close the database connection
-    db.close()
+
+
+def initialize_database():
+    """
+    Initializes the database.
+    """
+    for url in QUEUE_MANUAL_SEEDS:
+        server = utils.url.get_server_name_from_url(url)
+        query = "SELECT insert_job(%s, %s, 10);"
+        params = (url, server)
+        LOG.info(f'Executing query: {query}')
+        try:
+            db.execute_sql(query, params)
+        except Exception as e:
+            LOG.error(f'Error while inserting job for {url}: {e}')
+
+
+def main():
+    """
+    Executes SQL scripts in order. This is useful for database migrations.
+    """
+    run_migration_scripts()
+    initialize_database()
 
 
 if __name__ == '__main__':
