@@ -31,6 +31,7 @@ def get_logger(name: str, max_file_size: int = 10 * 1024 * 1024, backup_count: i
 
     log_file_name = name.split("/")[-1].split(".")[0]
     log_file_name = f'{os.getenv("LOG_FILES_PATH")}/{log_file_name}.log'
+    os.makedirs(os.path.dirname(log_file_name), exist_ok=True)
     file_handler = RotatingFileHandler(
         log_file_name,
         maxBytes=max_file_size,
