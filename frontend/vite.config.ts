@@ -6,7 +6,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 export default defineConfig({
   server: {
     host: 'localhost',
-    port: 4000,
+    port: 5000,
   },
   build: {
     outDir: 'build',
