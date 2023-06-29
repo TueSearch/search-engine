@@ -114,6 +114,5 @@ docker volume prune --force
 ```
 
 ```bash
-sudo rm -rf ./opt/tuesearch
 sudo rm -rf /opt/tuesearch
 ```
