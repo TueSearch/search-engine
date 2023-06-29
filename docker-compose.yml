@@ -183,7 +183,7 @@ services:
     ports:
       - '5000:5000'
     restart: 'always'
-    command: serve -s build -l 4000
+    command: serve -s build -l 5000
     volumes:
       - ./frontend/.env:/app/.env
     networks:
