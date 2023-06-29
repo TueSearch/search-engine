@@ -10,11 +10,13 @@ import peewee
 from dotenv import load_dotenv
 
 from crawler import utils, relevance_classification
+from crawler.crawl import Crawler
 from crawler.models.base import DATABASE
 from crawler.models.document import Document
 from crawler.models.job import Job
-from crawler.crawl import Crawler
 from crawler.priority_queue import PriorityQueue
+import atexit
+import signal
 
 load_dotenv()
 
@@ -30,46 +32,89 @@ class Loop:
         self.number_to_crawl = number_to_crawl
         self.number_crawled = 0
         self.queue = PriorityQueue()
+        self.jobs = []
         LOG.info(f"Proceed to retrieve {number_to_crawl} jobs.")
 
-    def store_results(self, jobs: list[Job], results: list[Document]):
+    def store_results(self, results: list[Document]):
         """
         Store the results of the crawl in the database.
         Args:
-            jobs: input jobs.
             results: results of the jobs.
         """
-        for job, new_document in zip(jobs, results):
-            with DATABASE.atomic() as transaction:
+        for job, new_document in zip(self.jobs, results):
+            success = new_document is not None
+            try:
+                if success:  # Save new document
+                    new_document.save()
+                Job.create_jobs(new_document.links)
+            except peewee.IntegrityError as error:
+                LOG.error(f"Error saving document {new_document.url}: {error}")
+            finally:
                 try:
-                    success = new_document is not None
-                    if success:
-                        new_document.save()
-                        Job.create_jobs(new_document.relevant_links_list)
-                    Job.update(done=True, success=success).where(Job.id == job.id).execute()
-                except peewee.IntegrityError as error:
-                    LOG.error(f"Error saving document {new_document.url}: {error}")
-                    transaction.rollback()
+                    # Mark job as done
+                    Job.update(done=True, success=success, being_crawled=False).where(Job.id == job.id).execute()
+                except Exception as error_marking_job_as_done:
+                    LOG.error(f"Error marking job {job} as finished: {error_marking_job_as_done}")
             self.number_crawled += 1
+        self.jobs = []
+
+    def start_processes(self):
+        """
+        Start the processes to crawl the jobs.
+        """
+        with multiprocessing.Manager() as manager:
+            results = manager.list([None for _ in self.jobs])
+            time.sleep(random.uniform(*CRAWL_RANDOM_SLEEP_INTERVAL))  # Random delay
+
+            def process_job(j_idx, j):
+                results[j_idx] = Crawler(j).crawl()
+
+            processes = [multiprocessing.Process(target=process_job, args=(i, job)) for i, job in enumerate(self.jobs)]
+            for process in processes:
+                process.start()
+            for process in processes:
+                process.join()
+            self.store_results(results)
+
+    def get_jobs_and_mark_as_being_crawled(self):
+        """
+        Get the jobs from the queue and mark them as being crawled.
+        Do this in a transaction manner
+        """
+        jobs_can_be_crawled_safely = []
+        with DATABASE.atomic():
+            self.jobs = self.queue.get_highest_priority_jobs()
+            for job in self.jobs:
+                try:
+                    job.being_crawled = True
+                    job.save()
+                    jobs_can_be_crawled_safely.append(job)
+                    LOG.info(f"Marked job {job} as being crawled.")
+                except Exception as marking_job_as_safe_exception:
+                    LOG.error(f"Error retrieving marking job as safe: {marking_job_as_safe_exception}")
+        self.jobs = jobs_can_be_crawled_safely
 
     def loop(self):
         """
         Run the crawler until the queue is exhausted.
         """
-        while len(jobs := self.queue.get_jobs_to_crawl()) > 0 and self.number_crawled < self.number_to_crawl:
-            with multiprocessing.Manager() as manager:
-                results = manager.list([None for _ in jobs])
-                time.sleep(random.uniform(*CRAWL_RANDOM_SLEEP_INTERVAL))  # Random delay
+        while self.number_crawled < self.number_to_crawl:
+            self.get_jobs_and_mark_as_being_crawled()
+            if len(self.jobs) == 0:
+                LOG.info("No more jobs to crawl.")
+                break
+            LOG.info(f"Starting to crawl {len(self.jobs)} jobs.")
+            self.start_processes()
 
-                def process_job(j_idx, j):
-                    results[j_idx] = Crawler(j).crawl()
-
-                processes = [multiprocessing.Process(target=process_job, args=(i, job)) for i, job in enumerate(jobs)]
-                for process in processes:
-                    process.start()
-                for process in processes:
-                    process.join()
-                self.store_results(jobs, results)
+    def handle_exit(self):
+        """
+        Handle exit by marking all jobs as not being crawled.
+        """
+        for job in self.jobs:
+            if not job.done:
+                job.being_crawled = False
+                job.save()
+                LOG.info(f"Exit handler: marked {job} as not being crawled.")
 
 
 def main():
@@ -78,7 +123,11 @@ def main():
     parser.add_argument("-n", "--number", type=int, default=math.inf,
                         help="How many documents should be crawled")
     args = parser.parse_args()
-    Loop(args.number).loop()
+    loop = Loop(args.number)
+    atexit.register(loop.handle_exit)
+    signal.signal(signal.SIGTERM, loop.handle_exit)
+    signal.signal(signal.SIGINT, loop.handle_exit)
+    loop.loop()
 
 
 if __name__ == '__main__':

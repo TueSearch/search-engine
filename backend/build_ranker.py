@@ -10,7 +10,6 @@ Usage:
 import json
 import os
 import pickle
-import traceback
 
 import networkx as nx
 from dotenv import load_dotenv
@@ -44,13 +43,12 @@ def train_global_tf_idf():
 def write_results_of_global_tf_idf_to_database():
     LOG.info("Start vectorize database's documents with the global TF-IDF to database")
     tfidf = utils.io.read_pickle_file(TFIDF_VECTORIZER_FILE)
-    for doc in tqdm(DocumentStreamer()):
+    for document in tqdm(DocumentStreamer()):
         try:
-            body_global_tfidf_vector = tfidf.transform([doc.body_tokens])[0]
-            doc.body_global_tfidf_vector = pickle.dumps(body_global_tfidf_vector)
-            doc.save()
+            document.body_tfidf = tfidf.transform([" ".join(document.body_tokens)])[0]
+            document.save()
         except Exception as e:
-            LOG.error(f"Error while writing TF-IDF vector to database for document {doc.id}: {e}")
+            LOG.error("Can not write results of global TF-IDF of one entry to database: " + str(e))
     LOG.info("Finished vectorize database's documents with the global TF-IDF to database")
 
 
@@ -64,7 +62,7 @@ def construct_directed_link_graph_from_crawled_documents():
     graph = nx.DiGraph()
     for doc in tqdm(DocumentStreamer()):
         from_server = str(doc.job.server.name)
-        for url in doc.relevant_links_list:
+        for url in doc.links:
             to_server = utils.url.get_server_name_from_url(url)
             if not graph.has_edge(
                     from_server, to_server) and from_server != to_server:
@@ -84,22 +82,18 @@ def construct_page_rank():
     """
     Construct the page rank of the servers.
     """
-    try:
-        LOG.info("Start constructing page rank")
-        network_graph = utils.io.read_pickle_file(os.getenv("DIRECTED_LINK_GRAPH_FILE"))
-        ranking = nx.pagerank(network_graph,
-                              max_iter=int(os.getenv("PAGERANK_MAX_ITER")),
-                              personalization=json.loads(os.getenv("PAGERANK_PERSONALIZATION")))
-        LOG.info("Finished constructing page rank")
-        utils.io.write_json_file(ranking, os.getenv("PAGERANK_FILE"))
-        LOG.info("Wrote page rank")
-    except Exception as error:
-        LOG.error(f"Error while constructing page rank. Properly too little data. Try again, later: {error}")
-        traceback.print_exc()
+    LOG.info("Start constructing page rank")
+    network_graph = utils.io.read_pickle_file(os.getenv("DIRECTED_LINK_GRAPH_FILE"))
+    ranking = nx.pagerank(network_graph,
+                          max_iter=int(os.getenv("PAGERANK_MAX_ITER")),
+                          personalization=json.loads(os.getenv("PAGERANK_PERSONALIZATION")))
+    LOG.info("Finished constructing page rank")
+    utils.io.write_json_file(ranking, os.getenv("PAGERANK_FILE"))
+    LOG.info("Wrote page rank")
 
 
 if __name__ == '__main__':
-    construct_directed_link_graph_from_crawled_documents()
-    construct_page_rank()
+    # construct_directed_link_graph_from_crawled_documents()
+    # construct_page_rank()
     train_global_tf_idf()
     write_results_of_global_tf_idf_to_database()

@@ -2,14 +2,14 @@
 This module contains functions to process text.
 """
 import html
+import os
 import re
 
+import spacy
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 from langdetect import detect_langs
 from unidecode import unidecode
-import spacy
-import os
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -118,7 +118,7 @@ def get_title_and_body_from_html(html_content: str) -> (str, str):
     """
     soup = BeautifulSoup(html_content, 'html.parser')
     title = soup.title.string if soup.title else ""
-    body = soup.get_text(separator=" ")
+    body = soup.body.get_text(separator=" ")
     title = make_text_human_readable(title)
     body = make_text_human_readable(body)
     title = unidecode(title)

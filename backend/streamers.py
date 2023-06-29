@@ -61,6 +61,6 @@ class DocumentStreamer:
         return result
 
 
-DocumentTokensStreamer = functools.partial(DocumentStreamer, transform=lambda doc: " ".join(doc.body_tokens_list))
+DocumentTokensStreamer = functools.partial(DocumentStreamer, transform=lambda doc: " ".join(doc.body_tokens))
 DocumentBodyGlobalTfidfVectorStreamer = functools.partial(DocumentStreamer,
-                                                          transform=lambda doc: doc.numpy_body_global_tfidf_vector)
+                                                          transform=lambda doc: doc.body_tfidf)

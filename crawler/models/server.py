@@ -14,6 +14,12 @@ class Server(BaseModel):
     name = peewee.TextField()
     is_black_list = peewee.BooleanField(default=False)
 
+    class Meta:
+        """
+        Meta class for the Server model.
+        """
+        table_name = 'servers'
+
     def __str__(self):
         return str(self.name)
 

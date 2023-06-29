@@ -60,7 +60,7 @@ def build_inverted_index() -> defaultdict:
         tokens_position = defaultdict(list)
 
         # Iterate over the tokens and their positions in the document
-        for token_position_in_document, token in enumerate(document.body_tokens_list):
+        for token_position_in_document, token in enumerate(document.body_tokens):
             # Append the token position to the list of positions for the token
             tokens_position[token].append(token_position_in_document)
 

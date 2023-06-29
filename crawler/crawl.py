@@ -8,7 +8,6 @@ import time
 
 import requests
 from dotenv import load_dotenv
-from playhouse.shortcuts import model_to_dict
 from requests.adapters import HTTPAdapter, Retry
 from requests_html import HTMLSession
 
@@ -59,27 +58,28 @@ class Crawler:
         """
         self.job: Job = job
 
-    def generate_document_from_html(self, html: str, links: list[str]) -> Document:
+    def generate_document_from_html(self, html: str) -> Document:
         """Generate a Document object from the HTML content of a crawled page.
 
         Args:
             html (object): Response's text.
-            links (list[str]): A list of links harvested from the crawled page.
         Returns:
             Document: The generated Document object.
+            list[str]: The list of URLs found in the HTML content.
         """
         title, body = utils.text.get_title_and_body_from_html(html)
         title_tokens = utils.text.tokenize(title)
         body_tokens = utils.text.tokenize(body)
-        relevant_links = [url for url in links if relevance_classification.is_url_relevant(url)]
+        urls = utils.url.get_all_urls_from_html(html, self.job.url)
+        urls = [url for url in urls if relevance_classification.url_relevance.is_url_relevant(url)]
         return Document(url=self.job.url,
                         server=utils.url.get_server_name_from_url(self.job.url),
+                        html=html,
                         title=title,
                         body=body,
-                        title_tokens=json.dumps(title_tokens),
-                        body_tokens=json.dumps(body_tokens),
-                        all_harvested_links=json.dumps(links),
-                        relevant_links=json.dumps(relevant_links),
+                        links=urls,
+                        title_tokens=title_tokens,
+                        body_tokens=body_tokens,
                         job=self.job)
 
     def try_to_obtain_static_website_html(self):
@@ -133,9 +133,8 @@ class Crawler:
         """
         response = self.try_to_obtain_static_website_html()
         html = response.text
-        links = utils.url.get_absolute_links(html, self.job.url)
-        new_document = self.generate_document_from_html(html, links)
-        relevance_classification.is_document_relevant(new_document)
+        new_document = self.generate_document_from_html(html)
+        new_document.relevant = relevance_classification.is_document_relevant(new_document)
         return new_document
 
     def crawl_assume_website_is_dynamic(self) -> Document:
@@ -144,10 +143,9 @@ class Crawler:
         :return:
             Document: The crawled Document object.
         """
-        response = self.try_to_obtain_static_website_html()
+        response = self.try_to_obtain_dynamic_website_html()
         html = response.text
-        links = utils.url.get_absolute_links(html, self.job.url)
-        new_document = self.generate_document_from_html(html, links)
+        new_document = self.generate_document_from_html(html)
         new_document.relevant = relevance_classification.is_document_relevant(new_document)
         return new_document
 
@@ -160,34 +158,26 @@ class Crawler:
         The dynamic crawling is more expensive but more accurate.
 
         If the static crawling is successful, the dynamic crawling is not performed.
-        A static crawling is succesful if the website is relevant to Tuebingen and in english.
+        A static crawling is successful if the website is relevant to Tuebingen and in english.
 
         Since we use two different libraries, this code is a bit messy.
 
         Returns:
             The crawled document.
         """
+        new_document = None
         if relevance_classification.is_job_relevant(self.job):
-            new_document = None
-
             try:  # First, try a cheaper static version.
                 new_document = self.crawl_assume_website_is_static()
             except Exception as exception:
                 LOG.error(f"{str(exception)}")
 
             if new_document is None or not new_document.relevant:
+                time.sleep(random.randint(*CRAWL_RANDOM_SLEEP_INTERVAL))
                 try:  # If not successful, try static version with vanilla requests.
-                    # Wait a bit to not get blocked.
-                    time.sleep(random.randint(*CRAWL_RANDOM_SLEEP_INTERVAL))
                     new_document = self.crawl_assume_website_is_dynamic()
                 except Exception as exception:
                     LOG.error(f"{str(exception)}")
-
-            if new_document is not None:  # Retrieved document successfully.
-                if new_document.relevant:  # Document is relevant. Queue its children.
-                    return new_document
-                # Document is not relevant. Do not queue its children.
-                return new_document
         else:
-            LOG.info(f"Job {self.job.url} is not relevant.")
-        return None  # Document could not be retrieved.
+            LOG.info(f"No crawl: job {self.job.url} is not relevant.")
+        return new_document
