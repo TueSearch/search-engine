@@ -23,8 +23,13 @@ jobs:
       - name: Prepare environment variables.
         run: cp example.env .env && cp example.mysql.env .mysql.env && cp -rf example.frontend.env frontend/.env
 
+      - name: Install pre-commit
+        run: | 
+          pip install pre-commit 
+          pre-commit install
+
       - name: Run pre-commit
-        run: ./scripts/pre-commit.sh
+        run: pre-commit run --all-files
 
       - name: Publish Test Results.
         uses: EnricoMi/publish-unit-test-result-action/composite@v2.4.2
