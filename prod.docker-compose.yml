@@ -113,7 +113,7 @@ services:
       dockerfile: #TODO: add image
     container_name: backend_server
     ports:
-      - '5001:5000'
+      - '4000:4000'
     depends_on:
       - mysql
       - initialize_database
@@ -139,7 +139,7 @@ services:
       dockerfile: #TODO: add image
     container_name: frontend_server
     ports:
-      - '4000:4000'
+      - '5000:5000'
     restart: 'always'
     command: serve -s build -l 4000
     volumes:

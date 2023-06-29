@@ -15,7 +15,6 @@ env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE_NAME: ${{ github.repository }}/backen-server
   FRONTEND_IMAGE_NAME: ${{ github.repository }}/fronten-server
-  CRAWLER_IMAGE_NAME: ${{ github.repository }}/crawler-server
   DATABASE_IMAGE_NAME: ${{ github.repository }}/database-server
 
 jobs:
@@ -77,40 +76,8 @@ jobs:
       - name: 🐋 Build and Push Docker Image
         uses: docker/build-push-action@v4
         with:
-          context: ./
-          file: ./docker/backend.Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-  deploy-crawler:
-    environment: production
-    name: 🐚 Deploy Crawler
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 🚚 Get latest code
-        uses: actions/checkout@v3
-
-      - name: 💻 Login Docker
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🪄 Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.CRAWLER_IMAGE_NAME }}
-          tags: 'latest'
-
-      - name: 🐋 Build and Push Docker Image
-        uses: docker/build-push-action@v4
-        with:
           context: .
-          file: ./docker/crawler.Dockerfile
+          file: ./docker/backend.Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

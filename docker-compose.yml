@@ -8,7 +8,7 @@ services:
   mysql:
     build:
       context: .
-      dockerfile: docker/mysql.Dockerfile
+      dockerfile: docker/database.Dockerfile
     container_name: mysql
     restart: unless-stopped
     environment:
