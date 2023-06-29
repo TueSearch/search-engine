@@ -6,6 +6,54 @@ permissions: write-all
 
 name: 🏗️ CI
 jobs:
+  # Test backend and crawler
+  test_backend_and_crawler:
+    name: Test backend and crawler.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set environment variable
+        run: echo "TEST_REPORT_FILE=pytest-results.xml" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Prepare environment variables
+        run: cp example.env .env && cp example.mysql.env .mysql.env
+
+      - name: Start database
+        run: docker-compose up -d mysql
+
+      - name: Drop database
+        run: docker-compose up drop_database
+
+      - name: Initialize database
+        run: docker-compose up initialize_database
+
+      - name: Create test results report file
+        run: touch $TEST_REPORT_FILE && chmod 777 $TEST_REPORT_FILE
+
+      - name: Run pre-commit
+        run: docker-compose up run_pre_commit
+
+      - name: Build inverted index
+        run: docker-compose up build_inverted_index
+
+      - name: Build ranker
+        run: docker-compose up build_ranker
+
+      - name: Start backend
+        run: docker-compose up -d backend_server
+
+      - name: Test API
+        run: curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4000/search?q=tubingen"
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action/composite@v2.4.2
+        if: always()
+        with:
+          check_name: Unit Tests Backend
+          files: $TEST_REPORT_FILE
+
   validatePrTitle:
     name: 🔎 Validate PR Title
     runs-on: ubuntu-latest
@@ -15,8 +63,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  validateCodyStyleFrontend:
-    name: 🔎 Validate Code Style Frontend
+  validateCodyStyle:
+    name: 🔎 Validate Code Style
     runs-on: ubuntu-latest
     steps:
       - name: 🚚 Get latest code
@@ -45,9 +93,9 @@ jobs:
         working-directory: ./frontend
         run: npm run lint
 
-  unitTestsFrontend:
-    name: 🧪 Unit Tests Frontend
-    needs: [ validateCodyStyleFrontend ]
+  unitTests:
+    name: 🧪 Unit Tests
+    needs: [ validateCodyStyle ]
     runs-on: ubuntu-latest
     steps:
       - name: 🚚 Get latest code
@@ -72,14 +120,14 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action/composite@v2.4.2
         if: always()
         with:
-          check_name: Unit Tests Frontend
+          check_name: Unit Tests
           files: 'frontend/vitest-results.xml'
 
   #skip e2e tests
   e2eTests:
     if: false
     name: 🧪 E2E Tests
-    needs: [ validateCodyStyleFrontend ]
+    needs: [ validateCodyStyle ]
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
@@ -134,58 +182,10 @@ jobs:
           check_name: E2E Tests
           files: 'playwright-results.xml'
 
-  # Test backend and crawler
-  test_backend_and_crawler:
-    name: Test backend and crawler.
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set environment variable
-        run: echo "TEST_REPORT_FILE=pytest-results.xml" >> $GITHUB_ENV
-
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Prepare environment variables
-        run: cp example.env .env && cp example.mysql.env .mysql.env
-
-      - name: Start database
-        run: docker-compose up -d mysql
-
-      - name: Drop database
-        run: docker-compose up drop_database
-
-      - name: Initialize database
-        run: docker-compose up initialize_database
-
-      - name: Create test results report file
-        run: touch $TEST_REPORT_FILE && chmod 777 $TEST_REPORT_FILE
-
-      - name: Run pre-commit
-        run: docker-compose up run_pre_commit
-
-      - name: Build inverted index
-        run: docker-compose up build_inverted_index
-
-      - name: Build ranker
-        run: docker-compose up build_ranker
-
-      - name: Start backend
-        run: docker-compose up -d backend_server
-
-      - name: Test API
-        run: curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4000/search?q=tubingen"
-
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action/composite@v2.4.2
-        if: always()
-        with:
-          check_name: Unit Tests Backend
-          files: $TEST_REPORT_FILE
-
   notify-on-success:
     name: 📧 Notify success
     if: success()
-    needs: [ validateCodyStyleFrontend, unitTestsFrontend ]
+    needs: [ validateCodyStyle, unitTests, e2eTests, test_backend_and_crawler ]
     runs-on: ubuntu-latest
     steps:
       - name: 📧 Comment Pull Request
@@ -199,7 +199,7 @@ jobs:
   notify-on-failure:
     name: 📧 Notify failure
     if: failure()
-    needs: [ validateCodyStyleFrontend, unitTestsFrontend ]
+    needs: [ validateCodyStyle, unitTests, e2eTests, test_backend_and_crawler ]
     runs-on: ubuntu-latest
     steps:
       - name: 📧 Comment Pull Request
