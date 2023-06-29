@@ -1,0 +1,148 @@
+# Docker Compose file for TueSearch PROD SERVER
+
+version: '3'
+
+networks:
+  mysql_net:
+
+services:
+  ############################################################
+  # MySQL models
+  ############################################################
+  mysql:
+    image: #TODO: add image
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - '3306:3306'
+    env_file:
+      - .mysql.env
+    networks:
+      - mysql_net
+  ############################################################
+  # Initialize models.
+  # Feed the models with initial jobs and initial documents.
+  # Will run once.
+  ############################################################
+  initialize_database:
+    build:
+      dockerfile: #TODO: add image
+    container_name: initialize_database
+    depends_on:
+      - mysql
+    restart: 'on-failure'
+    command: 'python3 -m scripts.migration'
+    env_file:
+      - .docker.env
+    volumes:
+      - ./crawler:/app/crawler:ro
+      - ./scripts:/app/scripts:ro
+    networks:
+      - mysql_net
+  ############################################################
+  # Send the crawler 10 times to feed the models with some
+  # meaningful documents.
+  # Will run once.
+  ############################################################
+  crawl:
+    build:
+      dockerfile: #TODO: add image
+    container_name: crawl
+    restart: 'unless-stopped'
+    depends_on:
+      - mysql
+      - initialize_database
+    command: 'python3 -m crawler.main'
+    env_file:
+      - .docker.env
+    volumes:
+      - ./crawler:/app/crawler:ro
+    networks:
+      - mysql_net
+  ############################################################
+  # Build indexer.
+  ############################################################
+  build_inverted_index:
+    build:
+      dockerfile: #TODO: add image
+    container_name: build_inverted_index
+    depends_on:
+      - mysql
+      - initialize_database
+      - crawl
+    restart: 'on-failure'
+    command: 'python3 -m backend.build_inverted_index'
+    env_file:
+      - .docker.env
+    volumes:
+      - ./backend:/app/backend:ro
+      - ./crawler:/app/crawler:ro
+      - tuesearch-models:/app/opt/tuesearch/data/
+    networks:
+      - mysql_net
+  ############################################################
+  # Build rankers.
+  ############################################################
+  build_ranker:
+    build:
+      dockerfile: #TODO: add image
+    container_name: build_ranker
+    depends_on:
+      - mysql
+      - initialize_database
+      - crawl
+      - build_inverted_index
+    restart: 'on-failure'
+    command: 'python3 -m backend.build_ranker'
+    env_file:
+      - .docker.env
+    volumes:
+      - ./backend:/app/backend:ro
+      - ./crawler:/app/crawler:ro
+      - tuesearch-models:/app/opt/tuesearch/data/
+    networks:
+      - mysql_net
+  ############################################################
+  # Start backend.
+  # Persistent process.
+  ############################################################
+  backend_server:
+    build:
+      dockerfile: #TODO: add image
+    container_name: backend_server
+    ports:
+      - '5001:5000'
+    depends_on:
+      - mysql
+      - initialize_database
+      - crawl
+      - build_inverted_index
+      - build_ranker
+    restart: 'always'
+    command: 'python3 -m backend.app'
+    env_file:
+      - .docker.env
+    volumes:
+      - ./backend:/app/backend:ro
+      - ./crawler:/app/crawler:ro
+      - tuesearch-models:/app/opt/tuesearch/data/
+    networks:
+      - mysql_net
+  ############################################################
+  # Start frontend.
+  # Persistent process.
+  ############################################################
+  frontend_server:
+    build:
+      dockerfile: #TODO: add image
+    container_name: frontend_server
+    ports:
+      - '4000:4000'
+    restart: 'always'
+    command: serve -s build -l 4000
+    volumes:
+      - ./.docker.env:/app/.env
+    networks:
+      - mysql_net
