@@ -118,7 +118,7 @@ services:
       dockerfile: docker/python.Dockerfile
     container_name: backend_server
     ports:
-      - '5001:5000'
+      - '5000:5000'
     depends_on:
       - mysql
       - initialize_database
@@ -149,7 +149,7 @@ services:
     restart: 'always'
     command: serve -s build -l 4000
     volumes:
-      - ./.docker.env:/app/.env
+      - ./frontend/.env:/app/.env
     networks:
       - mysql_net
 

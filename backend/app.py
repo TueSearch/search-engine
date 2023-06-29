@@ -11,15 +11,19 @@ The application exposes the following endpoints:
 
 Usage:
 - Start the Flask application by running this script.
-- Open a web browser and access http://localhost:5000/ to access the search interface.
+- Open a web browser and access http://localhost:4000/ to access the search interface.
 """
 from flask import Flask, request, jsonify
+from flask_cors import CORS, cross_origin
 from backend.rank import rank
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 @app.route('/search', methods=['GET'])
+@cross_origin()
 def search():
     """Handle the search request and return ranked documents."""
     query = request.args.get('q', '')  # Get the query parameter from the request
