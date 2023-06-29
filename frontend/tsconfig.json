@@ -19,7 +19,7 @@
     "types": ["node", "vite/client"],
     "outDir": "build",
     "paths": {
-      "@SearchEngine/*": ["src/*"]
+      "@SearchTue/*": ["src/*"]
     }
   },
   "include": ["src", "**/*.ts"],
