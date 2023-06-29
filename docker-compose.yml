@@ -11,10 +11,10 @@ services:
       dockerfile: docker/database.Dockerfile
     container_name: mysql
     restart: unless-stopped
-    environment:
-      MYSQL_ROOT_HOST: '%'
     ports:
       - '3306:3306'
+    environment:
+      MYSQL_ROOT_HOST: '%'
     env_file:
       - .mysql.env
     volumes:
@@ -37,8 +37,6 @@ services:
     command: 'python3 -m scripts.drop_database'
     env_file:
       - .env
-    volumes:
-      - .:/app
     networks:
       - mysql_net
   ############################################################
@@ -52,30 +50,27 @@ services:
       dockerfile: docker/backend.Dockerfile
     container_name: initialize_database
     depends_on:
-      - drop_database
       - mysql
     restart: 'on-failure'
-    command: 'python3 -m scripts.migration'
+    command: 'python3 -m scripts.initialize_database'
     env_file:
       - .env
-    volumes:
-      - .:/app
     networks:
       - mysql_net
   ############################################################
   # Test.
-  # Run pre-commit once.
+  # Run tests
   ############################################################
-  run_pre_commit:
+  run_unit_tests:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
-    container_name: run_pre_commit
+    container_name: run_unit_tests
     depends_on:
       - initialize_database
       - mysql
     restart: 'no'
-    command: './scripts/pre-commit.sh'
+    command: './scripts/run-tests.sh'
     env_file:
       - .env
     volumes:
@@ -84,7 +79,6 @@ services:
       - mysql_net
   ############################################################
   # Send the crawler.
-  # Disabled for now to save resources.
   ############################################################
   crawl:
     build:
@@ -95,11 +89,9 @@ services:
     depends_on:
       - mysql
       - initialize_database
-    command: 'python3 -m crawler.main -n 0'
+    command: 'python3 -m crawler.main -n 1'
     env_file:
       - .env
-    volumes:
-      - .:/app
     networks:
       - mysql_net
   ############################################################
@@ -118,7 +110,6 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/app
       - tuesearch-models:/opt/tuesearch/data/
     networks:
       - mysql_net
@@ -139,7 +130,6 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/app
       - tuesearch-models:/opt/tuesearch/data/
     networks:
       - mysql_net
@@ -164,7 +154,6 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/app
       - tuesearch-models:/opt/tuesearch/data/
     networks:
       - mysql_net
@@ -184,11 +173,10 @@ services:
       - '5000:5000'
     restart: 'always'
     command: serve -s build -l 5000
-    volumes:
-      - ./frontend/.env:/app/.env
+    env_file:
+      - frontend/.env
     networks:
       - mysql_net
-
 volumes:
   tuesearch-percona-server:
   tuesearch-models:

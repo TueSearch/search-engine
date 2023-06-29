@@ -21,6 +21,7 @@ Tübingen.
 ```bash
 cp -rf example.mysql.env .mysql.env
 cp -rf example.env .env
+cp -rf example.frontend.env frontend/.env
 ```
 
 2. Start the project
@@ -102,17 +103,7 @@ npm install
 npm run dev
 ```
 
-3. Open the browser at `http://localhost:4000/`
-
-# Docker
-
-## Docker set up
-
-Same as described in the section [Crawler](#crawler). Try this command if you have permission issues:
-
-```bash
-bash scripts/init.sh
-```
+3. Open the browser at `http://localhost:5000/`
 
 # Team Members
 

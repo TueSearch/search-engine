@@ -24,6 +24,7 @@ from backend.streamers import DocumentStreamer
 load_dotenv()
 LOG = utils.get_logger(__file__)
 INVERTED_INDEX_FILE = os.getenv("INVERTED_INDEX_FILE")
+PARTIAL_INVERTED_INDEX_FILE = os.getenv("PARTIAL_INVERTED_INDEX_FILE")
 
 
 def recompute_tokens():
@@ -39,7 +40,7 @@ def recompute_tokens():
             LOG.error(f"Error while writing TF-IDF vector to database for document {doc.id}: {error}")
 
 
-def build_inverted_index() -> defaultdict:
+def build_inverted_index():
     """
     Build an inverted index from the crawled documents.
 
@@ -68,21 +69,46 @@ def build_inverted_index() -> defaultdict:
         for token, positions in tokens_position.items():
             # Append the document ID and token positions to the list of
             # postings for the token
-            inverted_index[token].append(
-                (document.id, *positions))
+            inverted_index[token].append((document.id, *positions))
 
     LOG.info("Finished building index")
-    return inverted_index
+    utils.io.write_pickle_file(inverted_index, INVERTED_INDEX_FILE)
+    LOG.info(f"Wrote index file to {INVERTED_INDEX_FILE}")
+
+
+def build_partial_inverted_index():
+    """
+    Build an inverted index from the crawled documents.
+
+    Returns:
+        defaultdict: The inverted index mapping tokens to document IDs and token positions.
+
+    Example of result:
+        {
+            "term a" -> [doc_id_1, doc_id_2, ...],
+            "term b" -> [doc_id_5, doc_id_42, ...],
+            ...
+        }
+    """
+    LOG.info("Start building partial index")
+    inverted_index = defaultdict(list)
+    # Iterate over the documents
+    for document in tqdm(DocumentStreamer()):
+        # Iterate over the tokens and their positions in the document
+        for token in document.body_tokens:
+            inverted_index[token].append(document.id)
+
+    LOG.info("Finished building partial index")
+    utils.io.write_pickle_file(inverted_index, PARTIAL_INVERTED_INDEX_FILE)
+    LOG.info(f"Wrote partial index file to {PARTIAL_INVERTED_INDEX_FILE}")
 
 
 def main():
     """
     Main function to build the inverted index and save it as a pickle file.
     """
-    recompute_tokens()
-    # Build and save the inverted index as a pickle file
-    utils.io.write_pickle_file(build_inverted_index(), INVERTED_INDEX_FILE)
-    LOG.info(f"Wrote index file to {INVERTED_INDEX_FILE}")
+    build_inverted_index()
+    build_partial_inverted_index()
 
 
 if __name__ == '__main__':

@@ -14,6 +14,7 @@ class TestUtils(unittest.TestCase):
         self.assertTrue("tubingen" in tokens[0])
 
     def test_is_url_relevant(self):
+        """Test if url is relevant"""
         self.assertFalse(url_relevance.is_url_relevant(
             "https://javascript:linkTo_UnCryptMailto(%27ocknvq%2CkphqBvhy0wpk%5C%2Fvwgdkpigp0fg%27);/"))
         self.assertFalse(url_relevance.is_url_relevant(

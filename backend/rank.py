@@ -83,7 +83,7 @@ def get_global_tfidf_naive_norm_distance_ranking(query: str) -> np.array:
     return query_tokens, sorted_document_ids
 
 
-def rank(query: str, page=0, page_size=10) -> list[Document]:
+def rank(query: str, page=0, page_size=10) -> (list[str], list[Document]):
     """
     Rank the documents based on a query.
 
@@ -93,7 +93,7 @@ def rank(query: str, page=0, page_size=10) -> list[Document]:
         page_size (int): The number of results per page (default: 10).
 
     Returns:
-        list[Document]: List of ranked documents.
+        (list[str], list[Document]): Tokens of query for debugging and list of ranked documents.
 
     Note:
         This function assumes that the global TF-IDF vectorizer has been trained.

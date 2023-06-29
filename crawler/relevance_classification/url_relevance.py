@@ -61,18 +61,20 @@ def get_url_priority(url: str) -> int:
     if utils.url.get_server_name_from_url(url) in CRAWL_BLACK_LIST:
         return -1
 
-    count = 1
-    if "bingen" in url:
-        count += 2
-    if "/en/" in url:
-        count += 1
-    if "en." in url:
-        count += 1
+    priority = 1
+    has_tuebingen = "bingen" in url
+    is_english = "/en/" in url or "en." in url
+    if has_tuebingen:
+        priority += 3
+    if is_english:
+        priority += 3
+    if is_english and has_tuebingen:
+        priority += 10
     if url in QUEUE_MANUAL_SEEDS:
-        count += 100
+        priority += 100
     if extract(url).suffix == "com":
-        count += 1
-    return count
+        priority += 1
+    return priority
 
 
 def is_url(text: str) -> bool:
@@ -104,4 +106,3 @@ def is_url_relevant(url: str) -> bool:
     Returns: True if the URL is relevant, False otherwise.
     """
     return get_url_priority(url) > 0
-

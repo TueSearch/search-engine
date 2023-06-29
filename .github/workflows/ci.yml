@@ -11,43 +11,22 @@ jobs:
     name: Test backend and crawler.
     runs-on: ubuntu-latest
     steps:
-      - name: Set environment variable
+      - name: Set environment variable.
         run: echo "TEST_REPORT_FILE=pytest-results.xml" >> $GITHUB_ENV
 
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Prepare environment variables
-        run: cp example.env .env && cp example.mysql.env .mysql.env
-
-      - name: Start database
-        run: docker-compose up -d mysql
-
-      - name: Drop database
-        run: docker-compose up drop_database
-
-      - name: Initialize database
-        run: docker-compose up initialize_database
-
-      - name: Create test results report file
+      - name: Create test results report file.
         run: touch $TEST_REPORT_FILE && chmod 777 $TEST_REPORT_FILE
 
+      - name: Checkout code.
+        uses: actions/checkout@v2
+
+      - name: Prepare environment variables.
+        run: cp example.env .env && cp example.mysql.env .mysql.env && cp -rf example.frontend.env frontend/.env
+
       - name: Run pre-commit
-        run: docker-compose up run_pre_commit
+        run: ./scripts/pre-commit.sh
 
-      - name: Build inverted index
-        run: docker-compose up build_inverted_index
-
-      - name: Build ranker
-        run: docker-compose up build_ranker
-
-      - name: Start backend
-        run: docker-compose up -d backend_server
-
-      - name: Test API
-        run: curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4000/search?q=tubingen"
-
-      - name: Publish Test Results
+      - name: Publish Test Results.
         uses: EnricoMi/publish-unit-test-result-action/composite@v2.4.2
         if: always()
         with:

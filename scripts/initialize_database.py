@@ -5,13 +5,10 @@ import json
 import os
 
 import peewee
-from dotenv import load_dotenv
-
 from crawler.models.base import BaseModel, DATABASE as db
-from crawler.models.document import Document
 from crawler.models.job import Job
-from crawler.models.server import Server
 from crawler.utils.log import get_logger
+from dotenv import load_dotenv
 
 load_dotenv()
 LOG = get_logger(__name__)
@@ -67,36 +64,12 @@ def initialize_seed_jobs():
     LOG.info(f"Finished inserting {QUEUE_MANUAL_SEEDS} initial jobs.")
 
 
-def initialize_documents():
-    LOG.info("Starting to insert initial documents.")
-    server = Server(name="an-example-server", is_black_list=False)
-    server.save()
-    job = Job(url="https://www.an-example-server.com/en/tubingen",
-              server=server,
-              priority=1,
-              done=True,
-              success=True)
-    job.save()
-    document = Document(
-        job=job,
-        html="<p>An example Tübingen document.</p>",
-        title="Tübingen",
-        body="Tübingen is a city in Germany.",
-        links="[]",
-        title_tokens='["tubingen"]',
-        body_tokens='["tubingen", "is", "a", "city", "in", "germany"]',
-        relevant=True)
-    document.save()
-    LOG.info("Finished inserting initial documents.")
-
-
 def main():
     """
-    Executes SQL scripts in order. This is useful for database migrations.
+    Main method.
     """
     run_migration_scripts()
     initialize_seed_jobs()
-    initialize_documents()
 
 
 if __name__ == '__main__':
