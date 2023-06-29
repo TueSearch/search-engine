@@ -1,60 +1,33 @@
 """
 This module contains the Document model. It represents a crawled document.
 """
-import functools
-import json
-import pickle
-
-import numpy as np
 import peewee
 
-from crawler.models.base import BaseModel, LongTextField
-from crawler.models.job import Job
+from crawler.models.base import BaseModel, LongTextField, JSONField, PickleField
 
 
 class Document(BaseModel):
+    from crawler.models.job import Job
     """
     Represents a crawled document.
     """
     id = peewee.BigAutoField(primary_key=True)
     job = peewee.ForeignKeyField(Job, backref="job_id")
+    html = LongTextField()
     title = LongTextField()
     body = LongTextField()
-    title_tokens = LongTextField()
-    body_tokens = LongTextField()
-    all_harvested_links = LongTextField()
-    relevant_links = LongTextField()
-    body_global_tfidf_vector = peewee.BlobField()
+    links = LongTextField()
+    title_tokens = JSONField()
+    body_tokens = JSONField()
+    body_tfidf = PickleField()
     relevant = peewee.BooleanField(default=True)
 
-    @functools.cached_property
-    def all_harvested_links_list(self) -> list[str]:
-        """Get a list of all harvested links."""
-        return json.loads(str(self.all_harvested_links))
-
-    @functools.cached_property
-    def relevant_links_list(self) -> list[str]:
-        """Get a list of relevant links."""
-        return json.loads(str(self.relevant_links))
-
-    @functools.cached_property
-    def body_tokens_list(self) -> list[str]:
-        """Get a list of tokens."""
-        return json.loads(str(self.body_tokens))
-
-    @functools.cached_property
-    def title_tokens_list(self) -> list[str]:
-        """Get a list of tokens."""
-        return json.loads(str(self.title_tokens))
-
-    @property
-    def numpy_body_global_tfidf_vector(self) -> np.array:
+    class Meta:
         """
-        Get the body global tfidf vector as a numpy array.
-        Returns: The body global tfidf vector as a numpy array.
+        Meta class for the Document model.
         """
-        return pickle.loads(self.body_global_tfidf_vector)
+        table_name = 'documents'
 
     def __str__(self):
-        return f"Document[body={self.body[:50]}, title={self.title[:50]}, title_tokens={self.title_tokens_list[:25]},\
-          body_tokens={self.body_tokens_list[:25]}, all_harvested_links={self.all_harvested_links_list[:10]}, relevant={self.relevant}]"
+        return f"Document[body={self.body[:50]}, title={self.title[:50]}, title_tokens={self.title_tokens[:25]},\
+          body_tokens={self.body_tokens[:25]}, relevant={self.relevant}]"

@@ -12,7 +12,6 @@ import os
 from dotenv import load_dotenv
 
 from crawler import utils
-from crawler.models.document import Document
 from crawler.relevance_classification.url_relevance import is_url_relevant
 
 load_dotenv()
@@ -42,14 +41,14 @@ def do_tokens_contain_tuebingen(tokens: list[str]):
     return False
 
 
-def is_document_relevant(document: Document):
+def is_document_relevant(document: 'Document'):
     """Classify the relevance of a crawled document.
 
     Args:
         document (Document): The crawled document to be classified.
     """
-    title_is_relevant = do_tokens_contain_tuebingen(document.title_tokens_list)
-    body_is_relevant = do_tokens_contain_tuebingen(document.body_tokens_list)
+    title_is_relevant = do_tokens_contain_tuebingen(document.title_tokens)
+    body_is_relevant = do_tokens_contain_tuebingen(document.body_tokens)
     url_is_relevant = is_url_relevant(document.url)
     is_english = utils.text.do_text_contain_english_content(document.body)
     return (title_is_relevant or body_is_relevant or url_is_relevant) and is_english

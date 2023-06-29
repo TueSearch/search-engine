@@ -1,9 +1,11 @@
 """
 Base model class for all models, defines the models connection.
 """
+import json
 import os
 
 import datetime
+import pickle
 
 import peewee
 from dotenv import load_dotenv
@@ -30,11 +32,41 @@ class LongTextField(peewee.TextField):
     field_type = 'LONGTEXT'
 
 
+class JSONField(LongTextField):
+    """
+    https://stackoverflow.com/questions/40553790/peewee-orm-jsonfield-for-mysql
+    """
+
+    def db_value(self, value):
+        if value is not None:
+            if isinstance(value, str):
+                return value
+            return json.dumps(value)
+        raise Exception("None type!")
+
+    def python_value(self, value):
+        if value is not None:
+            if isinstance(value, str):
+                return json.loads(value)
+            return value
+        raise Exception("None type!")
+
+
+class PickleField(peewee.BlobField):
+    def db_value(self, value):
+        return pickle.dumps(value)
+
+    def python_value(self, value):
+        if value is not None:
+            return pickle.loads(value)
+        return value
+
 class BaseModel(peewee.Model):
     """
     Base model class for all models, defines the models connection.
     """
     created_date = peewee.DateTimeField(default=datetime.datetime.now)
+    last_time_changed = peewee.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         """

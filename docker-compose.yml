@@ -1,12 +1,14 @@
 # Docker Compose file for TueSearch
 
-version: '3'
+version: '3.9'
 services:
   ############################################################
   # MySQL models
   ############################################################
   mysql:
-    image: percona/percona-server:8.0 # Enable MyRocks engine
+    build:
+      context: .
+      dockerfile: docker/mysql.Dockerfile
     container_name: mysql
     restart: unless-stopped
     environment:
@@ -17,8 +19,26 @@ services:
       - .mysql.env
     volumes:
       - tuesearch-percona-server:/var/lib/mysql
-      - ./docker/my.cnf:/etc/mysql/my.cnf:ro # Mount project's MySQL configuration file
-      - ./docker/mysql.cnf:/etc/mysql/conf.d/mysql.cnf:ro # Mount project's MySQL configuration file
+    networks:
+      - mysql_net
+  ############################################################
+  # Drop the database
+  # Only do this in development
+  # will be thrown out in production
+  ############################################################
+  drop_database:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: drop_database
+    depends_on:
+      - mysql
+    restart: 'on-failure'
+    command: 'python3 -m scripts.drop_database'
+    env_file:
+      - .env
+    volumes:
+      - .:/app
     networks:
       - mysql_net
   ############################################################
@@ -29,38 +49,57 @@ services:
   initialize_database:
     build:
       context: .
-      dockerfile: docker/python.Dockerfile
+      dockerfile: docker/backend.Dockerfile
     container_name: initialize_database
     depends_on:
+      - drop_database
       - mysql
     restart: 'on-failure'
     command: 'python3 -m scripts.migration'
     env_file:
-      - .docker.env
+      - .env
     volumes:
-      - ./crawler:/app/crawler:ro
-      - ./scripts:/app/scripts:ro
+      - .:/app
     networks:
       - mysql_net
   ############################################################
-  # Send the crawler 10 times to feed the models with some
-  # meaningful documents.
-  # Will run once.
+  # Test.
+  # Run pre-commit once.
+  ############################################################
+  run_pre_commit:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: run_pre_commit
+    depends_on:
+      - initialize_database
+      - mysql
+    restart: 'no'
+    command: './scripts/pre-commit.sh'
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    networks:
+      - mysql_net
+  ############################################################
+  # Send the crawler.
+  # Disabled for now to save resources.
   ############################################################
   crawl:
     build:
       context: .
-      dockerfile: docker/python.Dockerfile
+      dockerfile: docker/backend.Dockerfile
     container_name: crawl
-    restart: 'unless-stopped'
+    restart: 'on-failure'
     depends_on:
       - mysql
       - initialize_database
-    command: 'python3 -m crawler.main'
+    command: 'python3 -m crawler.main -n 0'
     env_file:
-      - .docker.env
+      - .env
     volumes:
-      - ./crawler:/app/crawler:ro
+      - .:/app
     networks:
       - mysql_net
   ############################################################
@@ -69,20 +108,18 @@ services:
   build_inverted_index:
     build:
       context: .
-      dockerfile: docker/python.Dockerfile
+      dockerfile: docker/backend.Dockerfile
     container_name: build_inverted_index
     depends_on:
       - mysql
       - initialize_database
-      - crawl
     restart: 'on-failure'
     command: 'python3 -m backend.build_inverted_index'
     env_file:
-      - .docker.env
+      - .env
     volumes:
-      - ./backend:/app/backend:ro
-      - ./crawler:/app/crawler:ro
-      - tuesearch-models:/app/opt/tuesearch/data/
+      - .:/app
+      - tuesearch-models:/opt/tuesearch/data/
     networks:
       - mysql_net
   ############################################################
@@ -91,21 +128,19 @@ services:
   build_ranker:
     build:
       context: .
-      dockerfile: docker/python.Dockerfile
+      dockerfile: docker/backend.Dockerfile
     container_name: build_ranker
     depends_on:
       - mysql
       - initialize_database
-      - crawl
       - build_inverted_index
     restart: 'on-failure'
     command: 'python3 -m backend.build_ranker'
     env_file:
-      - .docker.env
+      - .env
     volumes:
-      - ./backend:/app/backend:ro
-      - ./crawler:/app/crawler:ro
-      - tuesearch-models:/app/opt/tuesearch/data/
+      - .:/app
+      - tuesearch-models:/opt/tuesearch/data/
     networks:
       - mysql_net
   ############################################################
@@ -115,24 +150,22 @@ services:
   backend_server:
     build:
       context: .
-      dockerfile: docker/python.Dockerfile
+      dockerfile: docker/backend.Dockerfile
     container_name: backend_server
     ports:
-      - '5000:5000'
+      - '4000:4000'
     depends_on:
       - mysql
       - initialize_database
-      - crawl
       - build_inverted_index
       - build_ranker
     restart: 'always'
     command: 'python3 -m backend.app'
     env_file:
-      - .docker.env
+      - .env
     volumes:
-      - ./backend:/app/backend:ro
-      - ./crawler:/app/crawler:ro
-      - tuesearch-models:/app/opt/tuesearch/data/
+      - .:/app
+      - tuesearch-models:/opt/tuesearch/data/
     networks:
       - mysql_net
   ############################################################
@@ -144,8 +177,11 @@ services:
       context: .
       dockerfile: docker/frontend.Dockerfile
     container_name: frontend_server
+    depends_on:
+      - backend_server
+      - mysql
     ports:
-      - '4000:4000'
+      - '5000:5000'
     restart: 'always'
     command: serve -s build -l 4000
     volumes:

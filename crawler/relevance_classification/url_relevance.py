@@ -6,8 +6,10 @@ import os
 from urllib.parse import urlparse
 
 from dotenv import load_dotenv
+import validators
 
 from crawler import utils
+from tldextract import extract
 
 load_dotenv()
 
@@ -20,7 +22,7 @@ QUEUE_MANUAL_SEEDS = json.loads(os.getenv('QUEUE_MANUAL_SEEDS'))
 def get_url_extension(url):
     parsed_url = urlparse(url)
     path = parsed_url.path
-    filename, file_extension = os.path.splitext(path)
+    _, file_extension = os.path.splitext(path)
     return file_extension
 
 
@@ -50,11 +52,14 @@ def get_url_priority(url: str) -> int:
     Returns: The priority of the URL. The higher the number, the higher the priority.
 
     """
+    if not is_url(url):
+        return -1
+
     if is_url_media_link(url):
-        return 0
+        return -1
 
     if utils.url.get_server_name_from_url(url) in CRAWL_BLACK_LIST:
-        return 0
+        return -1
 
     count = 1
     if "bingen" in url:
@@ -65,7 +70,30 @@ def get_url_priority(url: str) -> int:
         count += 1
     if url in QUEUE_MANUAL_SEEDS:
         count += 100
+    if extract(url).suffix == "com":
+        count += 1
     return count
+
+
+def is_url(text: str) -> bool:
+    """
+    Check if a text is a URL.
+    """
+
+    def test1():
+        try:
+            result = urlparse(text)
+            return all([result.scheme, result.netloc])
+        except:
+            return False
+
+    def test2():
+        result = validators.url(text)
+        if isinstance(result, validators.ValidationFailure):
+            return False
+        return result
+
+    return test1() and test2()
 
 
 def is_url_relevant(url: str) -> bool:
@@ -76,3 +104,4 @@ def is_url_relevant(url: str) -> bool:
     Returns: True if the URL is relevant, False otherwise.
     """
     return get_url_priority(url) > 0
+

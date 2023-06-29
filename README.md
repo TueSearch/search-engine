@@ -6,116 +6,37 @@ Tübingen.
 ## Table of Contents
 
 - [TueSearch](#tuesearch)
-  - [Table of Contents](#table-of-contents)
-- [Project Structure](#project-structure)
+    - [Table of Contents](#table-of-contents)
+- [Set up](#crawler-set-up)
 - [Crawler](#crawler)
-  - [Crawler set up](#crawler-set-up)
-  - [Crawler usage](#crawler-usage)
+    - [Crawler usage](#crawler-usage)
 - [Backend](#backend)
-  - [Backend set up](#backend-set-up)
-  - [Backend usage](#backend-usage)
+    - [Backend usage](#backend-usage)
 - [Frontend](#frontend)
-- [Docker](#docker)
-  - [Docker set up](#docker-set-up)
-  - [Docker usage](#docker-usage)
 - [Team Members](#team-members)
 
-# Project Structure
+# Set up
 
-The project has the following structure:
+1. Create output directories and initialize environment variables.
+```bash
+cp -rf example.mysql.env .mysql.env
+cp -rf example.env .env
+```
 
-- `.github`: This directory contains the GitHub workflow files for the project.
-- `backend`: This directory contains the Flask application for the search engine.
-  - `app.py`: This script contains the Flask API for the search engine.
-  - `build_inverted_index.py`: The script for building the inverted index from the crawled documents.
-  - `build_ranker.py`: The script for building the ranker from the inverted index and query.
-  - `rank.py`: This module contains the ranker class, which uses the built ranker to rank the documents based on the
-    query.
-  - `streamers.py`: This module contains the streamers class, which is used to stream the documents from the database
-    to the ranker.
-- `crawler`: This directory contains the main source code of the web crawler.
-  - `data`: This directory contains the data files for the project.
-    - `serp.json`: This file contains the search engine results page (SERP) for the query "Tübingen".
-    - `documents.json`: This file contains some initial crawled documents so local development gets a bit easier.
-  - `models`: SQL models for the database.
-    - `base.py`: This file contains the base model for the database.
-    - `document.py`: This file contains the model for the documents table.
-    - `job.py`: This file contains the model for the jobs table.
-  - `relevance_classification`: Classify URL's, document's and job's relevance.
-    - `document_relevance.py`: Determines if a document should be indexed.
-    - `job_relevance.py`: Determines if a job should be executed.
-    - `url_relevance.py`: Determines if a URL should be crawled and when it should be crawled.
-  - `tests`: This directory contains the test files for the project. (Note: The test directory could be improved
-    further to include more comprehensive testing scenarios and coverage.)
-  - `utils`:
-    - `io`: This module contains the functions for reading and writing data to files.
-    - `log`: This module contains the functions for logging the crawling process.
-    - `text`: Contains the function to preprocess text before feed it to ranker and classifier.
-  - `crawl.py`: Determine a crawler. A crawler is a single process that crawls a single URL.
-  - `fetch_serp.py`: The script for fetching the search engine results page (SERP) and saving it as a JSON file.
-  - `initialize_database.py`: The script for initializing the database and creating the necessary tables and add
-    initial data.
-  - `main.py`: Start the crawler.
-  - `priority_queue.py`: Contains the priority queue class, which is used to determine which server and which link is
-    preferred.
-- `docker`: This directory contains the docker files for the project.
-  - `my.cnf`: This file contains the configuration for the MySQL database.
-  - `mysql.cnf`: This file contains the configuration for the MySQL database.
-  - `python.Dockerfile`: This file contains the Dockerfile for the Python crawler & backend.
-- `frontend`: This directory contains the frontend application for the search engine.
-- `scripts`: This directory contains the scripts for the project. Wil run only on Ubuntu at the time of writing.
-  - `migration.py`: This script contains the migration for the database.
-  - `init.sh`: This script contains the initialization for the project.
-  - `*.sql`: These files contain the SQL queries for the project's migration.
-- `.pre-commit-config.yaml`: This file contains the configuration for the pre-commit hooks.
-- `.pylintrc`: This file contains the configuration for the pylint linter.
-- `CHEATSHEET.md`: This file contains the cheatsheet for the project.
-- `CODEOWNERS`. This file contains the GitHub code owners for the project.
-- `docker-compose.yml`: Configuration for docker-compose for local development and deployment.
-- `example.env`: This file contains the example environment variables for the project.
-- `example.mysql.env`: This file is specifically for the MySQL's instance in the docker-compose file.
-- `requirements.dev.txt`: This file contains the required dependencies for the project's crawler & backend at local.
-- `requirements.prod.txt`: This file contains the required dependencies for the project's crawler & backend at
-  production. Should contain fewer dependencies.
+2. Start the project
+
+```bash
+docker-compose up -d --build
+```
+
 
 # Crawler
-
-## Crawler set up
-
-The following set up was tested under Ubuntu 22.04. LTS and Windows WSL2 (although the WSL seems to
-have some performance issues).
-
-1. Create output directories and initialize environment variables on LInux
-
-```bash
-bash scripts/init.sh
-```
-
-and on windows
-
-```powershell
-scripts\init.bat
-```
-
-Then configure the two environment variables `OUTPUT_DIR` and `WORKING_DIR` in the `.env` file.
-
-2. Start MySQL database
-
-```bash
-docker-compose up -d --build mysql
-```
-
-3. Start the migration scripts to create the database tables.
-
-```bash
-python3 -m scripts.migration
-```
 
 ## Crawler usage
 
 To use the web crawler, follow the workflow below:
 
-1. Once the set up is done, you can start the crawling process using the `crawler/main.py` script.
+1. Once the setup is done, you can start the crawling process using the `crawler/main.py` script.
 
 ```bash
 python3 -m crawler.main -n 10 # Crawl 10 items
@@ -153,18 +74,18 @@ This step should be repeated regularly to keep the index fresh.
 python3 -m backend.build_ranker
 ```
 
-3. Test the API with
-
-```bash
-curl http://localhost:5000/search?q=tübingen
-```
-
 This step should be repeated regularly to keep the ranker fresh.
 
 3. You can run the Flask application to search for documents using the `backend/app.py` script.
 
 ```bash
 python3 -m backend.app
+```
+
+4Test the API with
+
+```bash
+curl http://localhost:4000/search?q=tubingen
 ```
 
 # Frontend
@@ -192,27 +113,6 @@ Same as described in the section [Crawler](#crawler). Try this command if you ha
 ```bash
 bash scripts/init.sh
 ```
-
-## Docker usage
-
-1. Start the services
-
-```bash
-docker-compose up -d --build
-```
-
-and wait at first time about 60 seconds for the crawler to fill the database.
-
-2. If everything successes then
-
-```bash
-docker container ps
-```
-
-should show only 3 containers running, `mysql`, `frontend_server` and `backend_server`.
-
-Note that port of the container's backend is not the same as
-the port of the host's backend.
 
 # Team Members
 
