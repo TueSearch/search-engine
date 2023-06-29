@@ -1,5 +1,8 @@
 """Test utility"""
 import unittest
+
+import langdetect
+
 from crawler import utils
 from crawler.relevance_classification import url_relevance
 
@@ -21,6 +24,11 @@ class TestUtils(unittest.TestCase):
             "tel:+4970712975570"))
         self.assertTrue(url_relevance.is_url_relevant(
             "https://uni-tuebingen.de/"))
+
+    def test_tokenize_url(self):
+        """Test if url is english"""
+        self.assertEqual("en", langdetect.detect(" ".join(utils.url.tokenize_url(
+            "https://tuebingenresearchcampus.com/en/research-in-tuebingen/tnc/neuro-campus-initiatives/"))))
 
 
 if __name__ == '__main__':
