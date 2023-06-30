@@ -6,6 +6,7 @@ import json
 from sklearn.feature_extraction.text import TfidfVectorizer
 from tqdm import tqdm
 
+from backend.build_index import read_short_inverted_index
 from backend.streamers import *
 from crawler import utils
 from crawler.sql_models.base import BaseModel
@@ -35,7 +36,7 @@ class Tfidf(BaseModel):
         table_name = 'tfidfs'
 
 
-def train():
+def train_tf_idf_vectorizer():
     """
     Train the TF-IDF vectorizer using the relevant document tokens.
 
@@ -56,58 +57,59 @@ def train():
         "h6": TfidfVectorizer(ngram_range=TFIDF_NGRAM_RANGE),
         "body": TfidfVectorizer(ngram_range=TFIDF_NGRAM_RANGE),
     }
+    _, doc_ids = read_short_inverted_index()
     try:
-        vectorizers["title"].fit(DocumentTitleStringStreamer())
+        vectorizers["title"].fit(DocumentTitleStringStreamer(doc_ids))
         LOG.info("Fitted title vectorizer")
     except Exception as e:
         LOG.error(f"Error while fitting title vectorizer {e}")
     try:
-        vectorizers["meta_description"].fit(DocumentMetaDescriptionStringStreamer())
+        vectorizers["meta_description"].fit(DocumentMetaDescriptionStringStreamer(doc_ids))
         LOG.info("Fitted meta_description vectorizer")
     except Exception as e:
         LOG.error(f"Error while fitting meta_description vectorizer {e}")
     try:
-        vectorizers["meta_keywords"].fit(DocumentMetaKeywordsStringStreamer())
+        vectorizers["meta_keywords"].fit(DocumentMetaKeywordsStringStreamer(doc_ids))
         LOG.info("Fitted meta_keywords vectorizer")
     except Exception as e:
         LOG.error(f"Error while fitting meta_keywords vectorizer {e}")
     try:
-        vectorizers["meta_author"].fit(DocumentMetaAuthorStringStreamer())
+        vectorizers["meta_author"].fit(DocumentMetaAuthorStringStreamer(doc_ids))
         LOG.info("Fitted meta_author vectorizer")
     except Exception as e:
         LOG.error(f"Error while fitting meta_author vectorizer {e}")
     try:
-        vectorizers["h1"].fit(DocumentH1StringStreamer())
+        vectorizers["h1"].fit(DocumentH1StringStreamer(doc_ids))
         LOG.info("Fitted h1 vectorizer")
     except Exception as e:
         LOG.error(f"Error while fitting h1 vectorizer {e}")
     try:
-        vectorizers["h2"].fit(DocumentH2StringStreamer())
+        vectorizers["h2"].fit(DocumentH2StringStreamer(doc_ids))
         LOG.info("Fitted h2 vectorizer")
     except Exception as e:
         LOG.error(f"Error while fitting h2 vectorizer {e}")
     try:
-        vectorizers["h3"].fit(DocumentH3StringStreamer())
+        vectorizers["h3"].fit(DocumentH3StringStreamer(doc_ids))
         LOG.info("Fitted h3 vectorizer")
     except Exception as e:
         LOG.error(f"Error while fitting h3 vectorizer {e}")
     try:
-        vectorizers["h4"].fit(DocumentH4StringStreamer())
+        vectorizers["h4"].fit(DocumentH4StringStreamer(doc_ids))
         LOG.info("Fitted h4 vectorizer")
     except Exception as e:
         LOG.error(f"Error while fitting h4 vectorizer {e}")
     try:
-        vectorizers["h5"].fit(DocumentH5StringStreamer())
+        vectorizers["h5"].fit(DocumentH5StringStreamer(doc_ids))
         LOG.info("Fitted h5 vectorizer")
     except Exception as e:
         LOG.error(f"Error while fitting h5 vectorizer {e}")
     try:
-        vectorizers["h6"].fit(DocumentH6StringStreamer())
+        vectorizers["h6"].fit(DocumentH6StringStreamer(doc_ids))
         LOG.info("Fitted h6 vectorizer")
     except Exception as e:
         LOG.error(f"Error while fitting h6 vectorizer {e}")
     try:
-        vectorizers["body"].fit(DocumentBodyStringStreamer())
+        vectorizers["body"].fit(DocumentBodyStringStreamer(doc_ids))
         LOG.info("Fitted body vectorizer")
     except Exception as e:
         LOG.error(f"Error while fitting body vectorizer {e}")
@@ -115,10 +117,15 @@ def train():
     LOG.info(f"Wrote TF-IDF file to {TFIDF_VECTORIZER_FILE}")
 
 
-def transform():
+def read_tfidf_vectorizer():
+    return utils.io.read_pickle_file(TFIDF_VECTORIZER_FILE)
+
+
+def tfidf_vectorize_indexed_documents():
     LOG.info("Start vectorize database's documents with the global TF-IDF to database")
-    vectorizers = utils.io.read_pickle_file(TFIDF_VECTORIZER_FILE)
-    for document in tqdm(DocumentStreamer()):
+    _, doc_ids = read_short_inverted_index()
+    vectorizers = read_tfidf_vectorizer()
+    for document in tqdm(DocumentStreamer(doc_ids)):
         try:
             tfidf, created = Tfidf.get_or_create(id=document.id)
             try:
@@ -127,8 +134,8 @@ def transform():
                 LOG.error(f"Error while transforming title {e}")
             try:
                 tfidf.meta_description = \
-                vectorizers["meta_description"].transform([" ".join(document.meta_description_tokens)])[
-                    0]
+                    vectorizers["meta_description"].transform([" ".join(document.meta_description_tokens)])[
+                        0]
             except Exception as e:
                 LOG.error(f"Error while transforming meta_description {e}")
             try:

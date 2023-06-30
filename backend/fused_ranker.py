@@ -70,7 +70,7 @@ def get_global_tfidf_naive_norm_distance_ranking(query: str) -> np.array:
     LOG.info(f"Matched: {matched_document_ids}")
 
     # Get the TF-IDF vectors for the query
-    query_vector = TFIDF_VECTORIZER.transform([preprocessed_query])
+    query_vector = TFIDF_VECTORIZER.tfidf_vectorize_indexed_documents([preprocessed_query])
 
     # Compute cosine similarities between the query vector and document vectors
     matched_vectors = [vec for vec in DocumentBodyGlobalTfidfVectorStreamer(matched_document_ids)]
