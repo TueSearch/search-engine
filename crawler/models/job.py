@@ -7,7 +7,7 @@ from playhouse.shortcuts import model_to_dict
 from crawler import utils
 from crawler.models.base import BaseModel, LongTextField, JSONField
 from crawler.models.server import Server
-from crawler.relevance_classification.job_relevance import assign_job_priority
+from crawler.relevance_classification.job_relevance import assign_job_priority, get_job_priority
 from crawler.relevance_classification.url_relevance import URL
 
 LOG = utils.get_logger(__file__)
@@ -35,7 +35,7 @@ class Job(BaseModel):
         table_name = 'jobs'
 
     def __str__(self):
-        return f"Job[server={self.server}, url={self.url}, priority={self.priority}]"
+        return f"Job[priority={self.priority}, server={self.server}, url={self.url}]"
 
     def __repr__(self):
         return str(self)
@@ -62,6 +62,8 @@ class Job(BaseModel):
         link_to_server = {link: servers[link.server_name] for link in relevant_links}
         jobs_batch = []
         for link, server in link_to_server.items():
-            job = Job(url=link.url, server=server.id, priority=link.priority + min(100, server.page_rank * 100))
+            job = Job(url=link.url, server=server)
+            job.priority = get_job_priority(job, link)
+            job.server = job.server.id  # Hacky to make peewee work
             jobs_batch.append(model_to_dict(job))
         Job.insert_many(jobs_batch).on_conflict_ignore().execute()
