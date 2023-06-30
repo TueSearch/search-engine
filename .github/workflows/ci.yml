@@ -6,37 +6,61 @@ permissions: write-all
 
 name: 🏗️ CI
 jobs:
-  # Test backend and crawler
-  test_backend_and_crawler:
-    name: Test backend and crawler.
+  validateCodyStyleAndTestBackend:
+    name: Test backend and crawler
     runs-on: ubuntu-latest
     steps:
-      - name: Set environment variable.
-        run: echo "TEST_REPORT_FILE=pytest-results.xml" >> $GITHUB_ENV
-
-      - name: Create test results report file.
-        run: touch $TEST_REPORT_FILE && chmod 777 $TEST_REPORT_FILE
-
-      - name: Checkout code.
-        uses: actions/checkout@v2
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v3
 
       - name: Prepare environment variables.
         run: cp example.env .env && cp example.mysql.env .mysql.env && cp -rf example.frontend.env frontend/.env
 
-      - name: Install pre-commit
-        run: | 
-          pip install pre-commit 
-          pre-commit install
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
 
-      - name: Run pre-commit
-        run: pre-commit run --all-files
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 🔎 run lint
+        run: python3 -m pylint --rcfile=.pylintrc backend
+
+      - name: 🔎 run lint
+        run: python3 -m pylint --rcfile=.pylintrc crawler
+
+      - name: 🔎 run lint
+        run: python3 -m pylint --rcfile=.pylintrc scripts
+
+      - name: 🧪 run tests
+        run: python3 -m pytest --junitxml=pytest-results.xml
 
       - name: Publish Test Results.
         uses: EnricoMi/publish-unit-test-result-action/composite@v2.4.2
         if: always()
         with:
           check_name: Unit Tests Backend
-          files: $TEST_REPORT_FILE
+          files: pytest-results.xml
+
+  testBackendAPI:
+    name: Test backend API
+    needs: [validateCodyStyleAndTestBackend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v3
+
+      - name: Prepare environment variables.
+        run: cp example.env .env && cp example.mysql.env .mysql.env && cp -rf example.frontend.env frontend/.env
+
+      - name: 🐋 Build docker
+        run: docker-compose up -d --build
+
+      - name: 🧪 run tests
+        run: curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4000/search?q=tubingen"
 
   validatePrTitle:
     name: 🔎 Validate PR Title
@@ -79,7 +103,7 @@ jobs:
 
   unitTests:
     name: 🧪 Unit Tests
-    needs: [ validateCodyStyle ]
+    needs: [validateCodyStyle]
     runs-on: ubuntu-latest
     steps:
       - name: 🚚 Get latest code
@@ -107,69 +131,69 @@ jobs:
           check_name: Unit Tests
           files: 'frontend/vitest-results.xml'
 
-  #skip e2e tests
-  e2eTests:
-    if: false
-    name: 🧪 E2E Tests
-    needs: [ validateCodyStyle ]
-    timeout-minutes: 60
-    runs-on: ubuntu-latest
-    steps:
-      - name: 🚚 Get latest code
-        uses: actions/checkout@v3
+  # #skip e2e tests
+  # e2eTests:
+  #   if: false
+  #   name: 🧪 E2E Tests
+  #   needs: [validateCodyStyle]
+  #   timeout-minutes: 60
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: 🚚 Get latest code
+  #       uses: actions/checkout@v3
 
-      - name: 🖍️ Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+  #     - name: 🖍️ Setup Node.js
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 16
+  #         cache: 'npm'
+  #         cache-dependency-path: frontend/package-lock.json
 
-      - name: 📦 Install dependencies
-        working-directory: ./frontend
-        run: npm ci
+  #     - name: 📦 Install dependencies
+  #       working-directory: ./frontend
+  #       run: npm ci
 
-      - name: 🎭 Install Playwright Browsers
-        working-directory: ./frontend
-        run: npx playwright install --with-deps
+  #     - name: 🎭 Install Playwright Browsers
+  #       working-directory: ./frontend
+  #       run: npx playwright install --with-deps
 
-      - name: 🔨 Build Project
-        working-directory: ./frontend
-        env:
-          NODE_ENV: development
-        run: |
-          npm run build
-          npm i -g serve
+  #     - name: 🔨 Build Project
+  #       working-directory: ./frontend
+  #       env:
+  #         NODE_ENV: development
+  #       run: |
+  #         npm run build
+  #         npm i -g serve
 
-      - name: 💻 Start frontend
-        working-directory: ./frontend
-        run: nohup serve -s build -l 4000 &
+  #     - name: 💻 Start frontend
+  #       working-directory: ./frontend
+  #       run: nohup serve -s build -l 4000 &
 
-      - name: 🧪 Run Playwright tests
-        working-directory: ./frontend
-        env:
-          NODE_ENV: development
-        run: npm run test:e2e
+  #     - name: 🧪 Run Playwright tests
+  #       working-directory: ./frontend
+  #       env:
+  #         NODE_ENV: development
+  #       run: npm run test:e2e
 
-      - name: 📤 Upload Playwright report
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: playwright-report
-          path: frontend/playwright-report/
-          retention-days: 30
+  #     - name: 📤 Upload Playwright report
+  #       uses: actions/upload-artifact@v3
+  #       if: always()
+  #       with:
+  #         name: playwright-report
+  #         path: frontend/playwright-report/
+  #         retention-days: 30
 
-      - name: 🚨 Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action/composite@v2.4.2
-        if: always()
-        with:
-          check_name: E2E Tests
-          files: 'playwright-results.xml'
+  #     - name: 🚨 Publish Test Results
+  #       uses: EnricoMi/publish-unit-test-result-action/composite@v2.4.2
+  #       if: always()
+  #       with:
+  #         check_name: E2E Tests
+  #         files: 'playwright-results.xml'
 
   notify-on-success:
     name: 📧 Notify success
     if: success()
-    needs: [ validateCodyStyle, unitTests, e2eTests, test_backend_and_crawler ]
+    needs: [validateCodyStyle, unitTests, validateCodyStyleAndTestBackend, testBackendAPI]
     runs-on: ubuntu-latest
     steps:
       - name: 📧 Comment Pull Request
@@ -183,7 +207,7 @@ jobs:
   notify-on-failure:
     name: 📧 Notify failure
     if: failure()
-    needs: [ validateCodyStyle, unitTests, e2eTests, test_backend_and_crawler ]
+    needs: [validateCodyStyle, unitTests, validateCodyStyleAndTestBackend, testBackendAPI]
     runs-on: ubuntu-latest
     steps:
       - name: 📧 Comment Pull Request

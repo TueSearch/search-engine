@@ -58,26 +58,6 @@ services:
     networks:
       - mysql_net
   ############################################################
-  # Test.
-  # Run tests
-  ############################################################
-  run_unit_tests:
-    build:
-      context: .
-      dockerfile: docker/backend.Dockerfile
-    container_name: run_unit_tests
-    depends_on:
-      - initialize_database
-      - mysql
-    restart: 'no'
-    command: './scripts/run-tests.sh'
-    env_file:
-      - .env
-    volumes:
-      - .:/app
-    networks:
-      - mysql_net
-  ############################################################
   # Send the crawler.
   ############################################################
   crawl:
