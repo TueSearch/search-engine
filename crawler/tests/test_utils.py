@@ -13,7 +13,7 @@ class TestUtils(unittest.TestCase):
     def test_tokenize(self):
         """Test if html is escaped"""
         text = "Tübingen (German) is a traditional university city in central Baden-Württemberg, Germany. In the season of autumn."
-        tokens = utils.text.tokenize(text)
+        tokens = utils.text.advanced_tokenize_with_pos(text)
         self.assertTrue("tubingen" in tokens[0])
 
     def test_is_url_relevant(self):

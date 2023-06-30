@@ -3,23 +3,45 @@ This module contains the Document model. It represents a crawled document.
 """
 import peewee
 
-from crawler.models.base import BaseModel, LongTextField, JSONField, PickleField
+from crawler.models.base import BaseModel, LongTextField, JSONField
 
 
 class Document(BaseModel):
     """
     Represents a crawled document.
     """
-    from crawler.models.job import Job
     id = peewee.BigAutoField(primary_key=True)
-    job = peewee.ForeignKeyField(Job, backref="job_id")
-    html = LongTextField()
-    title = LongTextField()
-    body = LongTextField()
-    links = LongTextField()
-    title_tokens = JSONField()
-    body_tokens = JSONField()
-    body_tfidf = PickleField()
+    job = peewee.DeferredForeignKey('jobs', backref="job_id")
+    # Raw data field
+    html = LongTextField(default="")
+    # Raw text Fields
+    title = LongTextField(default="")
+    meta_description = LongTextField(default="")
+    meta_keywords = LongTextField(default="")
+    meta_author = LongTextField(default="")
+    h1 = LongTextField(default="")
+    h2 = LongTextField(default="")
+    h3 = LongTextField(default="")
+    h4 = LongTextField(default="")
+    h5 = LongTextField(default="")
+    h6 = LongTextField(default="")
+    body = LongTextField(default="")
+    # Processed text fields
+    title_tokens = JSONField(default=[])
+    meta_description_tokens = JSONField(default=[])
+    meta_keywords_tokens = JSONField(default=[])
+    meta_author_tokens = JSONField(default=[])
+    h1_tokens = JSONField(default=[])
+    h2_tokens = JSONField(default=[])
+    h3_tokens = JSONField(default=[])
+    h4_tokens = JSONField(default=[])
+    h5_tokens = JSONField(default=[])
+    h6_tokens = JSONField(default=[])
+    body_tokens = JSONField(default=[])
+    # Links
+    links = LongTextField(default=[])
+    relevant_links = LongTextField(default=[])
+    # Classification
     relevant = peewee.BooleanField(default=True)
 
     class Meta:

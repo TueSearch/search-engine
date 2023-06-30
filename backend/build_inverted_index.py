@@ -27,19 +27,6 @@ INVERTED_INDEX_FILE = os.getenv("INVERTED_INDEX_FILE")
 PARTIAL_INVERTED_INDEX_FILE = os.getenv("PARTIAL_INVERTED_INDEX_FILE")
 
 
-def recompute_tokens():
-    """
-    Recompute the tokens for the documents in the database.
-    """
-    for doc in tqdm(DocumentStreamer()):
-        try:
-            doc.title_tokens = json.dumps(utils.text.tokenize(doc.title))
-            doc.body_tokens = json.dumps(utils.text.tokenize(doc.body))
-            doc.save()
-        except Exception as error:
-            LOG.error(f"Error while writing TF-IDF vector to database for document {doc.id}: {error}")
-
-
 def build_inverted_index():
     """
     Build an inverted index from the crawled documents.

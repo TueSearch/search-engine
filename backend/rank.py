@@ -57,7 +57,7 @@ def get_global_tfidf_naive_norm_distance_ranking(query: str) -> np.array:
 
     """
     # Preprocess the query
-    query_tokens = utils.text.tokenize(query)
+    query_tokens = utils.text.advanced_tokenize_with_pos(query)
     LOG.info(f"query_tokens: {query_tokens}")
     preprocessed_query = " ".join(query_tokens)
 

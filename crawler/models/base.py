@@ -1,6 +1,7 @@
 """
 Base model class for all models, defines the models connection.
 """
+import dataclasses
 import json
 import os
 
@@ -63,6 +64,7 @@ class PickleField(peewee.BlobField):
         if value is not None:
             return pickle.loads(value)
         return value
+
 
 
 class BaseModel(peewee.Model):

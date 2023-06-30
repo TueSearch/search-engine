@@ -5,7 +5,7 @@ import peewee
 from playhouse.shortcuts import model_to_dict
 
 from crawler import utils
-from crawler.models.base import BaseModel, LongTextField
+from crawler.models.base import BaseModel, LongTextField, JSONField, URL
 from crawler.models.server import Server
 
 LOG = utils.get_logger(__file__)
@@ -17,7 +17,10 @@ class Job(BaseModel):
     """
     id = peewee.BigAutoField(primary_key=True)
     url = LongTextField()
-    server = peewee.ForeignKeyField(Server, backref="server_id")
+    server = peewee.DeferredForeignKey('servers', backref="server_id")
+    parent = peewee.DeferredForeignKey('documents', backref="parent_id")
+    anchor_texts = JSONField(default=[])
+    anchor_texts_tokens = JSONField(default=[[]])
     priority = peewee.IntegerField(default=0)
     being_crawled = peewee.BooleanField(default=False)
     done = peewee.BooleanField(default=False)
@@ -45,7 +48,7 @@ class Job(BaseModel):
         return hash(self.url)
 
     @staticmethod
-    def create_jobs(urls: list[str]):
+    def create_jobs(urls: list[URL]):
         from crawler import relevance_classification
         if len(urls) == 0:
             return

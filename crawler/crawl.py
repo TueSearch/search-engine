@@ -67,20 +67,13 @@ class Crawler:
             Document: The generated Document object.
             list[str]: The list of URLs found in the HTML content.
         """
-        title, body = utils.text.get_title_and_body_from_html(html)
-        title_tokens = utils.text.tokenize(title)
-        body_tokens = utils.text.tokenize(body)
         urls = utils.url.get_all_urls_from_html(html, self.job.url)
-        urls = [url for url in urls if relevance_classification.url_relevance.is_url_relevant(url)]
-        return Document(url=self.job.url,
-                        server=utils.url.get_server_name_from_url(self.job.url),
-                        html=html,
-                        title=title,
-                        body=body,
-                        links=urls,
-                        title_tokens=title_tokens,
-                        body_tokens=body_tokens,
-                        job=self.job)
+        document = utils.text.generate_text_document_from_html(html)
+        document.job = self.job
+        document.links = urls
+        document.relevant_links = [url for url in urls if relevance_classification.url_relevance.is_url_relevant(url)]
+        document.relevant = relevance_classification.document_relevance.is_document_relevant(document)
+        return document
 
     def try_to_obtain_static_website_html(self):
         """Send an HTTP request to the URL of the job.
@@ -115,7 +108,7 @@ class Crawler:
         session = HTMLSession()
         session.mount('http://', HTTPAdapter(max_retries=RETRIES))
         session.mount('https://', HTTPAdapter(max_retries=RETRIES))
-        response = session.get(self.job.url, timeout=CRAWL_TIMEOUT)
+        response = session.get(self.job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS)
         response.html.render(timeout=CRAWL_RENDER_TIMEOUT)
         if not response.ok:
             raise Exception(

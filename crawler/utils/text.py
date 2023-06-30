@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from langdetect import detect_langs
 from unidecode import unidecode
+from spacy.tokens.token import Token
 
 load_dotenv()
 
@@ -35,7 +36,7 @@ def remove_hyperlinks_from_text(text: str) -> str:
     return re.sub(pattern, '', text)
 
 
-def tokenize(text: str) -> list[str]:
+def spacy_tokenize(text: str) -> list[Token]:
     """
     Tokenizes the given text.
     Args:
@@ -76,7 +77,35 @@ def tokenize(text: str) -> list[str]:
 
     tokens = [token for token in tokens if len(token.text) > 1]
 
+    return tokens
+
+
+def advanced_tokenize_with_pos(text: str) -> list[str]:
+    """
+    Tokenizes the given text.
+    Args:
+        text: input text
+
+    Returns: list of strings
+
+    """
+    tokens = spacy_tokenize(text)
+
     return [f"{t.lemma_}_{t.pos_}" for t in tokens]
+
+
+def tokenize_get_lang(text: str) -> list[str]:
+    """
+    Tokenizes the given text.
+    Args:
+        text: input text
+
+    Returns: list of strings
+
+    """
+    tokens = spacy_tokenize(text)
+
+    return [t.lang_ for t in tokens]
 
 
 def do_text_contain_english_content(text: str) -> bool:
@@ -115,7 +144,7 @@ def do_text_contain_english_content(text: str) -> bool:
         return False
 
 
-def get_title_and_body_from_html(html_content: str) -> (str, str):
+def generate_text_document_from_html(html_content: str) -> 'Document':
     """
     Extracts plain text from HTML content.
 
@@ -125,36 +154,60 @@ def get_title_and_body_from_html(html_content: str) -> (str, str):
     Returns:
         (str, str): Title and body extracted from HTML, if any. Default empty strings.
     """
+    from crawler.models.document import Document
+
     soup = BeautifulSoup(html_content, 'html.parser')
-    title = soup.title.string if soup.title else ""
-    body = soup.body.get_text(separator=" ")
-    title = make_text_human_readable(title)
-    body = make_text_human_readable(body)
-    title = unidecode(title)
-    body = unidecode(body)
-    return title, body
 
+    document = Document()
 
-def extract_content_from_tag(html_content: str, tag_name: str) -> str:
-    """
-    Extracts the content from a specified HTML tag.
+    document.body = make_text_human_readable(soup.body.get_text(separator=" "))
+    document.body_tokens = advanced_tokenize_with_pos(document.body)
 
-    Args:
-        html_content (str): HTML content.
-        tag_name (str): Name of the tag to extract content from.
+    document.title = make_text_human_readable(soup.title.string if soup.title else "")
+    document.title_tokens = advanced_tokenize_with_pos(document.title)
 
-    Returns:
-        str: Content extracted from the specified tag.
-    """
-    soup = BeautifulSoup(html_content, 'html.parser')
-    tag = soup.find(tag_name)
-    if tag:
-        ret = tag.text
-        if "content" in tag:
-            ret += " " + tag["content"]
-        return ret
-    # Handle the case when the tag is not found
-    return ""
+    # Add meta information to the document
+    meta_tags = soup.find_all('meta')
+    for meta_tag in meta_tags:
+        if 'name' in meta_tag.attrs and 'content' in meta_tag.attrs:
+            name = meta_tag.attrs['name']
+            content = meta_tag.attrs['content']
+            if name == 'description':
+                document.meta_description = make_text_human_readable(content)
+                document.meta_description_tokens = advanced_tokenize_with_pos(document.meta_description)
+            elif name == 'keywords':
+                document.meta_keywords = make_text_human_readable(content)
+                document.meta_keywords_tokens = advanced_tokenize_with_pos(document.meta_keywords)
+            elif name == 'author':
+                document.meta_author = make_text_human_readable(content)
+                document.meta_author_tokens = advanced_tokenize_with_pos(document.meta_author)
+
+    # Set h1, h2, h3, h4, h5, h6 fields
+    h1_tags = soup.find_all('h1')
+    document.h1 = make_text_human_readable(' '.join([h1.get_text().strip() for h1 in h1_tags]))
+    document.h1_tokens = advanced_tokenize_with_pos(document.h1)
+
+    h2_tags = soup.find_all('h2')
+    document.h2 = make_text_human_readable(' '.join([h2.get_text().strip() for h2 in h2_tags]))
+    document.h2_tokens = advanced_tokenize_with_pos(document.h2)
+
+    h3_tags = soup.find_all('h3')
+    document.h3 = make_text_human_readable(' '.join([h3.get_text().strip() for h3 in h3_tags]))
+    document.h3_tokens = advanced_tokenize_with_pos(document.h3)
+
+    h4_tags = soup.find_all('h4')
+    document.h4 = make_text_human_readable(' '.join([h4.get_text().strip() for h4 in h4_tags]))
+    document.h4_tokens = advanced_tokenize_with_pos(document.h4)
+
+    h5_tags = soup.find_all('h5')
+    document.h5 = make_text_human_readable(' '.join([h5.get_text().strip() for h5 in h5_tags]))
+    document.h5_tokens = advanced_tokenize_with_pos(document.h5)
+
+    h6_tags = soup.find_all('h6')
+    document.h6 = make_text_human_readable(' '.join([h6.get_text().strip() for h6 in h6_tags]))
+    document.h6_tokens = advanced_tokenize_with_pos(document.h6)
+
+    return document
 
 
 def make_text_human_readable(text):
@@ -176,4 +229,4 @@ def make_text_human_readable(text):
     # Remove leading and trailing whitespaces
     cleaned_text = cleaned_text.strip()
 
-    return cleaned_text
+    return unidecode(cleaned_text)

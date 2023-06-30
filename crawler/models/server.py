@@ -13,6 +13,10 @@ class Server(BaseModel):
     id = peewee.BigAutoField(primary_key=True)
     name = peewee.TextField()
     is_black_list = peewee.BooleanField(default=False)
+    page_rank = peewee.FloatField(default=0.0)
+    total_jobs = peewee.BigIntegerField(default=0)
+    success_jobs = peewee.BigIntegerField(default=0)
+    relevant_jobs = peewee.BigIntegerField(default=0)
 
     class Meta:
         """

@@ -47,8 +47,25 @@ def is_document_relevant(document: 'Document'):
     Args:
         document (Document): The crawled document to be classified.
     """
-    title_is_relevant = do_tokens_contain_tuebingen(document.title_tokens)
-    body_is_relevant = do_tokens_contain_tuebingen(document.body_tokens)
-    url_is_relevant = is_url_relevant(document.url)
-    is_english = utils.text.do_text_contain_english_content(document.body)
-    return (title_is_relevant or body_is_relevant or url_is_relevant) and is_english
+    text_fields = [
+        document.body,
+        document.title,
+        document.meta_description,
+    ]
+    json_fields = [
+        document.body_tokens,
+        document.title_tokens,
+        document.meta_description_tokens,
+        document.meta_keywords_tokens,
+        document.meta_author_tokens,
+        document.h1_tokens,
+        document.h2_tokens,
+        document.h3_tokens,
+        document.h4_tokens,
+        document.h5_tokens,
+        document.h6_tokens
+    ]
+    contains_tuebingen = any([do_tokens_contain_tuebingen(field) for field in json_fields]) or is_url_relevant(
+        document.url)
+    is_english = any([utils.text.do_text_contain_english_content(field) for field in text_fiels])
+    return contains_tuebingen and is_english
