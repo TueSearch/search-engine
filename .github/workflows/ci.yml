@@ -67,7 +67,7 @@ jobs:
         run: docker pull ghcr.io/tuesearch/search-engine/database-server:latest
 
       - name: 🐋 Start database image
-        run: docker run --name mysql -env-file .mysql.env -p 3306:3306 -d ghcr.io/tuesearch/search-engine/database-server:latest
+        run: docker run --name mysql -v /path/to/.mysql.env:/root/.mysql.env -p 3306:3306 -d ghcr.io/tuesearch/search-engine/database-server:latest
 
       - name: 🐍 Setup Python
         uses: actions/setup-python@v2
@@ -78,6 +78,18 @@ jobs:
 
       - name: 📦 Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Check Database Connection
+        run: |
+          ping -c 1 mysql
+
+          # Check the exit code of the ping command
+          if [ $? -eq 0 ]; then
+            echo "Database connection successful"
+          else
+            echo "Database connection failed"
+            exit 1
+          fi
 
       - name: Initialize database
         run: python3 -m scripts.initialize_database
