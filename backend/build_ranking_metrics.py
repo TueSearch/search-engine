@@ -9,7 +9,6 @@ Usage:
 """
 import json
 import os
-import pickle
 
 import networkx as nx
 from dotenv import load_dotenv
