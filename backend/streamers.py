@@ -61,5 +61,20 @@ class DocumentStreamer:
         return result
 
 
-DocumentBodyTokensStreamer = functools.partial(DocumentStreamer, transform=lambda doc: doc.body_tokens)
-DocumentBodyTokensStringStreamer = functools.partial(DocumentStreamer, transform=lambda doc: " ".join(doc.body_tokens))
+def partial(func):
+    DocumentTokensStreamer = functools.partial(DocumentStreamer, transform=lambda doc: func(doc))
+    DocumentStringStreamer = functools.partial(DocumentStreamer,
+                                               transform=lambda doc: " ".join(func(doc)))
+    return DocumentTokensStreamer, DocumentStringStreamer
+
+
+DocumentTitleTokensStreamer, DocumentTitleStringStreamer = partial(lambda doc: doc.title)
+DocumentMetaKeywordsTokensStreamer, DocumentMetaKeywordsStringStreamer = partial(lambda doc: doc.meta_keywords)
+DocumentMetaAuthorTokensStreamer, DocumentMetaAuthorStringStreamer = partial(lambda doc: doc.meta_author)
+DocumentH1TokensStreamer, DocumentH1StringStreamer = partial(lambda doc: doc.h1)
+DocumentH2TokensStreamer, DocumentH2StringStreamer = partial(lambda doc: doc.h2)
+DocumentH3TokensStreamer, DocumentH3StringStreamer = partial(lambda doc: doc.h3)
+DocumentH4TokensStreamer, DocumentH4StringStreamer = partial(lambda doc: doc.h4)
+DocumentH5TokensStreamer, DocumentH5StringStreamer = partial(lambda doc: doc.h5)
+DocumentH6TokensStreamer, DocumentH6StringStreamer = partial(lambda doc: doc.h6)
+DocumentBodyTokensStreamer, DocumentBodyStringStreamer = partial(lambda doc: doc.body)
