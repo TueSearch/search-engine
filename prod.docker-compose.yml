@@ -2,15 +2,36 @@
 
 version: '3'
 
+volumes:
+  tuesearch-percona-server:
+  tuesearch-models:
+
 networks:
   mysql_net:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
 
 services:
+  ############################################################
+  # Nginx Server
+  ############################################################
+  nginx:
+    image: nginx
+    ports:
+      - '80:80'
+      - '443:443'
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    networks:
+      - mysql_net
   ############################################################
   # MySQL models
   ############################################################
   mysql:
-    image: #TODO: add image
+    image: ghcr.io/tuesearch/search-engine/database-server:latest
     container_name: mysql
     restart: unless-stopped
     environment:
@@ -19,6 +40,8 @@ services:
       - '3306:3306'
     env_file:
       - .mysql.env
+    volumes:
+      - tuesearch-percona-server:/var/lib/mysql
     networks:
       - mysql_net
   ############################################################
@@ -27,18 +50,16 @@ services:
   # Will run once.
   ############################################################
   initialize_database:
-    build:
-      dockerfile: #TODO: add image
+    image: ghcr.io/tuesearch/search-engine/backend-server:latest
     container_name: initialize_database
     depends_on:
       - mysql
     restart: 'on-failure'
     command: 'python3 -m scripts.migration'
     env_file:
-      - .docker.env
+      - .env
     volumes:
-      - ./crawler:/app/crawler:ro
-      - ./scripts:/app/scripts:ro
+      - .:/app
     networks:
       - mysql_net
   ############################################################
@@ -47,8 +68,7 @@ services:
   # Will run once.
   ############################################################
   crawl:
-    build:
-      dockerfile: #TODO: add image
+    image: ghcr.io/tuesearch/search-engine/backend-server:latest
     container_name: crawl
     restart: 'unless-stopped'
     depends_on:
@@ -56,17 +76,16 @@ services:
       - initialize_database
     command: 'python3 -m crawler.main'
     env_file:
-      - .docker.env
+      - .env
     volumes:
-      - ./crawler:/app/crawler:ro
+      - .:/app
     networks:
       - mysql_net
   ############################################################
   # Build indexer.
   ############################################################
   build_inverted_index:
-    build:
-      dockerfile: #TODO: add image
+    image: ghcr.io/tuesearch/search-engine/backend-server:latest
     container_name: build_inverted_index
     depends_on:
       - mysql
@@ -75,19 +94,17 @@ services:
     restart: 'on-failure'
     command: 'python3 -m backend.build_inverted_index'
     env_file:
-      - .docker.env
+      - .env
     volumes:
-      - ./backend:/app/backend:ro
-      - ./crawler:/app/crawler:ro
-      - tuesearch-models:/app/opt/tuesearch/data/
+      - .:/app
+      - tuesearch-models:/opt/tuesearch/data/
     networks:
       - mysql_net
   ############################################################
   # Build rankers.
   ############################################################
   build_ranker:
-    build:
-      dockerfile: #TODO: add image
+    image: ghcr.io/tuesearch/search-engine/backend-server:latest
     container_name: build_ranker
     depends_on:
       - mysql
@@ -97,11 +114,10 @@ services:
     restart: 'on-failure'
     command: 'python3 -m backend.build_ranker'
     env_file:
-      - .docker.env
+      - .env
     volumes:
-      - ./backend:/app/backend:ro
-      - ./crawler:/app/crawler:ro
-      - tuesearch-models:/app/opt/tuesearch/data/
+      - .:/app
+      - tuesearch-models:/opt/tuesearch/data/
     networks:
       - mysql_net
   ############################################################
@@ -109,8 +125,7 @@ services:
   # Persistent process.
   ############################################################
   backend_server:
-    build:
-      dockerfile: #TODO: add image
+    image: ghcr.io/tuesearch/search-engine/backend-server:latest
     container_name: backend_server
     ports:
       - '4000:4000'
@@ -123,11 +138,10 @@ services:
     restart: 'always'
     command: 'python3 -m backend.app'
     env_file:
-      - .docker.env
+      - .env
     volumes:
-      - ./backend:/app/backend:ro
-      - ./crawler:/app/crawler:ro
-      - tuesearch-models:/app/opt/tuesearch/data/
+      - .:/app
+      - tuesearch-models:/opt/tuesearch/data/
     networks:
       - mysql_net
   ############################################################
@@ -135,14 +149,26 @@ services:
   # Persistent process.
   ############################################################
   frontend_server:
-    build:
-      dockerfile: #TODO: add image
+    image: ghcr.io/tuesearch/search-engine/frontend-server:latest
     container_name: frontend_server
     ports:
       - '5000:5000'
     restart: 'always'
-    command: serve -s build -l 4000
-    volumes:
-      - ./.docker.env:/app/.env
+    command: serve -s build -l 5000
     networks:
       - mysql_net
+
+  ############################################################
+  # Start Watchtower
+  # Watchtower will check for new images every 5 minutes and
+  # update the running containers.
+  ############################################################
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=500
+      - WATCHTOWER_CLEANUP=true
