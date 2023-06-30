@@ -63,48 +63,26 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-docker-
 
-      - name: 🐋 Pull image
-        run: docker pull ghcr.io/tuesearch/search-engine/database-server:latest
+      - name: 🐋 Pull image and start database
+        run: docker-compose up -d mysql mysql
 
-      - name: 🐋 Start database image
-        run: docker run --name mysql -v /path/to/.mysql.env:/root/.mysql.env -p 3306:3306 -d ghcr.io/tuesearch/search-engine/database-server:latest
-
-      - name: 🐍 Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-          cache: 'pip'
-          cache-dependency-path: requirements.txt
-
-      - name: 📦 Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Check Database Connection
-        run: |
-          ping -c 1 mysql
-
-          # Check the exit code of the ping command
-          if [ $? -eq 0 ]; then
-            echo "Database connection successful"
-          else
-            echo "Database connection failed"
-            exit 1
-          fi
+      - name: 🐋 build backend image
+        run: docker build -t backend-server -f docker/backend.Dockerfile .
 
       - name: Initialize database
-        run: python3 -m scripts.initialize_database
+        run: docker-compose up --exit-code-from initialize_database initialize_database
 
       - name: crawl a bit
-        run: python3 -m crawler.main -n 1
+        run: docker-compose up --exit-code-from crawl crawl
 
       - name: build inverted index
-        run: python3 -m backend.build_inverted_index
+        run: docker-compose up --exit-code-from build_inverted_index build_inverted_index
 
-      - name: run ranker
-        run: python3 -m backend.build_ranker
+      - name: build ranker
+        run: docker-compose up --exit-code-from build_ranker build_ranker
 
-      - name: start backend
-        run: python3 -m backend.app &
+      - name: 🐋 start backend
+        run: docker-compose up -d backend_server
 
       - name: 🧪 run tests
         run: curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4000/search?q=tubingen"
