@@ -12,7 +12,7 @@ import os
 from dotenv import load_dotenv
 
 from crawler import utils
-from crawler.relevance_classification.url_relevance import is_url_relevant
+from crawler.relevance_classification.url_relevance import URL
 
 load_dotenv()
 
@@ -65,7 +65,7 @@ def is_document_relevant(document: 'Document'):
         document.h5_tokens,
         document.h6_tokens
     ]
-    contains_tuebingen = any([do_tokens_contain_tuebingen(field) for field in json_fields]) or is_url_relevant(
-        document.url)
-    is_english = any([utils.text.do_text_contain_english_content(field) for field in text_fiels])
+    contains_tuebingen = any([do_tokens_contain_tuebingen(field) for field in json_fields]) or URL(
+        document.url).is_relevant
+    is_english = any([utils.text.do_text_contain_english_content(field) for field in text_fields])
     return contains_tuebingen and is_english

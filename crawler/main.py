@@ -50,7 +50,7 @@ class Loop:
                         LOG.info(f"Relevant {job}. Created {len(new_document.links)} new jobs.")
                     else:
                         LOG.info(f"Irrelevant {job}. Created {len(new_document.links)} new jobs.")
-                    Job.create_jobs(new_document.links)
+                    Job.create_jobs(new_document.relevant_links)
                 else:
                     LOG.info(f"Failed {job}.")
             except peewee.IntegrityError as error:

@@ -241,5 +241,6 @@ class URL:
 
         return total_points
 
+    @functools.cached_property
     def is_relevant(self) -> bool:
         return self.priority > 0

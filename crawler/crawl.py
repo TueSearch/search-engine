@@ -14,6 +14,8 @@ from requests_html import HTMLSession
 from crawler import utils, relevance_classification
 from crawler.models.document import Document
 from crawler.models.job import Job
+from crawler.relevance_classification import url_relevance
+from crawler.relevance_classification.url_relevance import URL
 
 load_dotenv()
 
@@ -58,7 +60,7 @@ class Crawler:
         """
         self.job: Job = job
 
-    def generate_document_from_html(self, html: str) -> Document:
+    def generate_document_from_html(self, html: str) -> (Document, list[URL]):
         """Generate a Document object from the HTML content of a crawled page.
 
         Args:
@@ -67,13 +69,13 @@ class Crawler:
             Document: The generated Document object.
             list[str]: The list of URLs found in the HTML content.
         """
-        urls = utils.url.get_all_urls_from_html(html, self.job.url)
+        urls = url_relevance.URL.get_links(html, self.job.url)
         document = utils.text.generate_text_document_from_html(html)
         document.job = self.job
-        document.links = urls
-        document.relevant_links = [url for url in urls if relevance_classification.url_relevance.is_url_relevant(url)]
+        document.links = [url for url in urls]
+        document.relevant_links = [url for url in urls if url.is_relevant]
         document.relevant = relevance_classification.document_relevance.is_document_relevant(document)
-        return document
+        return document, urls
 
     def try_to_obtain_static_website_html(self):
         """Send an HTTP request to the URL of the job.
@@ -159,18 +161,15 @@ class Crawler:
             The crawled document.
         """
         new_document = None
-        if relevance_classification.is_job_relevant(self.job):
-            try:  # First, try a cheaper static version.
-                new_document = self.crawl_assume_website_is_static()
+        try:  # First, try a cheaper static version.
+            new_document = self.crawl_assume_website_is_static()
+        except Exception as exception:
+            LOG.error(f"{str(exception)}")
+
+        if new_document is None or not new_document.relevant:
+            time.sleep(random.randint(*CRAWL_RANDOM_SLEEP_INTERVAL))
+            try:  # If not successful, try static version with vanilla requests.
+                new_document = self.crawl_assume_website_is_dynamic()
             except Exception as exception:
                 LOG.error(f"{str(exception)}")
-
-            if new_document is None or not new_document.relevant:
-                time.sleep(random.randint(*CRAWL_RANDOM_SLEEP_INTERVAL))
-                try:  # If not successful, try static version with vanilla requests.
-                    new_document = self.crawl_assume_website_is_dynamic()
-                except Exception as exception:
-                    LOG.error(f"{str(exception)}")
-        else:
-            LOG.info(f"No crawl: job {self.job.url} is not relevant.")
         return new_document

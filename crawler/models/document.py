@@ -39,8 +39,8 @@ class Document(BaseModel):
     h6_tokens = JSONField(default=[])
     body_tokens = JSONField(default=[])
     # Links
-    links = LongTextField(default=[])
-    relevant_links = LongTextField(default=[])
+    links = JSONField(default=[])
+    relevant_links = JSONField(default=[])
     # Classification
     relevant = peewee.BooleanField(default=True)
 

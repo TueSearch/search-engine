@@ -5,8 +5,10 @@ import peewee
 from playhouse.shortcuts import model_to_dict
 
 from crawler import utils
-from crawler.models.base import BaseModel, LongTextField, JSONField, URL
+from crawler.models.base import BaseModel, LongTextField, JSONField
 from crawler.models.server import Server
+from crawler.relevance_classification.job_relevance import assign_job_priority
+from crawler.relevance_classification.url_relevance import URL
 
 LOG = utils.get_logger(__file__)
 
@@ -47,21 +49,19 @@ class Job(BaseModel):
     def __hash__(self):
         return hash(self.url)
 
+    def should_be_crawled(self) -> bool:
+        return self.priority > 0
+
     @staticmethod
-    def create_jobs(urls: list[URL]):
-        from crawler import relevance_classification
-        if len(urls) == 0:
+    def create_jobs(relevant_links: list[URL]):
+        if len(relevant_links) == 0:
             return
-        servers = list(set(utils.url.get_server_name_from_url(url) for url in urls))
+        servers = [link.server_name for link in relevant_links]
         servers = [Server.get_or_create(name=server)[0] for server in servers]
         servers = {server.name: server for server in servers}
-        url_to_server = {url: servers[utils.url.get_server_name_from_url(url)] for url in urls}
+        link_to_server = {link: servers[link.server_name] for link in relevant_links}
         jobs_batch = []
-        for url, server in url_to_server.items():
-            job = Job(url=url,
-                      server=server.id,
-                      priority=relevance_classification.get_url_priority(url))
-            job_dict = model_to_dict(job)
-            job_dict["server"] = server.id
-            jobs_batch.append(job_dict)
+        for link, server in link_to_server.items():
+            job = Job(url=link.url, server=server.id, priority=link.priority + min(100, server.page_rank * 100))
+            jobs_batch.append(model_to_dict(job))
         Job.insert_many(jobs_batch).on_conflict_ignore().execute()
