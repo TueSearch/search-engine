@@ -3,7 +3,7 @@ This module contains the Document model. It represents a crawled document.
 """
 import peewee
 
-from crawler.models.base import BaseModel, LongTextField, JSONField
+from crawler.sql_models.base import BaseModel, LongTextField, JSONField
 
 
 class Document(BaseModel):

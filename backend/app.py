@@ -15,7 +15,7 @@ Usage:
 """
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
-from backend.rank import rank
+from backend.fused_ranker import rank
 
 app = Flask(__name__)
 cors = CORS(app)

@@ -3,7 +3,7 @@ Streamers for streaming sentences from relevant documents.
 """
 import functools
 from numpy.typing import ArrayLike
-from crawler.models.document import Document
+from crawler.sql_models.document import Document
 
 
 class DocumentStreamer:
@@ -61,6 +61,5 @@ class DocumentStreamer:
         return result
 
 
-DocumentTokensStreamer = functools.partial(DocumentStreamer, transform=lambda doc: " ".join(doc.body_tokens))
-DocumentBodyGlobalTfidfVectorStreamer = functools.partial(DocumentStreamer,
-                                                          transform=lambda doc: doc.body_tfidf)
+DocumentBodyTokensStreamer = functools.partial(DocumentStreamer, transform=lambda doc: doc.body_tokens)
+DocumentBodyTokensStringStreamer = functools.partial(DocumentStreamer, transform=lambda doc: " ".join(doc.body_tokens))

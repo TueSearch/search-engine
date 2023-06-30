@@ -5,9 +5,9 @@ import peewee
 from playhouse.shortcuts import model_to_dict
 
 from crawler import utils
-from crawler.models.base import BaseModel, LongTextField, JSONField
-from crawler.models.server import Server
-from crawler.relevance_classification.job_relevance import assign_job_priority, get_job_priority
+from crawler.sql_models.base import BaseModel, LongTextField, JSONField
+from crawler.sql_models.server import Server
+from crawler.relevance_classification.job_relevance import get_job_priority
 from crawler.relevance_classification.url_relevance import URL
 
 LOG = utils.get_logger(__file__)
