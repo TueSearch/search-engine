@@ -17,7 +17,7 @@ CRAWL_EXCLUDED_EXTENSIONS = set(json.loads(
     os.getenv("CRAWL_EXCLUDED_EXTENSIONS")))
 CRAWL_BLACK_LIST = set(json.loads(os.getenv("CRAWL_BLACK_LIST")))
 QUEUE_MANUAL_SEEDS = json.loads(os.getenv('QUEUE_MANUAL_SEEDS'))
-
+CRAWL_PRIORITY_LIST = json.loads(os.getenv('CRAWL_PRIORITY_LIST'))
 
 def get_url_extension(url):
     parsed_url = urlparse(url)
@@ -61,18 +61,35 @@ def get_url_priority(url: str) -> int:
     if utils.url.get_server_name_from_url(url) in CRAWL_BLACK_LIST:
         return -1
 
-    count = 1
-    if "bingen" in url:
-        count += 2
-    if "/en/" in url:
-        count += 1
-    if "en." in url:
-        count += 1
+    tokens = utils.url.tokenize_url(
+        "https://tuebingenresearchcampus.com/en/research-in-tuebingen/tnc/neuro-campus-initiatives/")
+    priority = 1
+    has_tuebingen = has_bingen = False
+    for token in tokens:
+        if "tübingen" in token or "tuebingen" in token or "tubingen" in token:
+            has_tuebingen = True
+        if "bingen" in token:
+            has_bingen = True
+    is_english = "en" in tokens or "/en/" in url or "en." in url or utils.text.do_text_contain_english_content(
+        " ".join(tokens))
+    for priority_url in CRAWL_PRIORITY_LIST:
+        if priority_url in url:
+            priority += 20
+    if has_bingen:
+        priority += 3
+    if has_tuebingen:
+        priority += 5
+    if is_english:
+        priority += 3
+    if is_english and has_bingen:
+        priority += 10
+    if is_english and has_tuebingen:
+        priority += 15
     if url in QUEUE_MANUAL_SEEDS:
-        count += 100
+        priority += 100
     if extract(url).suffix == "com":
-        count += 1
-    return count
+        priority += 1
+    return priority
 
 
 def is_url(text: str) -> bool:
@@ -104,4 +121,3 @@ def is_url_relevant(url: str) -> bool:
     Returns: True if the URL is relevant, False otherwise.
     """
     return get_url_priority(url) > 0
-

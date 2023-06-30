@@ -13,8 +13,8 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE_NAME: ${{ github.repository }}/backen-server
-  FRONTEND_IMAGE_NAME: ${{ github.repository }}/fronten-server
+  BACKEND_IMAGE_NAME: ${{ github.repository }}/backend-server
+  FRONTEND_IMAGE_NAME: ${{ github.repository }}/frontend-server
   DATABASE_IMAGE_NAME: ${{ github.repository }}/database-server
 
 jobs:

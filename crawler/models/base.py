@@ -16,13 +16,16 @@ load_dotenv()
 DATABASE_LOG_FILE = os.getenv("DATABASE_LOG_FILE")
 LOG = log.get_logger(__name__)
 
-DATABASE = peewee.MySQLDatabase(database=os.getenv("MYSQL_SEARCH_ENGINE_DATABASE"),
-                                host=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_HOST"),
-                                port=int(os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_PORT")),
+HOST = os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_HOST")
+PORT = int(os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_PORT"))
+DB = os.getenv("MYSQL_SEARCH_ENGINE_DATABASE")
+DATABASE = peewee.MySQLDatabase(database=DB,
+                                host=HOST,
+                                port=PORT,
                                 user=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_USER"),
                                 password=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_PASSWORD"))
 DATABASE.connect()
-LOG.info("Database connection successes.")
+LOG.info(f'Database connection successes. To host {HOST}:{PORT} database {DB}.')
 
 
 class LongTextField(peewee.TextField):
@@ -60,6 +63,7 @@ class PickleField(peewee.BlobField):
         if value is not None:
             return pickle.loads(value)
         return value
+
 
 class BaseModel(peewee.Model):
     """

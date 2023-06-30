@@ -14,3 +14,4 @@ docker.env
 **/.pytest_cache/
 **/opt/
 pytest-results.xml
+out

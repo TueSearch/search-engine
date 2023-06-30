@@ -30,7 +30,7 @@ class Job(BaseModel):
         table_name = 'jobs'
 
     def __str__(self):
-        return f"Job[server={self.server}, url={self.url}, ]"
+        return f"Job[server={self.server}, url={self.url}, priority={self.priority}]"
 
     def __repr__(self):
         return str(self)

@@ -48,7 +48,7 @@ def write_results_of_global_tf_idf_to_database():
             document.body_tfidf = tfidf.transform([" ".join(document.body_tokens)])[0]
             document.save()
         except Exception as e:
-            LOG.error("Can not write results of global TF-IDF of one entry to database: " + str(e))
+            LOG.error(f"Can not write results of global TF-IDF of one entry to database: {e}")
     LOG.info("Finished vectorize database's documents with the global TF-IDF to database")
 
 

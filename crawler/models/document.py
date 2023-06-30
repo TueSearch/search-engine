@@ -7,10 +7,10 @@ from crawler.models.base import BaseModel, LongTextField, JSONField, PickleField
 
 
 class Document(BaseModel):
-    from crawler.models.job import Job
     """
     Represents a crawled document.
     """
+    from crawler.models.job import Job
     id = peewee.BigAutoField(primary_key=True)
     job = peewee.ForeignKeyField(Job, backref="job_id")
     html = LongTextField()

@@ -1,9 +1,106 @@
 repos:
   - repo: local
     hooks:
-      - id: Pre-commit.
-        name: Pre-commit.
+      - id: create_reports.
+        name: create_reports.
         language: system
-        entry: ./scripts/pre-commit.sh
         pass_filenames: false
         always_run: true
+        verbose: true
+        entry: touch pytest-results.xml
+
+      - id: assign_right_reports.
+        name: assign_right_reports.
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        entry: chmod 777 pytest-results.xml
+
+      - id: stop_everything.
+        name: stop_everything.
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        entry: docker-compose down
+
+      - id: start_database.
+        name: start_database.
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        entry: docker-compose up -d mysql mysql
+
+      - id: build_image.
+        name: build_image.
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        entry: docker-compose build
+
+      - id: drop_database.
+        name: drop_database.
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        entry: docker-compose up --exit-code-from drop_database drop_database
+
+      - id: initialize_database.
+        name: initialize_database.
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        entry: docker-compose up --exit-code-from initialize_database initialize_database
+
+      - id: run_unit_tests.
+        name: run_unit_tests.
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        entry: docker-compose up --exit-code-from run_unit_tests run_unit_tests
+
+      - id: crawl.
+        name: crawl.
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        entry: docker-compose up --exit-code-from crawl crawl
+
+      - id: build_inverted_index.
+        name: build_inverted_index.
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        entry: docker-compose up --exit-code-from build_inverted_index build_inverted_index
+
+      - id: build_ranker.
+        name: build_ranker.
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        entry: docker-compose up --exit-code-from build_ranker build_ranker
+
+      - id: backend_server.
+        name: backend_server.
+        language: system
+        pass_filenames: false
+        always_run: true
+        entry: docker-compose up -d backend_server
+
+      - id: test_api.
+        name: test_api.
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        entry: curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4000/search?q=tubingen"
+

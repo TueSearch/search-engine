@@ -1,28 +1,27 @@
 import argparse
+import atexit
 import json
 import math
 import multiprocessing
 import os
 import random
+import signal
 import time
 
 import peewee
-from dotenv import load_dotenv
-
-from crawler import utils, relevance_classification
+from crawler import utils
 from crawler.crawl import Crawler
-from crawler.models.base import DATABASE
 from crawler.models.document import Document
 from crawler.models.job import Job
+from crawler.models.server import Server
 from crawler.priority_queue import PriorityQueue
-import atexit
-import signal
+from dotenv import load_dotenv
 
 load_dotenv()
 
 CRAWL_RANDOM_SLEEP_INTERVAL = list(json.loads(
     os.getenv("CRAWL_RANDOM_SLEEP_INTERVAL")))
-CRAWL_REDIRECTION_LIMIT = int(os.getenv("CRAWL_REDIRECTION_LIMIT"))
+CRAWL_BATCH_SIZE = int(os.getenv("CRAWL_BATCH_SIZE"))
 LOG = utils.get_logger(__file__)
 random.seed(1)
 
@@ -41,12 +40,19 @@ class Loop:
         Args:
             results: results of the jobs.
         """
+        LOG.info(f"Crawled {len(results)} documents.")
         for job, new_document in zip(self.jobs, results):
             success = new_document is not None
             try:
                 if success:  # Save new document
                     new_document.save()
-                Job.create_jobs(new_document.links)
+                    if new_document.relevant:
+                        LOG.info(f"Relevant {job}. Created {len(new_document.links)} new jobs.")
+                    else:
+                        LOG.info(f"Irrelevant {job}. Created {len(new_document.links)} new jobs.")
+                    Job.create_jobs(new_document.links)
+                else:
+                    LOG.info(f"Failed {job}.")
             except peewee.IntegrityError as error:
                 LOG.error(f"Error saving document {new_document.url}: {error}")
             finally:
@@ -66,40 +72,24 @@ class Loop:
             results = manager.list([None for _ in self.jobs])
             time.sleep(random.uniform(*CRAWL_RANDOM_SLEEP_INTERVAL))  # Random delay
 
-            def process_job(j_idx, j):
-                results[j_idx] = Crawler(j).crawl()
+            def process_job(j_idx, job):
+                LOG.info(f"Starting to crawl {job}.")
+                results[j_idx] = Crawler(job).crawl()
 
-            processes = [multiprocessing.Process(target=process_job, args=(i, job)) for i, job in enumerate(self.jobs)]
+            processes = [multiprocessing.Process(target=process_job, args=(i, job)) for i, job in
+                         enumerate(self.jobs)]
             for process in processes:
                 process.start()
             for process in processes:
                 process.join()
             self.store_results(results)
 
-    def get_jobs_and_mark_as_being_crawled(self):
-        """
-        Get the jobs from the queue and mark them as being crawled.
-        Do this in a transaction manner
-        """
-        jobs_can_be_crawled_safely = []
-        with DATABASE.atomic():
-            self.jobs = self.queue.get_highest_priority_jobs()
-            for job in self.jobs:
-                try:
-                    job.being_crawled = True
-                    job.save()
-                    jobs_can_be_crawled_safely.append(job)
-                    LOG.info(f"Marked job {job} as being crawled.")
-                except Exception as marking_job_as_safe_exception:
-                    LOG.error(f"Error retrieving marking job as safe: {marking_job_as_safe_exception}")
-        self.jobs = jobs_can_be_crawled_safely
-
     def loop(self):
         """
         Run the crawler until the queue is exhausted.
         """
         while self.number_crawled < self.number_to_crawl:
-            self.get_jobs_and_mark_as_being_crawled()
+            self.jobs = self.queue.get_next_jobs(min(self.number_to_crawl - self.number_crawled, CRAWL_BATCH_SIZE))
             if len(self.jobs) == 0:
                 LOG.info("No more jobs to crawl.")
                 break
@@ -123,6 +113,11 @@ def main():
     parser.add_argument("-n", "--number", type=int, default=math.inf,
                         help="How many documents should be crawled")
     args = parser.parse_args()
+
+    print(f"Found: {Server.select().count()} servers in DB.")
+    print(f"Found: {Job.select().count()} jobs in DB.")
+    print(f"Found: {Document.select().count()} documents in DB.")
+
     loop = Loop(args.number)
     atexit.register(loop.handle_exit)
     signal.signal(signal.SIGTERM, loop.handle_exit)

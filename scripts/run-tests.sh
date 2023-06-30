@@ -1,6 +1,6 @@
 #!/bin/bash
-set -e
 
+set -e
 python3 -m pylint --rcfile=.pylintrc crawler
 python3 -m pylint --rcfile=.pylintrc backend
 python3 -m pylint --rcfile=.pylintrc scripts

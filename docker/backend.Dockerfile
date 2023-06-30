@@ -26,13 +26,13 @@ COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
 
 # Copy backend
-COPY backend .
+COPY backend ./backend
 
 # Copy crawler
-COPY crawler .
+COPY crawler ./crawler
 
 # Copy crawler
-COPY scripts .
+COPY scripts ./scripts
 
 # Expose the port on which your Flask app will run
 EXPOSE 5000

@@ -36,6 +36,14 @@ def remove_hyperlinks_from_text(text: str) -> str:
 
 
 def tokenize(text: str) -> list[str]:
+    """
+    Tokenizes the given text.
+    Args:
+        text: input text
+
+    Returns: list of strings
+
+    """
     text = text.lower()
 
     text = html.unescape(text)
@@ -69,6 +77,7 @@ def tokenize(text: str) -> list[str]:
     tokens = [token for token in tokens if len(token.text) > 1]
 
     return [f"{t.lemma_}_{t.pos_}" for t in tokens]
+
 
 def do_text_contain_english_content(text: str) -> bool:
     """

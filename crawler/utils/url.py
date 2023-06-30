@@ -5,12 +5,20 @@ import json
 from urllib.parse import urljoin, urlparse, urlunparse
 import os
 
+import spacy
 import tldextract
 from bs4 import BeautifulSoup
 from url_normalize import url_normalize
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Credit: https://stackoverflow.com/a/68030892
+NLP = spacy.blank("en")
+NLP.tokenizer.url_match = None
+infixes = NLP.Defaults.infixes + [r'\.']
+infix_regex = spacy.util.compile_infix_regex(infixes)
+NLP.tokenizer.infix_finditer = infix_regex.finditer
 
 CRAWL_EXCLUDED_EXTENSIONS = set(json.loads(
     os.getenv("CRAWL_EXCLUDED_EXTENSIONS")))
@@ -99,3 +107,18 @@ def normalize_url(url: str) -> str:
     parsed_url = urlparse(url)
     parsed_url = parsed_url._replace(fragment='')
     return urlunparse(parsed_url)
+
+
+def tokenize_url(url: str) -> list[str]:
+    """
+    Tokenizes a URL.
+
+    Args:
+        url (str): Input URL.
+
+    Returns:
+        list[str]: List of tokens.
+    """
+    tokens = list(NLP(url))
+    tokens = [token.text for token in tokens if not token.is_punct]
+    return tokens
