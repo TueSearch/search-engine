@@ -4,6 +4,7 @@ import json
 import math
 import multiprocessing
 import os
+import pickle
 import random
 import signal
 import time
@@ -51,7 +52,7 @@ class Loop:
                         LOG.info(f"Relevant {job}. Created {len(relevant_urls)} new jobs.")
                     else:
                         LOG.info(f"Irrelevant {job}. Created {len(relevant_urls)} new jobs.")
-                    Job.create_jobs(relevant_urls, parent_id=new_document.id)
+                    Job.create_jobs(relevant_urls, parent=new_document)
                 else:
                     LOG.info(f"Failed {job}.")
             except peewee.IntegrityError as error:
@@ -75,7 +76,9 @@ class Loop:
 
             def process_job(j_idx, job):
                 LOG.info(f"Starting to crawl {job}.")
-                results[j_idx] = Crawler(job).crawl()
+                result = Crawler(job).crawl()
+                LOG.info(f" Result: {result}.")
+                results[j_idx] = result
 
             processes = [multiprocessing.Process(target=process_job, args=(i, job)) for i, job in
                          enumerate(self.jobs)]
@@ -91,6 +94,7 @@ class Loop:
         """
         while self.number_crawled < self.number_to_crawl:
             self.jobs = self.queue.get_next_jobs(min(self.number_to_crawl - self.number_crawled, CRAWL_BATCH_SIZE))
+            pickle.dumps(self.jobs)
             if len(self.jobs) == 0:
                 LOG.info("No more jobs to crawl.")
                 break

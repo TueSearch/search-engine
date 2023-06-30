@@ -40,28 +40,19 @@ class JSONField(LongTextField):
     """
     https://stackoverflow.com/questions/40553790/peewee-orm-jsonfield-for-mysql
     """
-
-    @staticmethod
-    def db(value):
+    def db_value(self, value):
         if value is not None:
             if isinstance(value, str):
                 return value
             return json.dumps(value)
         raise Exception("None type!")
 
-    @staticmethod
-    def python(value):
+    def python_value(self, value):
         if value is not None:
             if isinstance(value, str):
                 return json.loads(value)
             return value
         raise Exception("None type!")
-
-    def db_value(self, value):
-        return JSONField.db(value)
-
-    def python_value(self, value):
-        return JSONField.python(value)
 
 
 class PickleField(peewee.BlobField):

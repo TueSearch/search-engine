@@ -39,7 +39,7 @@ def get_logger(name: str, max_file_size: int = 10 * 1024 * 1024, backup_count: i
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler = logging.StreamHandler(sys.stderr)
     logger.addHandler(console_handler)
     console_handler.setFormatter(formatter)
 

@@ -11,18 +11,7 @@ class Document(BaseModel):
     Represents a crawled document.
     """
     id = peewee.BigAutoField(primary_key=True)
-    job_id = peewee.BigIntegerField()
-
-    # Hacky solution to solve circular dependency.
-    @property
-    def job(self):
-        from .job import Job
-        return Job.get(Job.id == self.job_id)
-
-    @job.setter
-    def job(self, value):
-        self.job_id = value.id
-
+    job_id = peewee.BigIntegerField(default=None)
     # Raw data field
     html = LongTextField(default="")
     # Raw text Fields

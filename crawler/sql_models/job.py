@@ -1,17 +1,16 @@
 """
 This module contains the Job model. It represents a job in the crawler's queue.
 """
-import urllib
-
 import peewee
 from playhouse.shortcuts import model_to_dict
 
-import crawler
 from crawler import utils
 from crawler.sql_models.base import BaseModel, LongTextField, JSONField
+from crawler.sql_models.document import Document
 from crawler.sql_models.server import Server
 from crawler.relevance_classification.job_relevance import get_job_priority
 from crawler.relevance_classification.url_relevance import URL
+
 LOG = utils.get_logger(__file__)
 
 
@@ -22,7 +21,7 @@ class Job(BaseModel):
     id = peewee.BigAutoField(primary_key=True)
     url = LongTextField()
     server = peewee.ForeignKeyField(Server, backref="server_id")
-    parent = peewee.ForeignKeyField(crawler.sql_models.document.Document, backref="parent_id")
+    parent = peewee.ForeignKeyField(Document, backref="parent_id")
     anchor_texts = JSONField(default=[])
     anchor_texts_tokens = JSONField(default=[[]])
     priority = peewee.FloatField(default=0.0)
@@ -55,7 +54,7 @@ class Job(BaseModel):
         return self.priority > 0
 
     @staticmethod
-    def create_jobs(relevant_links: list[URL], parent_id=None):
+    def create_jobs(relevant_links: list[URL], parent: Document = None):
         if len(relevant_links) == 0:
             return
         servers = [link.server_name for link in relevant_links]
@@ -63,8 +62,12 @@ class Job(BaseModel):
         servers = {server.name: server for server in servers}
         link_to_server = {link: servers[link.server_name] for link in relevant_links}
         jobs_batch = []
+        parent_id = None if parent is None else parent.id
+        parent_job = None if parent is None else Job.get_or_none(id=parent_id)
+        inherited_priority = 0.0 if parent is None else min(10, parent_job.priority / 10.0)
         for link, server in link_to_server.items():
             job = Job(url=link.url, parent=parent_id, server=server.id, priority=get_job_priority(server, link))
+            job.priority += inherited_priority
             job_dict = model_to_dict(job)
             job_dict['parent_id'] = parent_id
             job_dict['server_id'] = server.id

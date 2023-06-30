@@ -12,7 +12,10 @@ from bs4 import BeautifulSoup
 from url_normalize import url_normalize
 from dotenv import load_dotenv
 
+from crawler import utils
 from crawler.utils.text import tokenize_get_lang
+
+from crawler.utils import text
 
 load_dotenv()
 
@@ -37,7 +40,13 @@ class URL:
         parsed_url = urlparse(url)
         parsed_url = parsed_url._replace(fragment='')
         self.url = urlunparse(parsed_url)
-        self.anchor_text = anchor_text
+        self.anchor_text = utils.text.make_text_human_readable(anchor_text)
+
+    def __str__(self):
+        return f"URL[url={self.url}, anchor_text={self.anchor_text}]"
+
+    def __repr__(self):
+        return str(self)
 
     @staticmethod
     def get_links(html, url) -> list['URL']:
@@ -96,7 +105,6 @@ class URL:
         Returns:
             list[str]: List of tokens.
         """
-        from crawler.utils import text
         return text.advanced_tokenize_with_pos(self.anchor_text)
 
     @functools.cached_property
