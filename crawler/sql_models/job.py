@@ -1,11 +1,11 @@
 """
 This module contains the Job model. It represents a job in the crawler's queue.
 """
-import peewee
-from playhouse.shortcuts import model_to_dict
+import urllib
 
+import peewee
 from crawler import utils
-from crawler.sql_models.base import BaseModel, LongTextField, JSONField
+from crawler.sql_models.base import BaseModel, LongTextField, JSONField, DATABASE
 from crawler.sql_models.server import Server
 from crawler.relevance_classification.job_relevance import get_job_priority
 from crawler.relevance_classification.url_relevance import URL
@@ -23,7 +23,7 @@ class Job(BaseModel):
     parent = peewee.DeferredForeignKey('documents', backref="parent_id")
     anchor_texts = JSONField(default=[])
     anchor_texts_tokens = JSONField(default=[[]])
-    priority = peewee.IntegerField(default=0)
+    priority = peewee.FloatField(default=0.0)
     being_crawled = peewee.BooleanField(default=False)
     done = peewee.BooleanField(default=False)
     success = peewee.BooleanField(default=None, null=True)
@@ -53,17 +53,37 @@ class Job(BaseModel):
         return self.priority > 0
 
     @staticmethod
-    def create_jobs(relevant_links: list[URL]):
+    def create_jobs(relevant_links: list[URL], parent_id=None):
         if len(relevant_links) == 0:
             return
         servers = [link.server_name for link in relevant_links]
         servers = [Server.get_or_create(name=server)[0] for server in servers]
         servers = {server.name: server for server in servers}
         link_to_server = {link: servers[link.server_name] for link in relevant_links}
-        jobs_batch = []
         for link, server in link_to_server.items():
-            job = Job(url=link.url, server=server)
-            job.priority = get_job_priority(job, link)
-            job.server = job.server.id  # Hacky to make peewee work
-            jobs_batch.append(model_to_dict(job))
-        Job.insert_many(jobs_batch).on_conflict_ignore().execute()
+            job = Job(url=link.url, server=server, priority=get_job_priority(server, link))
+            url = job.url
+            server_id = str(server.id)
+            parent_id = str(parent_id) if parent_id is not None else "null"
+            anchor_texts = JSONField.db(job.anchor_texts)
+            anchor_texts_tokens = JSONField.db(job.anchor_texts_tokens)
+            priority = str(job.priority)
+            # query = f"""
+            # INSERT IGNORE INTO
+            # jobs (url, server_id, parent_id, anchor_texts, anchor_texts_tokens, priority)
+            # VALUES ('{url}', {server_id}, {parent_id}, '{anchor_texts}', '{anchor_texts_tokens}', {priority});"""
+            # print(query)
+            # DATABASE.execute_sql(query)
+            query = """
+                INSERT INTO jobs (url, server_id, anchor_texts, anchor_texts_tokens, priority)
+                VALUES (%s, %s, %s, %s, %s);
+            """
+            params = (
+                url,
+                server_id,
+                anchor_texts,
+                anchor_texts_tokens,
+                priority
+            )
+            print(params)
+            DATABASE.execute_sql(query, params)

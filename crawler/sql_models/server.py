@@ -16,7 +16,7 @@ class Server(BaseModel):
     page_rank = peewee.FloatField(default=0.0)
     total_jobs = peewee.BigIntegerField(default=0)
     success_jobs = peewee.BigIntegerField(default=0)
-    relevant_jobs = peewee.BigIntegerField(default=0)
+    relevant_documents = peewee.BigIntegerField(default=0)
 
     class Meta:
         """

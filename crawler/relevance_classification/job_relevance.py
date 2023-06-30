@@ -1,13 +1,14 @@
-from crawler.models.job import Job
 from crawler.relevance_classification.url_relevance import URL
+from crawler.sql_models.server import Server
 
 
-def get_job_priority(job: Job, link: URL):
+def get_job_priority(server: Server, link: URL):
     priority = link.priority
     if priority < 0:
         return priority
 
-    priority += min(50, job.server.page_rank * 50)
-    priority += (job.server.success_jobs / job.server.total_jobs) * 10
-    priority += (job.server.relevant_jobs / job.server.total_jobs) * 10 * 2
+    priority += min(50, server.page_rank * 50)
+    if server.total_jobs > 0:
+        priority += (server.success_jobs / server.total_jobs) * 10
+        priority += (server.relevant_documents / server.total_jobs) * 10 * 2
     return priority

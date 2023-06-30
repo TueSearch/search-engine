@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS jobs
     parent_id           BIGINT   DEFAULT NULL,
     anchor_texts        LONGTEXT DEFAULT ('[]'),
     anchor_texts_tokens LONGTEXT DEFAULT ('[[]]'),
-    priority            INT      DEFAULT 0     NOT NULL,
+    priority            FLOAT    DEFAULT 0.0   NOT NULL,
     being_crawled       BOOLEAN  DEFAULT FALSE,
     done                BOOLEAN  DEFAULT FALSE NOT NULL,
     success             BOOLEAN  DEFAULT NULL,
@@ -21,6 +21,5 @@ CREATE TABLE IF NOT EXISTS jobs
            (being_crawled = TRUE AND done = FALSE AND success IS NULL) OR
            (being_crawled = FALSE AND done = TRUE OR success IS NOT NULL)),
     -- Foreign keys
-    FOREIGN KEY (server_id) REFERENCES servers (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (parent_id) REFERENCES documents (id) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (server_id) REFERENCES servers (id)
 ) ENGINE = RocksDB;
