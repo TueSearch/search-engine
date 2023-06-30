@@ -55,6 +55,17 @@ jobs:
       - name: Prepare environment variables.
         run: cp example.env .env && cp example.mysql.env .mysql.env && cp -rf example.frontend.env frontend/.env
 
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /var/lib/docker
+          key: ${{ runner.os }}-docker-${{ hashFiles('**/Dockerfile') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
+
+      - name: 🐋 Pull image
+        run: docker pull ghcr.io/tuesearch/search-engine/database-server:latest
+
       - name: 🐋 Start database image
         run: docker run --name mysql -env-file .mysql.env -p 3306:3306 -d ghcr.io/tuesearch/search-engine/database-server:latest
 
