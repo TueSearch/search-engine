@@ -1,3 +1,4 @@
+import numpy as np
 import peewee
 import os
 from dotenv import load_dotenv
@@ -9,31 +10,59 @@ from tqdm import tqdm
 from backend.build_index import read_short_inverted_index
 from backend.streamers import *
 from crawler import utils
-from crawler.sql_models.base import BaseModel
-from crawler.sql_models.document import Document
+from crawler.sql_models.base import BaseModel, PickleField
 
 load_dotenv()
 TFIDF_VECTORIZER_FILE = os.getenv("TFIDF_VECTORIZER_FILE")
 TFIDF_NGRAM_RANGE = tuple(json.loads(os.getenv("TFIDF_NGRAM_RANGE")))
 LOG = utils.get_logger(__file__)
 
+TFIDF_CANONICAL_ORDERING = ["title", "meta_description", "meta_keywords", "meta_author", "h1", "h2", "h3", "h4", "h5",
+                            "h6", "body"]
+
 
 class Tfidf(BaseModel):
-    id = peewee.BigAutoField(peewee.ForeignKeyField(Document), primary_key=True)
-    title = peewee.BlobField()
-    meta_description = peewee.BlobField()
-    meta_keywords = peewee.BlobField()
-    meta_author = peewee.BlobField()
-    h1 = peewee.BlobField()
-    h2 = peewee.BlobField()
-    h3 = peewee.BlobField()
-    h4 = peewee.BlobField()
-    h5 = peewee.BlobField()
-    h6 = peewee.BlobField()
-    body = peewee.BlobField()
+    id = peewee.IntegerField(primary_key=True)
+    title = PickleField()
+    meta_description = PickleField()
+    meta_keywords = PickleField()
+    meta_author = PickleField()
+    h1 = PickleField()
+    h2 = PickleField()
+    h3 = PickleField()
+    h4 = PickleField()
+    h5 = PickleField()
+    h6 = PickleField()
+    body = PickleField()
 
     class Meta:
         table_name = 'tfidfs'
+
+    def vectors(self) -> dict[str, np.array]:
+        returned_vectors = dict()
+        if self.title is not None:
+            returned_vectors["title"] = self.title
+        if self.meta_description is not None:
+            returned_vectors["meta_description"] = self.meta_description
+        if self.meta_keywords is not None:
+            returned_vectors["meta_keywords"] = self.meta_keywords
+        if self.meta_author is not None:
+            returned_vectors["meta_author"] = self.meta_author
+        if self.h1 is not None:
+            returned_vectors["h1"] = self.h1
+        if self.h2 is not None:
+            returned_vectors["h2"] = self.h2
+        if self.h3 is not None:
+            returned_vectors["h3"] = self.h3
+        if self.h4 is not None:
+            returned_vectors["h4"] = self.h4
+        if self.h5 is not None:
+            returned_vectors["h5"] = self.h5
+        if self.h6 is not None:
+            returned_vectors["h6"] = self.h6
+        if self.body is not None:
+            returned_vectors["body"] = self.body
+        return returned_vectors
 
 
 def train_tf_idf_vectorizer():
@@ -117,7 +146,7 @@ def train_tf_idf_vectorizer():
     LOG.info(f"Wrote TF-IDF file to {TFIDF_VECTORIZER_FILE}")
 
 
-def read_tfidf_vectorizer():
+def read_tfidf_vectorizer() -> dict[str, TfidfVectorizer]:
     return utils.io.read_pickle_file(TFIDF_VECTORIZER_FILE)
 
 

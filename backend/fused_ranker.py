@@ -1,115 +1,81 @@
-'''
-The `rank` module provides functionality for ranking items based on a given metric or scoring mechanism.
-'''
-
-import os
 from collections import defaultdict
+from typing import Tuple, List, Dict
 
 import numpy as np
 from dotenv import load_dotenv
-from sklearn.metrics.pairwise import cosine_similarity
 
+from backend.build_index import read_short_inverted_index
+from backend.rankers.tfidf_ranker import TFIDFRanker
 from crawler import utils
 from crawler.sql_models.document import Document
 
 load_dotenv()
 
-TFIDF_VECTORIZER_FILE = os.getenv("TFIDF_VECTORIZER_FILE")
-TFIDF_VECTORIZER = utils.io.read_pickle_file(TFIDF_VECTORIZER_FILE)
-INVERTED_INDEX_FILE = os.getenv("INVERTED_INDEX_FILE")
-INVERTED_INDEX = utils.io.read_pickle_file(INVERTED_INDEX_FILE)
 LOG = utils.get_logger(__file__)
 
 
-def get_matches_for_tokens(tokens: list[str]) -> defaultdict[str, list]:
-    """
-    Return the document IDs for the documents matching the query.
+class FusedRanker:
+    def __init__(self):
+        pickled_index = read_short_inverted_index()
+        self.indices = pickled_index[0]
+        self.all_doc_ids = pickled_index[1]
 
-    Args:
-        tokens (str): The query to search for
+    def get_matches_for_query_tokens(self, query_tokens: list[str]) -> dict[str, list[int]]:
+        matches = defaultdict(list)
+        for index_name, index in self.indices.items():
+            for query_token in query_tokens:
+                if query_token in index:
+                    matches[index_name].extend(index[query_token])
+        return matches
 
-    Returns:
-        list: The list of document IDs matching the query
+    def scores(self, query: str) -> tuple[list[str], dict[int, float]]:
+        """
+        Retrieves a ranking of document IDs based on global TF-IDF naive normalized distance.
 
-    Example of result:
-        {
-            "token1" -> [(doc_id_1, pos_1, pos_2, pos_3),(doc_id_2, pos_2, pos_4),...],
-            "token2" -> [(doc_id_5, pos_1, pos_2, pos_3),(doc_id_42, pos_6, pos_4),...],
-            ...
-        }
-    """
-    token_matches = defaultdict(list)
-    for token in tokens:
-        token_matches[token].extend(INVERTED_INDEX[token])
-    return token_matches
+        Args:
+            query (str): The query string.
 
+        Returns:
+            list[int]: A list of document IDs, sorted by their ranking.
 
-def get_global_tfidf_naive_norm_distance_ranking(query: str) -> np.array:
-    """
-    Retrieves a ranking of document IDs based on global TF-IDF naive normalized distance.
+        """
+        # Preprocess the query
+        query_tokens = utils.text.advanced_tokenize_with_pos(query)
+        # Get the document IDs that match the query tokens
+        matched_ids = self.get_matches_for_query_tokens(query_tokens)
+        # Scores of the documents based on the TF-IDF
+        return query_tokens, TFIDFRanker(query_tokens, matched_ids).scores()
 
-    Args:
-        query (str): The query string.
+    def process_query(self, query: str, page=0, page_size=10) -> (list[str], list[Document]):
+        """
+        Rank the documents based on a query.
 
-    Returns:
-        list[int]: A list of document IDs, sorted by their ranking.
+        Args:
+            query (str): The query string.
+            page (int): The page number of the results (default: 0).
+            page_size (int): The number of results per page (default: 10).
 
-    """
-    # Preprocess the query
-    query_tokens = utils.text.advanced_tokenize_with_pos(query)
-    LOG.info(f"query_tokens: {query_tokens}")
-    preprocessed_query = " ".join(query_tokens)
+        Returns:
+            (list[str], list[Document]): Tokens of query for debugging and list of ranked documents.
 
-    # Get the document IDs for the documents matching the query
-    matching_data_structure = get_matches_for_tokens(query_tokens)
-    matched_document_ids = []
-    for matched_documents in matching_data_structure.values():
-        for matched_document in matched_documents:
-            matched_document_ids.append(matched_document[0])
-    matched_document_ids = np.asarray(matched_document_ids, dtype=np.int32)
-    LOG.info(f"Matched: {matched_document_ids}")
+        Note:
+            This function assumes that the global TF-IDF vectorizer has been trained.
 
-    # Get the TF-IDF vectors for the query
-    query_vector = TFIDF_VECTORIZER.tfidf_vectorize_indexed_documents([preprocessed_query])
-
-    # Compute cosine similarities between the query vector and document vectors
-    matched_vectors = [vec for vec in DocumentBodyGlobalTfidfVectorStreamer(matched_document_ids)]
-    similarities = [cosine_similarity(query_vector, v, dense_output=True)[0][0] for v in matched_vectors]
-
-    # Create a dictionary to store document ranks
-    sorted_sims = np.argsort(similarities)
-    sorted_document_ids = matched_document_ids[sorted_sims]
-    return query_tokens, sorted_document_ids
-
-
-def rank(query: str, page=0, page_size=10) -> (list[str], list[Document]):
-    """
-    Rank the documents based on a query.
-
-    Args:
-        query (str): The query string.
-        page (int): The page number of the results (default: 0).
-        page_size (int): The number of results per page (default: 10).
-
-    Returns:
-        (list[str], list[Document]): Tokens of query for debugging and list of ranked documents.
-
-    Note:
-        This function assumes that the global TF-IDF vectorizer has been trained.
-
-    Example:
-        documents = rank("search query", page=0, page_size=10)
-    """
-    query_tokens, document_ids = get_global_tfidf_naive_norm_distance_ranking(query)
-    # Convert the document_ids array to a list
-    document_ids = document_ids.tolist()
-    # Retrieve the documents based on the ranked document IDs
-    documents = Document.select().where(
-        Document.id.in_(document_ids)).paginate(
-        page + 1, page_size)
-    return query_tokens, list(documents)
+        Example:
+            documents = rank("search query", page=0, page_size=10)
+        """
+        query_tokens, documents_id_mapped_to_scores = self.scores(query)
+        # Convert the document_ids array to a list
+        ranking = list(documents_id_mapped_to_scores.keys())
+        ranking.sort(reverse=True, key=lambda x: documents_id_mapped_to_scores[x])
+        # Retrieve the documents based on the ranked document IDs
+        documents = Document.select().where(Document.id.in_(ranking)).paginate(page + 1, page_size)
+        return query_tokens, list(documents)
 
 
 if __name__ == '__main__':
-    for doc in rank("Tübingen"):
+    query = "the press in germany is bullshit"
+    processed_query, docs = FusedRanker().process_query(query)
+    print(processed_query)
+    for doc in docs:
         print(doc)

@@ -27,6 +27,9 @@ class Migration(BaseModel):
     """
     name = peewee.CharField(unique=True)
 
+    class Meta:
+        table_name = 'migrations'
+
 
 def run_migration_scripts():
     """

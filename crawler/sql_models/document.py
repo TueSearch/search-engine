@@ -48,5 +48,19 @@ class Document(BaseModel):
         table_name = 'documents'
 
     def __str__(self):
-        return f"Document[body={self.body[:50]}, title={self.title[:50]}, title_tokens={self.title_tokens[:25]},\
-          body_tokens={self.body_tokens[:25]}, relevant={self.relevant}]"
+        return f"""Document[
+    body={self.body[:50]}, 
+    title={self.title[:50]}, 
+    title_tokens={self.title_tokens},
+    meta_description_tokens={self.meta_description_tokens},
+    meta_keywords_tokens={self.meta_keywords_tokens},
+    meta_author_tokens={self.meta_author_tokens},
+    h1_tokens={self.h1_tokens},
+    h2_tokens={self.h2_tokens},
+    h3_tokens={self.h3_tokens},
+    h4_tokens={self.h4_tokens},
+    h5_tokens={self.h5_tokens},
+    h6_tokens={self.h6_tokens},
+    body_tokens={self.body_tokens}, 
+    relevant={self.relevant}
+]"""

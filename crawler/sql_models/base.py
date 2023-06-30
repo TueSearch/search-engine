@@ -40,6 +40,7 @@ class JSONField(LongTextField):
     """
     https://stackoverflow.com/questions/40553790/peewee-orm-jsonfield-for-mysql
     """
+
     def db_value(self, value):
         if value is not None:
             if isinstance(value, str):
@@ -61,7 +62,11 @@ class PickleField(peewee.BlobField):
 
     def python_value(self, value):
         if value is not None:
-            return pickle.loads(value)
+            try:
+                return pickle.loads(value)
+            except Exception as e:
+                LOG.error(f"Error while unpickling: {e}")
+                return None
         return value
 
 

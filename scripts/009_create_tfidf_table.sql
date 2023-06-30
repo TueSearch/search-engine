@@ -1,7 +1,6 @@
 CREATE TABLE IF NOT EXISTS tfidfs
 (
-    id                BIGINT AUTO_INCREMENT PRIMARY KEY,
-    document_id       BIGINT,
+    id                BIGINT PRIMARY KEY,
     title             BLOB,
     meta_description  BLOB,
     meta_keywords     BLOB,
@@ -17,5 +16,5 @@ CREATE TABLE IF NOT EXISTS tfidfs
     created_date      DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_time_changed DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     -- Foreign key
-    FOREIGN KEY (document_id) REFERENCES documents (id) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (id) REFERENCES documents (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
