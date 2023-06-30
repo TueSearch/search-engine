@@ -11,7 +11,18 @@ class Document(BaseModel):
     Represents a crawled document.
     """
     id = peewee.BigAutoField(primary_key=True)
-    job = peewee.DeferredForeignKey('jobs', backref="job_id")
+    job_id = peewee.BigIntegerField()
+
+    # Hacky solution to solve circular dependency.
+    @property
+    def job(self):
+        from .job import Job
+        return Job.get(Job.id == self.job_id)
+
+    @job.setter
+    def job(self, value):
+        self.job_id = value.id
+
     # Raw data field
     html = LongTextField(default="")
     # Raw text Fields
@@ -38,9 +49,6 @@ class Document(BaseModel):
     h5_tokens = JSONField(default=[])
     h6_tokens = JSONField(default=[])
     body_tokens = JSONField(default=[])
-    # Links
-    links = JSONField(default=[])
-    relevant_links = JSONField(default=[])
     # Classification
     relevant = peewee.BooleanField(default=True)
 

@@ -16,8 +16,8 @@ from crawler.relevance_classification.url_relevance import URL
 
 load_dotenv()
 
-INVERTED_INDEX_TUEBINGEN_WRITING_STYLES = set(json.loads(
-    os.getenv("INVERTED_INDEX_TUEBINGEN_WRITING_STYLES")))
+TUEBINGEN_WRITING_STYLES = set(json.loads(
+    os.getenv("TUEBINGEN_WRITING_STYLES")))
 CRAWL_ENGLISH_CLASSIFICATION_THRESHOLD = float(
     os.getenv("CRAWL_ENGLISH_CLASSIFICATION_THRESHOLD"))
 CRAWL_ENGLISH_CLASSIFICATION_MULTI_THRESHOLD = float(
@@ -34,7 +34,7 @@ def do_tokens_contain_tuebingen(tokens: list[str]):
     Returns:
         bool: True if the word variations of "Tübingen" are present in the tokens, False otherwise.
     """
-    for tuebingen in INVERTED_INDEX_TUEBINGEN_WRITING_STYLES:
+    for tuebingen in TUEBINGEN_WRITING_STYLES:
         for token in tokens:
             if tuebingen in token:
                 return True

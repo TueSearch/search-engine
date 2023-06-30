@@ -10,8 +10,7 @@ from dotenv import load_dotenv
 from sklearn.metrics.pairwise import cosine_similarity
 
 from crawler import utils
-from crawler.models.document import Document
-from backend.streamers import DocumentBodyGlobalTfidfVectorStreamer
+from crawler.sql_models.document import Document
 
 load_dotenv()
 

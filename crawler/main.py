@@ -11,9 +11,9 @@ import time
 import peewee
 from crawler import utils
 from crawler.crawl import Crawler
-from crawler.models.document import Document
-from crawler.models.job import Job
-from crawler.models.server import Server
+from crawler.sql_models.document import Document
+from crawler.sql_models.job import Job
+from crawler.sql_models.server import Server
 from crawler.priority_queue import PriorityQueue
 from dotenv import load_dotenv
 
@@ -41,16 +41,17 @@ class Loop:
             results: results of the jobs.
         """
         LOG.info(f"Crawled {len(results)} documents.")
-        for job, new_document in zip(self.jobs, results):
+        for job, (new_document, urls) in zip(self.jobs, results):
             success = new_document is not None
+            relevant_urls = [url for url in urls if url.is_relevant]
             try:
                 if success:  # Save new document
                     new_document.save()
                     if new_document.relevant:
-                        LOG.info(f"Relevant {job}. Created {len(new_document.links)} new jobs.")
+                        LOG.info(f"Relevant {job}. Created {len(relevant_urls)} new jobs.")
                     else:
-                        LOG.info(f"Irrelevant {job}. Created {len(new_document.links)} new jobs.")
-                    Job.create_jobs(new_document.relevant_links, parent_id=new_document.id)
+                        LOG.info(f"Irrelevant {job}. Created {len(relevant_urls)} new jobs.")
+                    Job.create_jobs(relevant_urls, parent_id=new_document.id)
                 else:
                     LOG.info(f"Failed {job}.")
             except peewee.IntegrityError as error:
@@ -69,7 +70,7 @@ class Loop:
         Start the processes to crawl the jobs.
         """
         with multiprocessing.Manager() as manager:
-            results = manager.list([None for _ in self.jobs])
+            results = manager.list([(None, []) for _ in self.jobs])
             time.sleep(random.uniform(*CRAWL_RANDOM_SLEEP_INTERVAL))  # Random delay
 
             def process_job(j_idx, job):

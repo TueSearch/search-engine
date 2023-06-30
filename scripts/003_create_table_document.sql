@@ -30,9 +30,6 @@ CREATE TABLE IF NOT EXISTS documents
     h5_tokens               LONGTEXT DEFAULT ('[]'),
     h6_tokens               LONGTEXT DEFAULT ('[]'),
     body_tokens             LONGTEXT DEFAULT ('[]'),
-    -- Links
-    links                   LONGTEXT DEFAULT ('[]'),
-    relevant_links          LONGTEXT DEFAULT ('[]'),
     -- Classification
     relevant                BOOLEAN  DEFAULT TRUE,
     -- Other fields

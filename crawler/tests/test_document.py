@@ -1,7 +1,7 @@
 """Test utility"""
 import unittest
 
-from crawler.models.document import Document
+from crawler.sql_models.document import Document
 
 
 class TestDocument(unittest.TestCase):

@@ -5,6 +5,7 @@ import json
 import os
 import random
 import time
+import traceback
 
 import requests
 from dotenv import load_dotenv
@@ -12,10 +13,11 @@ from requests.adapters import HTTPAdapter, Retry
 from requests_html import HTMLSession
 
 from crawler import utils, relevance_classification
-from crawler.models.document import Document
-from crawler.models.job import Job
+from crawler.sql_models.document import Document
+from crawler.sql_models.job import Job
 from crawler.relevance_classification import url_relevance
 from crawler.relevance_classification.url_relevance import URL
+from crawler.relevance_classification.document_relevance import is_document_relevant
 
 load_dotenv()
 
@@ -72,9 +74,7 @@ class Crawler:
         urls = url_relevance.URL.get_links(html, self.job.url)
         document = utils.text.generate_text_document_from_html(html)
         document.job = self.job
-        document.links = [url for url in urls]
-        document.relevant_links = [url for url in urls if url.is_relevant]
-        document.relevant = relevance_classification.document_relevance.is_document_relevant(document)
+        document.relevant = is_document_relevant(document)
         return document, urls
 
     def try_to_obtain_static_website_html(self):
@@ -120,7 +120,7 @@ class Crawler:
                 f"Error while rendering dynamic website. Only accept HTML. Got {data_type} for URL: {self.job.url}")
         return response
 
-    def crawl_assume_website_is_static(self) -> Document:
+    def crawl_assume_website_is_static(self) -> (Document, list[URL]):
         """Try to assume that the website is static and crawl it.
 
         Returns:
@@ -129,10 +129,9 @@ class Crawler:
         response = self.try_to_obtain_static_website_html()
         html = response.text
         new_document = self.generate_document_from_html(html)
-        new_document.relevant = relevance_classification.is_document_relevant(new_document)
         return new_document
 
-    def crawl_assume_website_is_dynamic(self) -> Document:
+    def crawl_assume_website_is_dynamic(self) -> (Document, list[URL]):
         """
         Try to assume that the website is dynamic and crawl it.
         :return:
@@ -141,10 +140,9 @@ class Crawler:
         response = self.try_to_obtain_dynamic_website_html()
         html = response.text
         new_document = self.generate_document_from_html(html)
-        new_document.relevant = relevance_classification.is_document_relevant(new_document)
         return new_document
 
-    def crawl(self) -> Document:
+    def crawl(self) -> (Document, list[URL]):
         """Perform the crawling process for the given job.
 
         This procedure tries to crawl the website at least twice.
@@ -160,16 +158,17 @@ class Crawler:
         Returns:
             The crawled document.
         """
-        new_document = None
+        new_document, urls = None, []
         try:  # First, try a cheaper static version.
-            new_document = self.crawl_assume_website_is_static()
+            new_document, urls = self.crawl_assume_website_is_static()
         except Exception as exception:
             LOG.error(f"{str(exception)}")
+            traceback.print_exc()
 
         if new_document is None or not new_document.relevant:
             time.sleep(random.randint(*CRAWL_RANDOM_SLEEP_INTERVAL))
             try:  # If not successful, try static version with vanilla requests.
-                new_document = self.crawl_assume_website_is_dynamic()
+                new_document, urls = self.crawl_assume_website_is_dynamic()
             except Exception as exception:
                 LOG.error(f"{str(exception)}")
-        return new_document
+        return new_document, urls

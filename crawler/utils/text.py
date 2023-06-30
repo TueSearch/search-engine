@@ -154,7 +154,7 @@ def generate_text_document_from_html(html_content: str) -> 'Document':
     Returns:
         (str, str): Title and body extracted from HTML, if any. Default empty strings.
     """
-    from crawler.models.document import Document
+    from crawler.sql_models.document import Document
 
     soup = BeautifulSoup(html_content, 'html.parser')
 

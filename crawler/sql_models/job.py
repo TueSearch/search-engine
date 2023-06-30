@@ -6,13 +6,12 @@ import urllib
 import peewee
 from playhouse.shortcuts import model_to_dict
 
+import crawler
 from crawler import utils
 from crawler.sql_models.base import BaseModel, LongTextField, JSONField
-from crawler.sql_models.document import Document
 from crawler.sql_models.server import Server
 from crawler.relevance_classification.job_relevance import get_job_priority
 from crawler.relevance_classification.url_relevance import URL
-
 LOG = utils.get_logger(__file__)
 
 
@@ -23,7 +22,7 @@ class Job(BaseModel):
     id = peewee.BigAutoField(primary_key=True)
     url = LongTextField()
     server = peewee.ForeignKeyField(Server, backref="server_id")
-    parent = peewee.ForeignKeyField(Document, backref="parent_id")
+    parent = peewee.ForeignKeyField(crawler.sql_models.document.Document, backref="parent_id")
     anchor_texts = JSONField(default=[])
     anchor_texts_tokens = JSONField(default=[[]])
     priority = peewee.FloatField(default=0.0)

@@ -2,7 +2,7 @@
 Drop every table. Only use for development.
 """
 
-from crawler.models.base import DATABASE as db
+from crawler.sql_models.base import DATABASE as db
 from crawler.utils.log import get_logger
 
 LOG = get_logger(__name__)
