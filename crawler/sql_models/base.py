@@ -23,9 +23,11 @@ DATABASE = peewee.MySQLDatabase(database=DB,
                                 port=PORT,
                                 user=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_USER"),
                                 password=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_PASSWORD"))
-DATABASE.connect()
+def connect_to_database():
+    DATABASE.connect()
 
-def execute_query_and_return_objects(query):
+
+def execute_query_and_return_objects(query: str):
     ret = []
     for row in (cursor := DATABASE.execute_sql(query)).fetchall():
         job = dotdict()

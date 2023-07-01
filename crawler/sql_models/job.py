@@ -83,26 +83,22 @@ class Job(BaseModel):
         return self.priority > 0
 
     @staticmethod
-    def create_jobs_to_initialize_database(relevant_links: list['URL']):
+    def insert_initial_jobs_into_databases(relevant_links: list['URL']):
         if len(relevant_links) == 0:
             return
-        servers = [link.server_name for link in relevant_links]
-        servers = [Server.get_or_create(name=server)[0] for server in servers]
-        servers = {server.name: server for server in servers}
-        link_to_server = {link: servers[link.server_name] for link in relevant_links}
+        link_to_server_id = Server.create_servers_and_return_ids(relevant_links)
         jobs_batch = []
-        for link, server in link_to_server.items():
+        for link, server_id in link_to_server_id.items():
             job = Job(url=link.url,
-                      server=server.id,
-                      priority=get_job_priority(server, link),
+                      server=server_id,
+                      priority=get_job_priority(server_id, link),
                       anchor_text=link.anchor_text,
                       anchor_text_tokens=link.anchor_text_tokens,
                       surrounding_text=link.surrounding_text,
                       surrounding_text_tokens=link.surrounding_text_tokens,
                       title_text=link.title_text,
                       title_text_tokens=link.title_text_tokens)
-            job_dict = model_to_dict(job)
-            jobs_batch.append(job_dict)
+            jobs_batch.append(model_to_dict(job))
         Job.insert_many(jobs_batch).on_conflict_ignore().execute()
 
     @staticmethod
@@ -117,6 +113,5 @@ class Job(BaseModel):
                       surrounding_text_tokens=link.surrounding_text_tokens,
                       title_text=link.title_text,
                       title_text_tokens=link.title_text_tokens)
-            job_dict = model_to_dict(job)
-            jobs_batch.append(json.dumps(job_dict))
+            jobs_batch.append(json.dumps(model_to_dict(job)))
         return jobs_batch

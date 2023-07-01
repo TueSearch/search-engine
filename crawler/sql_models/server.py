@@ -29,3 +29,10 @@ class Server(BaseModel):
 
     def __repr__(self):
         return self.__str__()
+
+    @staticmethod
+    def create_servers_and_return_ids(links: list['URL']) -> dict['URL', int]:
+        servers = [link.server_name for link in links]
+        servers = [Server.get_or_create(name=server)[0] for server in servers]
+        servers = {server.name: server for server in servers}
+        return {link: servers[link.server_name].id for link in links}

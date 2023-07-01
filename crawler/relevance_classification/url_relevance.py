@@ -51,6 +51,15 @@ class URL:
         self.title_text = utils.text.make_text_human_readable(title_text)
         self.parent = parent
 
+    def __eq__(self, other):
+        return self.url == other.url
+
+    def __neq__(self, other):
+        return self.url == other.url
+
+    def __hash__(self):
+        return hash(self.url)
+
     def __str__(self):
         return f"URL[url={self.url}, anchor_text={self.anchor_text}]"
 
