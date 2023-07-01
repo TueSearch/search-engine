@@ -1,6 +1,6 @@
-# docker build -f docker/backend.base.Dockerfile -t tuesearch-backend-base:latest .
-# docker tag tuesearch-backend-base:latest longpollehn/tuesearch-backend-base:latest
-# docker push longpollehn/tuesearch-backend-base:latest
+# docker build -f docker/backend.base.Dockerfile -t ghcr.io/tuesearch/search-engine/tuesearch-backend-base:latest .
+# docker tag ghcr.io/tuesearch/search-engine/tuesearch-backend-base:latest ghcr.io/tuesearch/search-engine/tuesearch-backend-base:latest
+# docker push ghcr.io/tuesearch/search-engine/tuesearch-backend-base:latest
 
 # Use the official Python base image
 FROM python:3.10.6-slim

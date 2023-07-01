@@ -1,5 +1,5 @@
-# Use the official Python base image
-FROM longpollehn/tuesearch-backend-base:latest
+# Use base image to accelerate dependencies build time.
+FROM ghcr.io/tuesearch/search-engine/tuesearch-backend-base:latest
 
 # Copy the requirements.txt file to the container
 COPY requirements.txt .
