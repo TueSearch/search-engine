@@ -32,6 +32,10 @@ class Server(BaseModel):
 
     @staticmethod
     def create_servers_and_return_ids(links: list['URL']) -> dict['URL', int]:
+        """
+        Creates the servers in the database and
+        returns a dictionary mapping the links to their server IDs.
+        """
         servers = [link.server_name for link in links]
         servers = [Server.get_or_create(name=server)[0] for server in servers]
         servers = {server.name: server for server in servers}

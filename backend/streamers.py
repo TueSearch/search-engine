@@ -62,14 +62,20 @@ class DocumentStreamer:
 
 
 def partial(func):
-    DocumentTokensStreamer = functools.partial(DocumentStreamer, transform=lambda doc: func(doc))
+    """
+    Help function to create more streams.
+    """
+    # pylint: disable=invalid-name
+    DocumentTokensStreamer = functools.partial(DocumentStreamer, transform=func)
+    # pylint: disable=invalid-name
     DocumentStringStreamer = functools.partial(DocumentStreamer,
                                                transform=lambda doc: " ".join(func(doc)))
     return DocumentTokensStreamer, DocumentStringStreamer
 
 
 DocumentTitleTokensStreamer, DocumentTitleStringStreamer = partial(lambda doc: doc.title_tokens)
-DocumentMetaDescriptionTokensStreamer, DocumentMetaDescriptionStringStreamer = partial(lambda doc: doc.meta_description_tokens)
+DocumentMetaDescriptionTokensStreamer, DocumentMetaDescriptionStringStreamer = partial(
+    lambda doc: doc.meta_description_tokens)
 DocumentMetaKeywordsTokensStreamer, DocumentMetaKeywordsStringStreamer = partial(lambda doc: doc.meta_keywords_tokens)
 DocumentMetaAuthorTokensStreamer, DocumentMetaAuthorStringStreamer = partial(lambda doc: doc.meta_author_tokens)
 DocumentH1TokensStreamer, DocumentH1StringStreamer = partial(lambda doc: doc.h1_tokens)

@@ -31,5 +31,5 @@ CREATE TABLE IF NOT EXISTS documents
     h6_tokens               LONGTEXT DEFAULT ('[]'),
     body_tokens             LONGTEXT DEFAULT ('[]'),
     -- Classification
-    relevant                BOOLEAN  DEFAULT TRUE,
+    relevant                BOOLEAN  DEFAULT TRUE
 ) ENGINE = RocksDB;

@@ -71,7 +71,9 @@ services:
     depends_on:
       - mysql
       - initialize_database
-    command: 'python3 -m crawler.manager'
+    command: 'python3 -m crawler.manager.main'
+    ports:
+      - '6000:6000'
     env_file:
       - .env
     networks:
@@ -89,7 +91,7 @@ services:
       - mysql
       - initialize_database
       - manager
-    command: 'python3 -m crawler.worker'
+    command: 'python3 -m crawler.worker.main -n 1'
     env_file:
       - .env
     networks:
@@ -110,11 +112,11 @@ services:
     env_file:
       - .env
     volumes:
-      - tuesearch-models:/opt/tuesearch/data/
+      - tuesearch:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
-  # Build rankers.
+  # Build metrics.
   ############################################################
   build_metrics:
     build:
@@ -124,13 +126,12 @@ services:
     depends_on:
       - mysql
       - initialize_database
-      - build_index
     restart: 'on-failure'
     command: 'python3 -m backend.build_metrics'
     env_file:
       - .env
     volumes:
-      - tuesearch-models:/home/tuesearch/tuesearch/data/
+      - tuesearch:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
@@ -151,7 +152,7 @@ services:
     env_file:
       - .env
     volumes:
-      - tuesearch-models:/home/tuesearch/tuesearch/data/
+      - tuesearch:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
@@ -176,6 +177,6 @@ services:
       - mysql_net
 volumes:
   tuesearch-percona-server:
-  tuesearch-models:
+  tuesearch:
 networks:
   mysql_net:

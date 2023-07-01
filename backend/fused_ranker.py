@@ -1,10 +1,8 @@
 from collections import defaultdict
-from typing import Tuple, List, Dict
 
-import numpy as np
 from dotenv import load_dotenv
 
-from backend.build_index import read_short_inverted_index
+from backend.build_index import read_index_file
 from backend.rankers.tfidf_ranker import TFIDFRanker
 from crawler import utils
 from crawler.sql_models.document import Document
@@ -15,12 +13,21 @@ LOG = utils.get_logger(__file__)
 
 
 class FusedRanker:
+    """
+    This class builds a ranker model using the TF-IDF vectorizer
+    and relevant document tokens.
+    """
+
     def __init__(self):
-        pickled_index = read_short_inverted_index()
+        pickled_index = read_index_file()
         self.indices = pickled_index[0]
         self.all_doc_ids = pickled_index[1]
 
     def get_matches_for_query_tokens(self, query_tokens: list[str]) -> dict[str, list[int]]:
+        """
+        Returns the document IDs that match the query tokens.
+        The document IDs are grouped by the index name.
+        """
         matches = defaultdict(list)
         for index_name, index in self.indices.items():
             for query_token in query_tokens:
@@ -30,14 +37,7 @@ class FusedRanker:
 
     def scores(self, query: str) -> tuple[list[str], dict[int, float]]:
         """
-        Retrieves a ranking of document IDs based on global TF-IDF naive normalized distance.
-
-        Args:
-            query (str): The query string.
-
-        Returns:
-            list[int]: A list of document IDs, sorted by their ranking.
-
+        Returns the tokens of the query and the scores of the documents based on the TF-IDF.
         """
         # Preprocess the query
         query_tokens = utils.text.advanced_tokenize_with_pos(query)
@@ -48,21 +48,8 @@ class FusedRanker:
 
     def process_query(self, query: str, page=0, page_size=10) -> (list[str], list[Document]):
         """
-        Rank the documents based on a query.
-
-        Args:
-            query (str): The query string.
-            page (int): The page number of the results (default: 0).
-            page_size (int): The number of results per page (default: 10).
-
-        Returns:
-            (list[str], list[Document]): Tokens of query for debugging and list of ranked documents.
-
-        Note:
-            This function assumes that the global TF-IDF vectorizer has been trained.
-
-        Example:
-            documents = rank("search query", page=0, page_size=10)
+        Returns the tokens of the query and the documents that match the query.
+        The documents are ranked based on the TF-IDF.
         """
         query_tokens, documents_id_mapped_to_scores = self.scores(query)
         # Convert the document_ids array to a list
@@ -71,11 +58,3 @@ class FusedRanker:
         # Retrieve the documents based on the ranked document IDs
         documents = Document.select().where(Document.id.in_(ranking)).paginate(page + 1, page_size)
         return query_tokens, list(documents)
-
-
-if __name__ == '__main__':
-    query = "the press in germany"
-    processed_query, docs = FusedRanker().process_query(query)
-    print(processed_query)
-    for doc in docs:
-        print(doc)

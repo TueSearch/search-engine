@@ -14,18 +14,23 @@ Usage:
 import os
 from collections import defaultdict
 
-from tqdm import tqdm
 from dotenv import load_dotenv
+from tqdm import tqdm
 
-from crawler import utils
 from backend.streamers import DocumentStreamer
+from crawler import utils
+from crawler.sql_models.base import connect_to_database
 
 load_dotenv()
 LOG = utils.get_logger(__file__)
-SHORT_INVERTED_INDEX_FILE = os.getenv("SHORT_INVERTED_INDEX_FILE")
+INDEX_FILE = os.getenv("INDEX_FILE")
 
 
 class Indexer:
+    """
+    This class builds an inverted index from the crawled documents.
+    """
+
     def __init__(self):
         self.index = {
             "title": defaultdict(list),
@@ -43,6 +48,9 @@ class Indexer:
         self.doc_ids = []
 
     def build_index(self):
+        """
+        Builds the inverted index from the crawled documents.
+        """
         for document in tqdm(DocumentStreamer()):  # Iterate over the documents
             self.doc_ids.append(document.id)
             LOG.info(f"Indexing {document}")
@@ -91,20 +99,77 @@ class Indexer:
                 self.index["body"][token].append(document.id)
             LOG.info("Indexed body")
 
-        LOG.info("Finished short partial index")
-        utils.io.write_pickle_file((self.index, self.doc_ids), SHORT_INVERTED_INDEX_FILE)
-        LOG.info(f"Wrote short index file to {SHORT_INVERTED_INDEX_FILE}")
+        LOG.info("Finished indexing")
+        utils.io.write_pickle_file((self.index, self.doc_ids), INDEX_FILE)
+        LOG.info(f"Wrote index file to {INDEX_FILE}")
 
 
-def read_short_inverted_index() -> (defaultdict[str, dict[str, list[int]]], list[int]):
-    return utils.io.read_pickle_file(SHORT_INVERTED_INDEX_FILE)
+def read_index_file() -> (defaultdict[str, dict[str, list[int]]], list[int]):
+    """
+    Reads the short inverted index from the pickle file.
+
+    Returns:
+        A tuple of the inverted index and the list of document IDs.
+    (
+        [doc_id, doc_id, ...],
+        {
+            "title": {
+                "token": [doc_id, doc_id, ...],
+                ...
+            },
+            "meta_description": {
+                "token": [doc_id, doc_id, ...],
+                ...
+            },
+            "meta_keywords": {
+                "token": [doc_id, doc_id, ...],
+                ...
+            },
+            "meta_author": {
+                "token": [doc_id, doc_id, ...],
+                ...
+            },
+            "h1": {
+                "token": [doc_id, doc_id, ...],
+                ...
+            },
+            "h2": {
+                "token": [doc_id, doc_id, ...],
+                ...
+            },
+            "h3": {
+                "token": [doc_id, doc_id, ...],
+                ...
+            },
+            "h4": {
+                "token": [doc_id, doc_id, ...],
+                ...
+            },
+            "h5": {
+                "token": [doc_id, doc_id, ...],
+                ...
+            },
+            "h6": {
+                "token": [doc_id, doc_id, ...],
+                ...
+            },
+            "body": {
+                "token": [doc_id, doc_id, ...],
+                ...
+            },
+        }
+    )
+    """
+    return utils.io.read_pickle_file(INDEX_FILE)
 
 
 def main():
     """
     Main function to build the inverted index and save it as a pickle file.
     """
+    connect_to_database()
     Indexer().build_index()
+    read_index_file()
 
 
 if __name__ == '__main__':

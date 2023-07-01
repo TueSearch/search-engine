@@ -107,10 +107,16 @@ class URL:
 
     @functools.cached_property
     def server_name(self):
+        """
+        Extracts the server name of a URL.
+        """
         return tldextract.extract(self.url).domain
 
     @functools.cached_property
     def tld(self):
+        """
+        Extracts the top-level domain of a URL.
+        """
         return tldextract.extract(self.url).suffix
 
     @functools.cached_property
@@ -169,6 +175,9 @@ class URL:
 
     @functools.cached_property
     def extension(self):
+        """
+        Extracts the extension of a URL.
+        """
         parsed_url = urlparse(self.url)
         path = parsed_url.path
         _, file_extension = os.path.splitext(path)
@@ -198,6 +207,7 @@ class URL:
             try:
                 result = urlparse(self.url)
                 return all([result.scheme, result.netloc])
+            # pylint: disable=broad-except
             except:
                 return False
 
@@ -211,10 +221,16 @@ class URL:
 
     @functools.cached_property
     def is_on_server_black_list(self) -> bool:
+        """
+        Check if a URL is on the server black list.
+        """
         return self.server_name in CRAWL_BLACK_LIST
 
     @functools.cached_property
     def count_tuebingen_in_url(self) -> int:
+        """
+        Counts the number of times the word "tuebingen" appears in the URL.
+        """
         count = 0
         for token in self.url_tokens:
             for tueb in TUEBINGEN_WRITING_STYLES:
@@ -224,6 +240,9 @@ class URL:
 
     @functools.cached_property
     def count_bingen_in_url(self) -> int:
+        """
+        Counts the number of times the word "bingen" appears in the URL.
+        """
         count = 0
         for token in self.url_tokens:
             if "bingen" in token:
@@ -232,6 +251,9 @@ class URL:
 
     @functools.cached_property
     def count_en_in_url(self) -> int:
+        """
+        Counts the number of times the word "en" appears in the URL.
+        """
         count = 0
         for token in self.url_tokens:
             if "en" in token or "/en" in token or "/en/" in token or ".en" in token or ".en/" in token or ".en." in token:
@@ -240,6 +262,9 @@ class URL:
 
     @functools.cached_property
     def get_priority_list_bonus(self) -> int:
+        """
+        Return a bonus if the URL is in the priority list.
+        """
         count = 0
         for priority_url in CRAWL_PRIORITY_LIST:
             if priority_url in self.url:
@@ -248,6 +273,9 @@ class URL:
 
     @functools.cached_property
     def get_initial_queue_list_bonus(self) -> int:
+        """
+        Return a bonus if the URL is in the initial queue list.
+        """
         count = 0
         for priority_url in QUEUE_MANUAL_SEEDS:
             if priority_url in self.url:
@@ -256,6 +284,9 @@ class URL:
 
     @functools.cached_property
     def get_international_suffix_bonus(self) -> int:
+        """
+        If the tld is a international suffix, return a bonus.
+        """
         count = 0
         if "com" in self.tld:
             count += 1
@@ -263,6 +294,9 @@ class URL:
 
     @functools.cached_property
     def count_tuebingen_in_anchor_text(self) -> int:
+        """
+        Counts the number of times the word "tuebingen" appears in the anchor text.
+        """
         count = 0
         for token in self.anchor_text_tokens:
             for tueb in TUEBINGEN_WRITING_STYLES:
@@ -272,6 +306,9 @@ class URL:
 
     @functools.cached_property
     def count_bingen_in_anchor_text(self) -> int:
+        """
+        Counts the number of times the word "bingen" appears in the anchor text.
+        """
         count = 0
         for token_lang in tokenize_get_lang(self.anchor_text):
             if "en" in token_lang:
@@ -280,6 +317,9 @@ class URL:
 
     @functools.cached_property
     def count_tuebingen_in_surrounding_text(self) -> int:
+        """
+        Counts the number of times the word "tuebingen" appears in the surrounding text.
+        """
         count = 0
         for token in self.surrounding_text_tokens:
             for tueb in TUEBINGEN_WRITING_STYLES:
@@ -289,6 +329,9 @@ class URL:
 
     @functools.cached_property
     def count_bingen_in_surrounding_text(self) -> int:
+        """
+        Counts the number of times the word "bingen" appears in the surrounding text.
+        """
         count = 0
         for token_lang in tokenize_get_lang(self.surrounding_text):
             if "en" in token_lang:
@@ -297,6 +340,9 @@ class URL:
 
     @functools.cached_property
     def count_tuebingen_in_title_text(self) -> int:
+        """
+        Counts the number of times the word "tuebingen" appears in the title text.
+        """
         count = 0
         for token in self.title_text_tokens:
             for tueb in TUEBINGEN_WRITING_STYLES:
@@ -306,6 +352,9 @@ class URL:
 
     @functools.cached_property
     def count_bingen_in_title_text(self) -> int:
+        """
+        Counts the number of times the word "bingen" appears in the title text.
+        """
         count = 0
         for token_lang in tokenize_get_lang(self.title_text):
             if "en" in token_lang:
@@ -313,7 +362,10 @@ class URL:
         return count
 
     @functools.cached_property
-    def count_english_(self) -> int:
+    def count_english_in_url_tokens(self) -> int:
+        """
+        The word "english" appears in the URL.
+        """
         count = 0
         for token in self.url_tokens:
             if "en" in token or "/en" in token or "/en/" in token or ".en" in token or ".en/" in token or ".en." in token:
@@ -322,6 +374,9 @@ class URL:
 
     @functools.cached_property
     def priority(self) -> int:
+        """
+        Returns the priority of the URL.
+        """
         if not self.is_properly_a_html_site:
             return -1
 
@@ -347,4 +402,7 @@ class URL:
 
     @functools.cached_property
     def is_relevant(self) -> bool:
+        """
+        Returns true if the URL is relevant.
+        """
         return self.priority > 0

@@ -5,12 +5,12 @@ import json
 import os
 
 import peewee
+from dotenv import load_dotenv
 
 from crawler.relevance_classification.url_relevance import URL
 from crawler.sql_models.base import BaseModel, DATABASE as db
 from crawler.sql_models.job import Job
 from crawler.utils.log import get_logger
-from dotenv import load_dotenv
 
 load_dotenv()
 LOG = get_logger(__name__)

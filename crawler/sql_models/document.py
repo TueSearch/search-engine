@@ -16,6 +16,9 @@ class Document(BaseModel):
 
     @property
     def job(self):
+        """
+        Get the job that crawled this document.
+        """
         query = f"select * from jobs where id = {self.job_id}"
         for row in (cursor := DATABASE.execute_sql(query)).fetchall():
             job = {}
@@ -26,6 +29,9 @@ class Document(BaseModel):
 
     @job.setter
     def job(self, value):
+        """
+        Set the job that crawled this document.
+        """
         self.job_id = value.id
 
     # Raw data field
@@ -56,36 +62,6 @@ class Document(BaseModel):
     body_tokens = JSONField(default=[])
     # Classification
     relevant = peewee.BooleanField(default=True)
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "job_id": self.job_id,
-            "html": self.html,
-            "title": self.title,
-            "meta_description": self.meta_description,
-            "meta_keywords": self.meta_keywords,
-            "meta_author": self.meta_author,
-            "h1": self.h1,
-            "h2": self.h2,
-            "h3": self.h3,
-            "h4": self.h4,
-            "h5": self.h5,
-            "h6": self.h6,
-            "body": self.body,
-            "title_tokens": self.title_tokens,
-            "meta_description_tokens": self.meta_description_tokens,
-            "meta_keywords_tokens": self.meta_keywords_tokens,
-            "meta_author_tokens": self.meta_author_tokens,
-            "h1_tokens": self.h1_tokens,
-            "h2_tokens": self.h2_tokens,
-            "h3_tokens": self.h3_tokens,
-            "h4_tokens": self.h4_tokens,
-            "h5_tokens": self.h5_tokens,
-            "h6_tokens": self.h6_tokens,
-            "body_tokens": self.body_tokens,
-            "relevant": self.relevant
-        }
 
     class Meta:
         """

@@ -16,6 +16,7 @@ Usage:
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from backend.fused_ranker import FusedRanker
+from crawler.sql_models.base import connect_to_database
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -57,5 +58,11 @@ def search():
     return jsonify({'error': 'Invalid query'})
 
 
-if __name__ == '__main__':
+def main():
+    """Start the Flask application."""
+    connect_to_database()
     app.run(debug=True, host="0.0.0.0", port=4000)
+
+
+if __name__ == '__main__':
+    main()

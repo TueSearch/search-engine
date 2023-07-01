@@ -1,20 +1,21 @@
 from collections import defaultdict
 
-import scipy.sparse
+import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from backend.vector_spaces.tfidf import read_tfidf_vectorizer, Tfidf, TFIDF_CANONICAL_ORDERING
-import numpy as np
-
+from backend.vector_spaces.tfidf import read_tfidf_vectorizers, Tfidf, TFIDF_CANONICAL_ORDERING
 from crawler import utils
 
 LOG = utils.get_logger(__file__)
 
-VECTORIZERS: dict[str, TfidfVectorizer] = read_tfidf_vectorizer()
+VECTORIZERS: dict[str, TfidfVectorizer] = read_tfidf_vectorizers()
 VECTOR_SPACE_WEIGHTS = dict(zip(TFIDF_CANONICAL_ORDERING, np.arange(1, len(VECTORIZERS) + 1)[::-1]))
 
 
 class TFIDFRanker:
+    """
+    This class is responsible for ranking documents based on their TF-IDF scores.
+    """
     def __init__(self, query_tokens: list[str], matches_in_vector_spaces: dict[str, list[int]]):
         self.query_tokens = query_tokens
         self.matches_in_vector_spaces = matches_in_vector_spaces
@@ -23,27 +24,36 @@ class TFIDFRanker:
     @staticmethod
     def query_document_similarities_in_all_vector_spaces(query_vectors: list[np.array],
                                                          document_vectors: list[np.array]) -> np.array:
+        """
+        Returns the cosine similarities of the query and the document in all vector spaces.
+        """
         return np.array([np.dot(query_vector, document_vector) for query_vector, document_vector in
                          zip(query_vectors, document_vectors)])
 
     @staticmethod
     def map_query_to_vector_spaces(query_tokens: list[str]) -> dict[str, np.array]:
-        ret = dict()
+        """
+        Returns the query tokens mapped to the vector spaces.
+        """
+        ret = {}
         for name, vectorizer in VECTORIZERS.items():
             try:
                 ret[name] = vectorizer.transform([" ".join(query_tokens)])[0]
-            except Exception as e:
-                LOG.error(f"Error while transforming query into vector space '{name}': {e}")
+            except Exception as exception:
+                LOG.error(f"Error while transforming query into vector space '{name}': {exception}")
         return ret
 
     def update_scores_of_matches_with_new_vector_space(self,
                                                        query_vector: np.array,
                                                        matches: list[int],
                                                        vector_space_name: str):
+        """
+        Updates the scores of the matches with the new vector space.
+        """
         tfidfs = Tfidf.select().where(Tfidf.id.in_(matches))
         weight = VECTOR_SPACE_WEIGHTS[vector_space_name]
         for tfidf in tfidfs:
-            doc_vectors = tfidf.vectors()
+            doc_vectors = tfidf.not_null_vectors()
             if vector_space_name in doc_vectors:
                 doc_vector = doc_vectors[vector_space_name]
                 LOG.info(f"Cosine similarity of {query_vector.shape=}, {type(query_vector)=}, {doc_vector.shape=}, {type(doc_vector)=}")
@@ -52,6 +62,9 @@ class TFIDFRanker:
                 self.final_scores[tfidf.id] += weight * cosine_sim
 
     def scores(self) -> dict[int, float]:
+        """
+        Returns the final scores of the documents.
+        """
         query_vectors = self.map_query_to_vector_spaces(self.query_tokens)
         for vector_space_name, matches_in_vector_space in self.matches_in_vector_spaces.items():
             if vector_space_name in query_vectors:

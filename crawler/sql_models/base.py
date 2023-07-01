@@ -8,7 +8,7 @@ import pickle
 
 import peewee
 from dotenv import load_dotenv
-from crawler.utils import log, dotdict
+from crawler.utils import log
 
 load_dotenv()
 
@@ -23,11 +23,28 @@ DATABASE = peewee.MySQLDatabase(database=DB,
                                 port=PORT,
                                 user=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_USER"),
                                 password=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_PASSWORD"))
+
+
+# pylint: disable=invalid-name
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
 def connect_to_database():
+    """
+    Connects to the database.
+    """
     DATABASE.connect()
 
 
 def execute_query_and_return_objects(query: str):
+    """
+    Executes a query and returns the results as a list of objects.
+    Object are dotdicts, which means that you can access the values like this: object.key
+    """
     ret = []
     for row in (cursor := DATABASE.execute_sql(query)).fetchall():
         job = dotdict()
@@ -65,6 +82,10 @@ class JSONField(LongTextField):
 
 
 class PickleField(peewee.BlobField):
+    """
+    Store binary blobs in the database.
+    """
+
     def db_value(self, value):
         return pickle.dumps(value)
 
@@ -72,8 +93,8 @@ class PickleField(peewee.BlobField):
         if value is not None:
             try:
                 return pickle.loads(value)
-            except Exception as e:
-                LOG.error(f"Error while unpickling: {e}")
+            except Exception as exception:
+                LOG.error(f"Error while unpickling: {exception}")
                 return None
         return value
 

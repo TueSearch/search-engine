@@ -5,7 +5,7 @@ FROM python:3.10.6-slim
 RUN useradd -ms /bin/bash tuesearch
 
 # Create directories
-RUN mkdir -p /opt/tuesearch/log /opt/tuesearch/data
+RUN mkdir -p /opt/tuesearch/
 
 # Give rights
 RUN chown -R tuesearch:tuesearch /opt/tuesearch
@@ -33,6 +33,3 @@ COPY crawler ./crawler
 
 # Copy crawler
 COPY scripts ./scripts
-
-# Expose the port on which your Flask app will run
-EXPOSE 5000

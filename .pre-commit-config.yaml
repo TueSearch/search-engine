@@ -31,7 +31,7 @@ repos:
         pass_filenames: false
         always_run: true
         verbose: true
-        entry: docker-compose up -d mysql mysql
+        entry: docker-compose up --build -d mysql mysql
 
       - id: build_image.
         name: build_image.
@@ -41,21 +41,13 @@ repos:
         verbose: true
         entry: docker-compose build
 
-      - id: drop_database.
-        name: drop_database.
-        language: system
-        pass_filenames: false
-        always_run: true
-        verbose: true
-        entry: docker-compose up --exit-code-from drop_database drop_database
-
       - id: initialize_database.
         name: initialize_database.
         language: system
         pass_filenames: false
         always_run: true
         verbose: true
-        entry: docker-compose up --exit-code-from initialize_database initialize_database
+        entry: docker-compose up --build --exit-code-from initialize_database initialize_database
 
       - id: run_unit_tests.
         name: run_unit_tests.
@@ -63,38 +55,54 @@ repos:
         pass_filenames: false
         always_run: true
         verbose: true
-        entry: docker-compose up --exit-code-from run_unit_tests run_unit_tests
+        entry: docker-compose up --build --exit-code-from run_unit_tests run_unit_tests
 
-      - id: crawl.
-        name: crawl.
+      - id: manager.
+        name: manager.
         language: system
         pass_filenames: false
         always_run: true
         verbose: true
-        entry: docker-compose up --exit-code-from crawl crawl
+        entry: docker-compose up -d --build manager
 
-      - id: build_inverted_index.
-        name: build_inverted_index.
+      - id: test_manager.
+        name: test_manager.
         language: system
         pass_filenames: false
         always_run: true
         verbose: true
-        entry: docker-compose up --exit-code-from build_inverted_index build_inverted_index
+        entry: curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:6000/"
 
-      - id: build_ranker.
-        name: build_ranker.
+      - id: worker.
+        name: worker.
         language: system
         pass_filenames: false
         always_run: true
         verbose: true
-        entry: docker-compose up --exit-code-from build_ranker build_ranker
+        entry: docker-compose up --build --exit-code-from worker worker
+
+      - id: build_index.
+        name: build_index.
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        entry: docker-compose up --build --exit-code-from build_index build_index
+
+      - id: build_metrics.
+        name: build_metrics.
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        entry: docker-compose up --build --exit-code-from build_metrics build_metrics
 
       - id: backend_server.
         name: backend_server.
         language: system
         pass_filenames: false
         always_run: true
-        entry: docker-compose up -d backend_server
+        entry: docker-compose up --build -d backend_server
 
       - id: test_api.
         name: test_api.

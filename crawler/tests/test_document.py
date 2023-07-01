@@ -45,9 +45,6 @@ class TestDocument(unittest.TestCase):
         self.assertTrue(isinstance(document.meta_author, str))
         self.assertTrue(isinstance(document.meta_author_tokens, list))
 
-        self.assertTrue(isinstance(document.links, list))
-        self.assertTrue(isinstance(document.relevant_links, list))
-
 
 if __name__ == '__main__':
     unittest.main()

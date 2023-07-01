@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from langdetect import detect_langs
 from unidecode import unidecode
+# pylint: disable=no-name-in-module
 from spacy.tokens.token import Token
 
 load_dotenv()

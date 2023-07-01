@@ -2,7 +2,7 @@
 This module manages the priority queue of URLs to be crawled.
 """
 from crawler import utils
-from crawler.sql_models.base import DATABASE, execute_query_and_return_objects
+from crawler.sql_models.base import execute_query_and_return_objects
 from crawler.sql_models.job import Job
 
 LOG = utils.get_logger(__file__)

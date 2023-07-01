@@ -1,26 +1,27 @@
 """
 This module contains the main crawling logic.
 """
+import argparse
 import json
+import math
 import os
 import random
 import time
 import traceback
 
+import requests
 from dotenv import load_dotenv
 from playhouse.shortcuts import model_to_dict
 from requests.adapters import HTTPAdapter, Retry
 from requests_html import HTMLSession
 
 from crawler import utils
-from crawler.sql_models.document import Document
 from crawler.relevance_classification import url_relevance
-from crawler.relevance_classification.url_relevance import URL
 from crawler.relevance_classification.document_relevance import is_document_relevant
+from crawler.relevance_classification.url_relevance import URL
+from crawler.sql_models.base import dotdict
+from crawler.sql_models.document import Document
 from crawler.sql_models.job import Job
-import requests
-
-from crawler.utils import dotdict
 
 load_dotenv()
 
@@ -59,12 +60,18 @@ CRAWLER_MANAGER_HOST = os.getenv("CRAWLER_MANAGER_HOST")
 
 
 class Crawler:
-    """Represents a web crawler that retrieves a single page, classifies its relevance, and extracts information."""
+    """
+    Crawler class.
+    """
 
     def __init__(self):
         self.url: str = ""
+        self.job: dotdict = None
 
     def generate_document_from_html(self, html: str) -> (Document, list[URL]):
+        """
+        Generate a document from the HTML of a website.
+        """
         document = utils.text.generate_text_document_from_html(html)
         document.relevant = is_document_relevant(document)
         urls = url_relevance.URL.get_links(document, self.url)
@@ -73,6 +80,9 @@ class Crawler:
         return document, urls
 
     def try_to_obtain_static_website_html(self):
+        """
+        Try to obtain the HTML of a static website.
+        """
         session = requests.Session()
         session.mount('http://', HTTPAdapter(max_retries=RETRIES))
         session.mount('https://', HTTPAdapter(max_retries=RETRIES))
@@ -86,6 +96,9 @@ class Crawler:
         return response
 
     def try_to_obtain_dynamic_website_html(self):
+        """
+        Try to obtain the HTML of a dynamic website.
+        """
         session = HTMLSession()
         session.mount('http://', HTTPAdapter(max_retries=RETRIES))
         session.mount('https://', HTTPAdapter(max_retries=RETRIES))
@@ -100,18 +113,27 @@ class Crawler:
         return response
 
     def crawl_assume_website_is_static(self) -> (Document, list[URL]):
+        """
+        Crawl the website, assuming it is static.
+        """
         response = self.try_to_obtain_static_website_html()
         html = response.text
         new_document = self.generate_document_from_html(html)
         return new_document
 
     def crawl_assume_website_is_dynamic(self) -> (Document, list[URL]):
+        """
+        Crawl the website, assuming it is dynamic.
+        """
         response = self.try_to_obtain_dynamic_website_html()
         html = response.text
         new_document = self.generate_document_from_html(html)
         return new_document
 
     def crawl(self) -> (Document, list[URL]):
+        """
+        Crawl the website, first assuming it is static, then assuming it is dynamic.
+        """
         new_document, urls = None, []
         try:  # First, try a cheaper static version.
             new_document, urls = self.crawl_assume_website_is_static()
@@ -127,29 +149,58 @@ class Crawler:
                 LOG.error(f"{str(exception)}")
         return new_document, urls
 
-    def loop(self):
-        while True:
-            self.job = dotdict(requests.get(
-                f"{CRAWLER_MANAGER_HOST}:{CRAWLER_MANAGER_PORT}/get_job?pw={CRAWLER_MANAGER_PASSWORD}").json())
-            LOG.info("Retrieved new job: " + str(self.job))
+    @staticmethod
+    def get_job() -> dotdict:
+        """
+        Get a new job from the crawler manager.
+        """
+        answer = requests.get(
+            f"{CRAWLER_MANAGER_HOST}/get_job?pw={CRAWLER_MANAGER_PASSWORD}",
+            timeout=CRAWL_TIMEOUT)
+        return dotdict(answer.json())
+
+    def store_results(self, json_new_document: str, json_new_jobs: str):
+        """
+        Store the job in the database.
+        """
+        url = f"{CRAWLER_MANAGER_HOST}/save_crawling_results/{self.job.id}?pw={CRAWLER_MANAGER_PASSWORD}"
+        requests.post(url, json={"new_document": json_new_document, "new_jobs": json_new_jobs})
+
+    def mark_job_as_failed(self):
+        """
+        Mark the job as failed in the database.
+        """
+        requests.post(
+            f"{CRAWLER_MANAGER_HOST}/mark_job_as_fail/{self.job.id}?pw={CRAWLER_MANAGER_PASSWORD}")
+
+    def loop(self, number_of_documents_to_be_crawled: int):
+        """
+        Loop over the crawler, retrieving new jobs from the crawler manager,
+        crawling them, and sending the results back.
+        """
+        i = 0
+        while i < number_of_documents_to_be_crawled:
+            i += 1
+            self.job = self.get_job()
+            LOG.info(f"Retrieved new job: {self.job}")
             new_document, new_relevant_urls = self.crawl()
             if new_document:
                 new_jobs = Job.create_jobs_from_worker_to_master(relevant_links=new_relevant_urls)
                 new_document = json.dumps(model_to_dict(new_document))
-                requests.post(
-                    f"{CRAWLER_MANAGER_HOST}:{CRAWLER_MANAGER_PORT}/save_crawling_results/{self.job.id}?pw={CRAWLER_MANAGER_PASSWORD}",
-                    json={"new_document": new_document, "new_jobs": new_jobs})
+                self.store_results(new_document, new_jobs)
             else:
-                requests.post(
-                    f"{CRAWLER_MANAGER_HOST}:{CRAWLER_MANAGER_PORT}/mark_job_as_fail/{self.job.id}?pw={CRAWLER_MANAGER_PASSWORD}")
+                self.mark_job_as_failed()
 
 
 def main():
     """
     Start the processes to crawl the jobs.
     """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', type=int, help='Number of rounds for the loop', default=math.inf)
+    args = parser.parse_args()
     crawler = Crawler()
-    crawler.loop()
+    crawler.loop(args.n)
 
 
 if __name__ == '__main__':

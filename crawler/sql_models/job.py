@@ -24,22 +24,37 @@ class Job(BaseModel):
 
     @property
     def server(self) -> 'Server':
+        """
+        Returns the server object of the job.
+        """
         query = f"select * from servers where id = {self.server_id}"
         return execute_query_and_return_objects(query)[0]
 
     @server.setter
     def server(self, value):
-        self.server_id = value.id
+        """
+        Sets the server of the job.
+        """
+        if isinstance(value, int):
+            self.server_id = value
+        else:
+            self.server_id = value.id
 
     parent_id = peewee.BigIntegerField()
 
     @property
     def parent(self) -> 'Document':
+        """
+        Returns the parent document of the job.
+        """
         query = f"select * from documents where id = {self.parent_id}"
         return execute_query_and_return_objects(query)[0]
 
     @parent.setter
     def parent(self, value):
+        """
+        Sets the parent document of the job.
+        """
         self.parent_id = value.id
 
     anchor_text = LongTextField(default="")
@@ -51,12 +66,6 @@ class Job(BaseModel):
     priority = peewee.FloatField(default=0.0)
     done = peewee.BooleanField(default=False)
     success = peewee.BooleanField(default=None, null=True)
-
-    def to_dict_from_master_to_worker(self):
-        return {
-            "id": self.id,
-            "url": self.url
-        }
 
     class Meta:
         """
@@ -80,10 +89,16 @@ class Job(BaseModel):
         return hash(self.url)
 
     def should_be_crawled(self) -> bool:
+        """
+        Returns whether the job should be crawled or not.
+        """
         return self.priority > 0
 
     @staticmethod
     def insert_initial_jobs_into_databases(relevant_links: list['URL']):
+        """
+        Inserts the initial jobs into the database.
+        """
         if len(relevant_links) == 0:
             return
         link_to_server_id = Server.create_servers_and_return_ids(relevant_links)
@@ -103,6 +118,9 @@ class Job(BaseModel):
 
     @staticmethod
     def create_jobs_from_worker_to_master(relevant_links: list['URL']):
+        """
+        Creates jobs to be sent from the worker to the master.
+        """
         jobs_batch = []
         for link in relevant_links:
             job = Job(url=link.url,

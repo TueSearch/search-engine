@@ -15,9 +15,6 @@ CREATE TABLE IF NOT EXISTS jobs
     priority                FLOAT    DEFAULT 0.0   NOT NULL,
     done                    BOOLEAN  DEFAULT FALSE NOT NULL,
     success                 BOOLEAN  DEFAULT NULL,
-    -- Other fields
-    created_date            DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_time_changed       DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     -- Checks
     CHECK ((done AND success IS NOT NULL) OR (NOT done AND success IS NULL)),
     CHECK ((done = FALSE AND success IS NULL) OR
