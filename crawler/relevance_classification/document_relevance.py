@@ -12,7 +12,6 @@ import os
 from dotenv import load_dotenv
 
 from crawler import utils
-from crawler.relevance_classification.url_relevance import URL
 
 load_dotenv()
 
@@ -41,12 +40,7 @@ def do_tokens_contain_tuebingen(tokens: list[str]):
     return False
 
 
-def is_document_relevant(document: 'Document'):
-    """Classify the relevance of a crawled document.
-
-    Args:
-        document (Document): The crawled document to be classified.
-    """
+def get_document_approximated_relevance_score_for(document: 'Document'):
     text_fields = [
         document.body,
         document.title,
@@ -65,7 +59,22 @@ def is_document_relevant(document: 'Document'):
         document.h5_tokens,
         document.h6_tokens
     ]
-    contains_tuebingen = any([do_tokens_contain_tuebingen(field) for field in json_fields]) or URL(
-        document.url).is_relevant
     is_english = any([utils.text.do_text_contain_english_content(field) for field in text_fields])
-    return contains_tuebingen and is_english
+    if not is_english:
+        return 0
+
+    score = 1
+    for field in text_fields:
+        score += utils.text.do_text_contain_english_content(field)
+    for field in json_fields:
+        score += do_tokens_contain_tuebingen(field)
+    return score
+
+
+def is_document_relevant(document: 'Document'):
+    """Classify the relevance of a crawled document.
+
+    Args:
+        document (Document): The crawled document to be classified.
+    """
+    return get_document_approximated_relevance_score_for(document) > 0

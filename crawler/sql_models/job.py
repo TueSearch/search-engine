@@ -22,8 +22,12 @@ class Job(BaseModel):
     url = LongTextField()
     server = peewee.ForeignKeyField(Server, backref="server_id")
     parent = peewee.ForeignKeyField(Document, backref="parent_id")
-    anchor_texts = JSONField(default=[])
-    anchor_texts_tokens = JSONField(default=[[]])
+    anchor_texts = LongTextField(default="")
+    anchor_texts_tokens = JSONField(default=[])
+    surrounding_text = LongTextField(default="")
+    surrounding_text_tokens = JSONField(default=[])
+    title_text = LongTextField(default="")
+    title_text_tokens = JSONField(default=[])
     priority = peewee.FloatField(default=0.0)
     being_crawled = peewee.BooleanField(default=False)
     done = peewee.BooleanField(default=False)
@@ -66,7 +70,13 @@ class Job(BaseModel):
         parent_job = None if parent is None else Job.get_or_none(id=parent_id)
         inherited_priority = 0.0 if parent is None else min(10, parent_job.priority / 10.0)
         for link, server in link_to_server.items():
-            job = Job(url=link.url, parent=parent_id, server=server.id, priority=get_job_priority(server, link))
+            job = Job(url=link.url,
+                      parent=parent_id,
+                      server=server.id,
+                      priority=get_job_priority(server, link),
+                      anchor_texts=link.anchor_texts,
+                      surrounding_text=link.surrounding_text,
+                      title_text=link.title_text)
             job.priority += inherited_priority
             job_dict = model_to_dict(job)
             job_dict['parent_id'] = parent_id
@@ -74,4 +84,4 @@ class Job(BaseModel):
             del job_dict['server']
             del job_dict['parent']
             jobs_batch.append(job_dict)
-        Job.insert_many(jobs_batch).on_conflict_ignore().execute()
+            Job.insert_many(jobs_batch).on_conflict_ignore().execute()

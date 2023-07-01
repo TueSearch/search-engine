@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from requests.adapters import HTTPAdapter, Retry
 from requests_html import HTMLSession
 
-from crawler import utils, relevance_classification
+from crawler import utils
 from crawler.sql_models.document import Document
 from crawler.sql_models.job import Job
 from crawler.relevance_classification import url_relevance
@@ -72,10 +72,10 @@ class Crawler:
             Document: The generated Document object.
             list[str]: The list of URLs found in the HTML content.
         """
-        urls = url_relevance.URL.get_links(html, self.job.url)
         document = utils.text.generate_text_document_from_html(html)
-        document.job_id = self.job.id
         document.relevant = is_document_relevant(document)
+        urls = url_relevance.URL.get_links(document, self.job)
+        document.job_id = self.job.id
         return document, urls
 
     def try_to_obtain_static_website_html(self):
