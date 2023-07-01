@@ -1,10 +1,8 @@
+import functools
 import json
 import os
 
-import time
-
-import flask
-from flask import g
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 
 from crawler.priority_queue import PriorityQueue
@@ -16,8 +14,13 @@ from crawler.sql_models.server import Server
 from crawler.utils import dotdict
 from crawler.utils.log import get_logger
 
+load_dotenv()
+
 app = Flask(__name__)
 CRAWL_BATCH_SIZE = int(os.getenv("CRAWL_BATCH_SIZE"))
+CRAWLER_MANAGER_PORT = int(os.getenv("CRAWLER_MANAGER_PORT"))
+CRAWLER_MANAGER_PASSWORD = os.getenv("CRAWLER_MANAGER_PASSWORD")
+CRAWLER_MANAGER_PASSWORD_QUERY = os.getenv("CRAWLER_MANAGER_PASSWORD_QUERY")
 PRIORITY_QUEUE = PriorityQueue()
 LOG = get_logger(__name__)
 
@@ -32,28 +35,28 @@ def get_next_job_from_buffer():
     return JOB_BUFFER.pop()
 
 
-@app.before_request
-def before_request():
-    g.start = time.time()
+def password(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        code = request.args.get("pw", '')
+        if len(code) > 0:
+            if code == CRAWLER_MANAGER_PASSWORD:
+                return func(*args, **kwargs)
+            return "Wrong password.\n"
+        else:
+            return "Password not found.\n"
 
-
-@app.after_request
-def after_request(response):
-    diff = time.time() - g.start
-    if ((response.response) and
-            (200 <= response.status_code < 300) and
-            (response.content_type.startswith('text/html'))):
-        response.set_data(response.get_data().replace(
-            b'__EXECUTION_TIME__', bytes(str(diff), 'utf-8')))
-    return response
+    return wrapper
 
 
 @app.route('/', methods=['GET'])
+@password
 def index():
-    return "Master is running\n"
+    return "Master is running\n."
 
 
 @app.route('/get_job', methods=['GET'])
+@password
 def get_job():
     job = get_next_job_from_buffer()
     LOG.info(f"Sending job {job} to worker")
@@ -61,6 +64,7 @@ def get_job():
 
 
 @app.route('/mark_job_as_fail/<int:job_id>', methods=['POST'])
+@password
 def mark_job_as_fail(job_id):
     Job.update(done=True, success=False).where(Job.id == job_id).execute()
     LOG.info(f"Marked job {job_id} as failed")
@@ -68,6 +72,7 @@ def mark_job_as_fail(job_id):
 
 
 @app.route('/save_crawling_results/<int:parent_job_id>', methods=['POST'])
+@password
 def save_crawling_results(parent_job_id):
     entry = dotdict(request.get_json())
     new_document = dotdict(json.loads(entry.new_document))
@@ -94,7 +99,7 @@ def save_crawling_results(parent_job_id):
 
 def main():
     connect_to_database()
-    app.run(host="localhost", debug=True, port=6000)
+    app.run(host="localhost", debug=True, port=CRAWLER_MANAGER_PORT)
 
 
 if __name__ == '__main__':

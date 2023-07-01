@@ -53,6 +53,10 @@ RETRIES = Retry(total=CRAWL_RETRIES,
 LOG = utils.get_logger(__file__)
 random.seed(1)
 
+CRAWLER_MANAGER_PORT = int(os.getenv("CRAWLER_MANAGER_PORT"))
+CRAWLER_MANAGER_PASSWORD = os.getenv("CRAWLER_MANAGER_PASSWORD")
+CRAWLER_MANAGER_HOST = os.getenv("CRAWLER_MANAGER_HOST")
+
 
 class Crawler:
     """Represents a web crawler that retrieves a single page, classifies its relevance, and extracts information."""
@@ -125,16 +129,19 @@ class Crawler:
 
     def loop(self):
         while True:
-            self.job = dotdict(requests.get("http://localhost:6000/get_job").json())
+            self.job = dotdict(requests.get(
+                f"{CRAWLER_MANAGER_HOST}:{CRAWLER_MANAGER_PORT}/get_job?pw={CRAWLER_MANAGER_PASSWORD}").json())
             LOG.info("Retrieved new job: " + str(self.job))
             new_document, new_relevant_urls = self.crawl()
             if new_document:
                 new_jobs = Job.create_jobs_from_worker_to_master(relevant_links=new_relevant_urls)
                 new_document = json.dumps(model_to_dict(new_document))
-                requests.post(f"http://localhost:6000/save_crawling_results/{self.job.id}",
-                              json={"new_document": new_document, "new_jobs": new_jobs})
+                requests.post(
+                    f"{CRAWLER_MANAGER_HOST}:{CRAWLER_MANAGER_PORT}/save_crawling_results/{self.job.id}?pw={CRAWLER_MANAGER_PASSWORD}",
+                    json={"new_document": new_document, "new_jobs": new_jobs})
             else:
-                requests.post(f"http://localhost:6000/mark_job_as_fail/{self.job.id}")
+                requests.post(
+                    f"{CRAWLER_MANAGER_HOST}:{CRAWLER_MANAGER_PORT}/mark_job_as_fail/{self.job.id}?pw={CRAWLER_MANAGER_PASSWORD}")
 
 
 def main():
