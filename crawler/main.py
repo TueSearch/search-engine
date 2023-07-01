@@ -49,9 +49,9 @@ class Loop:
                 if success:  # Save new document
                     new_document.save()
                     if new_document.relevant:
-                        LOG.info(f"Relevant {job}. Created {len(relevant_urls)} new jobs.")
+                        LOG.info(f"Relevant {job}. Created {len(relevant_urls)} new jobs out of {len(urls)} urls.")
                     else:
-                        LOG.info(f"Irrelevant {job}. Created {len(relevant_urls)} new jobs.")
+                        LOG.info(f"Irrelevant {job}. Created {len(relevant_urls)} new jobs out of {len(urls)} urls.")
                     Job.create_jobs(relevant_urls, parent=new_document)
                 else:
                     LOG.info(f"Failed {job}.")
@@ -75,9 +75,7 @@ class Loop:
             time.sleep(random.uniform(*CRAWL_RANDOM_SLEEP_INTERVAL))  # Random delay
 
             def process_job(j_idx, job):
-                LOG.info(f"Starting to crawl {job}.")
                 result = Crawler(job).crawl()
-                LOG.info(f" Result: {result}.")
                 results[j_idx] = result
 
             processes = [multiprocessing.Process(target=process_job, args=(i, job)) for i, job in

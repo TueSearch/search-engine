@@ -61,7 +61,6 @@ class Crawler:
             job (Job): The job representing the URL to be crawled.
         """
         self.job: Job = job
-        LOG.info(f"Crawler received {job}")
 
     def generate_document_from_html(self, html: str) -> (Document, list[URL]):
         """Generate a Document object from the HTML content of a crawled page.
@@ -172,5 +171,4 @@ class Crawler:
                 new_document, urls = self.crawl_assume_website_is_dynamic()
             except Exception as exception:
                 LOG.error(f"{str(exception)}")
-        LOG.info(f"Crawler finished. Return {new_document} and {urls} back to main process.")
         return new_document, urls

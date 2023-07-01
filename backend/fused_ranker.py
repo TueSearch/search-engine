@@ -74,7 +74,7 @@ class FusedRanker:
 
 
 if __name__ == '__main__':
-    query = "the press in germany is bullshit"
+    query = "the press in germany"
     processed_query, docs = FusedRanker().process_query(query)
     print(processed_query)
     for doc in docs:

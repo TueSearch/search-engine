@@ -1,9 +1,10 @@
 """
 This module contains the Document model. It represents a crawled document.
 """
+
 import peewee
 
-from crawler.sql_models.base import BaseModel, LongTextField, JSONField
+from crawler.sql_models.base import BaseModel, LongTextField, JSONField, DATABASE
 
 
 class Document(BaseModel):
@@ -12,6 +13,21 @@ class Document(BaseModel):
     """
     id = peewee.BigAutoField(primary_key=True)
     job_id = peewee.BigIntegerField(default=None)
+
+    @property
+    def job(self):
+        query = f"select * from jobs where id = {self.job_id}"
+        for row in (cursor := DATABASE.execute_sql(query)).fetchall():
+            job = {}
+            for column, value in zip(cursor.description, row):
+                job[column[0]] = value
+            return job
+        return None
+
+    @job.setter
+    def job(self, value):
+        self.job_id = value.id
+
     # Raw data field
     html = LongTextField(default="")
     # Raw text Fields

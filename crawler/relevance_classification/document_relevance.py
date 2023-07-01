@@ -61,16 +61,18 @@ def get_document_approximated_relevance_score_for(document: 'Document'):
         document.h5_tokens,
         document.h6_tokens
     ]
-    is_english = any([utils.text.do_text_contain_english_content(field) for field in text_fields])
-    if not is_english:
-        return 0
 
-    score = 1
+    english_score = 0
     for field in text_fields:
-        score += utils.text.do_text_contain_english_content(field)
+        english_score += utils.text.do_text_contain_english_content(field)
+    if english_score == 0:
+        return -1
+    tubingen_score = 0
     for field in json_fields:
-        score += do_tokens_contain_tuebingen(field)
-    return score
+        tubingen_score += do_tokens_contain_tuebingen(field)
+    if tubingen_score == 0:
+        return -1
+    return english_score + tubingen_score
 
 
 @functools.lru_cache(maxsize=1000)
