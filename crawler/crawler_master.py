@@ -8,6 +8,7 @@ from crawler.relevance_classification.url_relevance import URL
 from crawler.sql_models.document import Document
 from crawler.sql_models.job import Job
 from crawler.sql_models.server import Server
+from crawler.utils import dotdict
 from crawler.utils.log import get_logger
 
 app = Flask(__name__)
@@ -50,27 +51,32 @@ def save_crawling_results(parent_job_id):
     new_document = entry['new_document']
     new_document = json.loads(new_document)
     new_jobs = entry['new_jobs']
-    new_jobs = [json.loads(job) for job in new_jobs]
+    new_jobs = [dotdict(json.loads(job)) for job in new_jobs]
 
     new_document = Document(**new_document)
     new_document.save()
     LOG.info(f"Created document {new_document}")
 
+    server_names = set()
     for job in new_jobs:
-        server = URL(job["url"]).server_name
-        server = Server.get_or_create(name=server)[0]
-        LOG.info(f"Created server {server}")
-        job["server_id"] = server.id
-        job["parent_id"] = new_document.id
-        Job.insert(job).on_conflict_ignore().execute()
-        LOG.info(f"Created job {job}")
-    Job.update(done=True, success=True).where(Job.id == parent_job_id).execute()
+        server_name = URL(job["url"]).server_name
+        server_names.add(server_name)
+    server_names = list(server_names)
+    Server.insert_many([{"name": server_name} for server_name in server_names]).on_conflict_ignore().execute()
+    name_to_id = dict()
+    for server_name in server_names:
+        name_to_id[server_name] = Server.select(Server.id).where(Server.name == server_name).execute()[0].id
+    LOG.info(f"Created new servers for incoming jobs {name_to_id}")
 
-    if new_document.relevant:
-        LOG.info(f"Relevant document created {len(new_jobs)} new jobs.")
-    else:
-        LOG.info(f"Irrelevant document created {len(new_jobs)} new jobs.")
-    return "OK!"
+    for job in new_jobs:
+        job.server_id = name_to_id[URL(job["url"]).server_name]
+        job.parent_id = new_document.id
+    Job.insert_many(new_jobs).on_conflict_ignore().execute()
+    LOG.info(f"Created {len(new_jobs)} new jobs for document {new_document}")
+
+    Job.update(done=True, success=True).where(Job.id == parent_job_id).execute()
+    LOG.info("Updated parent job to done")
+    return "Done!"
 
 
 if __name__ == '__main__':
