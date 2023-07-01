@@ -11,9 +11,6 @@ jobs:
     name: Test backend and crawler.
     runs-on: ubuntu-latest
     steps:
-      - name: Login
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
       - name: Set environment variable.
         run: echo "TEST_REPORT_FILE=pytest-results.xml" >> $GITHUB_ENV
 
@@ -27,7 +24,9 @@ jobs:
         run: cp example.env .env && cp -rf example.frontend.env frontend/.env
 
       - name: Install pre-commit
-        run: pre-commit install
+        run: | 
+          pip install pre-commit 
+          pre-commit install
 
       - name: Run pre-commit
         run: pre-commit run --all-files

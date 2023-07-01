@@ -18,6 +18,7 @@ Tübingen.
 # Set up
 
 1. Create output directories and initialize environment variables.
+
 ```bash
 cp -rf example.env .env
 cp -rf example.frontend.env frontend/.env
@@ -28,7 +29,6 @@ cp -rf example.frontend.env frontend/.env
 ```bash
 docker-compose up -d --build
 ```
-
 
 # Crawler
 
@@ -41,6 +41,29 @@ To use the web crawler, follow the workflow below:
 ```bash
 docker-compose up worker
 ```
+
+2. To crawl in loop (more than once), remove `-n 1` in `docker-compose.yml`.
+
+3. To start up more than one crawler
+
+```
+docker-compose up --scale worker=12
+```
+
+4. To send crawled data to remote server, set
+
+```dotenv
+# Where to retrieve jobs
+CRAWLER_MANAGER_PORT=6000
+
+# Where to retrieve jobs
+CRAWLER_MANAGER_HOST=http://manager:${CRAWLER_MANAGER_PORT}
+
+# Password
+CRAWLER_MANAGER_PASSWORD=pw
+```
+
+to desired remove server
 
 # Backend
 
@@ -66,7 +89,6 @@ docker-compose up build_metrics
 ```
 
 This step should be repeated regularly to keep the metrics fresh.
-
 
 4. Test the API with
 
