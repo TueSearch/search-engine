@@ -8,6 +8,7 @@ and
 """
 import json
 import os
+import functools
 
 from dotenv import load_dotenv
 
@@ -40,6 +41,7 @@ def do_tokens_contain_tuebingen(tokens: list[str]):
     return False
 
 
+@functools.lru_cache(maxsize=1000)
 def get_document_approximated_relevance_score_for(document: 'Document'):
     text_fields = [
         document.body,
@@ -71,6 +73,7 @@ def get_document_approximated_relevance_score_for(document: 'Document'):
     return score
 
 
+@functools.lru_cache(maxsize=1000)
 def is_document_relevant(document: 'Document'):
     """Classify the relevance of a crawled document.
 

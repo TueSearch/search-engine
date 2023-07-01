@@ -161,7 +161,7 @@ def generate_text_document_from_html(html_content: str) -> 'Document':
     document = Document()
 
     document.html = html_content
-    document.body = make_text_human_readable(soup.body.get_text(separator=" "))
+    document.body = make_text_human_readable(soup.body.get_text(separator=" ") if soup.body else "")
     document.body_tokens = advanced_tokenize_with_pos(document.body)
 
     document.title = make_text_human_readable(soup.title.string if soup.title else "")

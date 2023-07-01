@@ -47,6 +47,12 @@ class Document(BaseModel):
         """
         table_name = 'documents'
 
+    def __eq__(self, other):
+        return self.html == other.html
+
+    def __hash__(self):
+        return hash(self.meta_description)
+
     def __str__(self):
         return f"""Document[
     body={self.body[:50]}, 

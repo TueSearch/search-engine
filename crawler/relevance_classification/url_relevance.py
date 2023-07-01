@@ -15,7 +15,6 @@ from dotenv import load_dotenv
 from crawler import utils
 from crawler.relevance_classification.document_relevance import get_document_approximated_relevance_score_for
 from crawler.sql_models.document import Document
-from crawler.sql_models.job import Job
 from crawler.utils.text import tokenize_get_lang, make_text_human_readable
 
 from crawler.utils import text
@@ -59,7 +58,7 @@ class URL:
         return str(self)
 
     @staticmethod
-    def get_links(parent_document: Document, parent_job: Job) -> list['URL']:
+    def get_links(parent_document: Document, parent_job: 'Job') -> list['URL']:
         """
         Extracts all absolute links from HTML content.
 
@@ -334,7 +333,7 @@ class URL:
         total_points += 5 * self.count_bingen_in_anchor_text
         total_points += 10 * self.count_tuebingen_in_title_text
         total_points += 5 * self.count_bingen_in_surrounding_text
-        total_points += get_document_approximated_relevance_score_for(self.parent)
+        total_points += 0 if self.parent is None else get_document_approximated_relevance_score_for(self.parent)
         return total_points
 
     @functools.cached_property

@@ -9,7 +9,6 @@ from crawler.sql_models.base import BaseModel, LongTextField, JSONField
 from crawler.sql_models.document import Document
 from crawler.sql_models.server import Server
 from crawler.relevance_classification.job_relevance import get_job_priority
-from crawler.relevance_classification.url_relevance import URL
 
 LOG = utils.get_logger(__file__)
 
@@ -22,8 +21,8 @@ class Job(BaseModel):
     url = LongTextField()
     server = peewee.ForeignKeyField(Server, backref="server_id")
     parent = peewee.ForeignKeyField(Document, backref="parent_id")
-    anchor_texts = LongTextField(default="")
-    anchor_texts_tokens = JSONField(default=[])
+    anchor_text = LongTextField(default="")
+    anchor_text_tokens = JSONField(default=[])
     surrounding_text = LongTextField(default="")
     surrounding_text_tokens = JSONField(default=[])
     title_text = LongTextField(default="")
@@ -58,7 +57,7 @@ class Job(BaseModel):
         return self.priority > 0
 
     @staticmethod
-    def create_jobs(relevant_links: list[URL], parent: Document = None):
+    def create_jobs(relevant_links: list['URL'], parent: Document = None):
         if len(relevant_links) == 0:
             return
         servers = [link.server_name for link in relevant_links]
@@ -68,15 +67,18 @@ class Job(BaseModel):
         jobs_batch = []
         parent_id = None if parent is None else parent.id
         parent_job = None if parent is None else Job.get_or_none(id=parent_id)
-        inherited_priority = 0.0 if parent is None else min(10, parent_job.priority / 10.0)
+        inherited_priority = 0.0 if parent_job is None else min(10, parent_job.priority / 10.0)
         for link, server in link_to_server.items():
             job = Job(url=link.url,
                       parent=parent_id,
                       server=server.id,
                       priority=get_job_priority(server, link),
-                      anchor_texts=link.anchor_texts,
+                      anchor_text=link.anchor_text,
+                      anchor_text_tokens=link.anchor_text_tokens,
                       surrounding_text=link.surrounding_text,
-                      title_text=link.title_text)
+                      surrounding_text_tokens=link.surrounding_text_tokens,
+                      title_text=link.title_text,
+                      title_text_tokens=link.title_text_tokens)
             job.priority += inherited_priority
             job_dict = model_to_dict(job)
             job_dict['parent_id'] = parent_id

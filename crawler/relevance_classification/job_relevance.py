@@ -1,8 +1,4 @@
-from crawler.relevance_classification.url_relevance import URL
-from crawler.sql_models.server import Server
-
-
-def get_job_priority(server: Server, link: URL):
+def get_job_priority(server, link):
     priority = link.priority
     if priority < 0:
         return priority
