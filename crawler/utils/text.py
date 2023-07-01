@@ -14,7 +14,6 @@ from unidecode import unidecode
 from spacy.tokens.token import Token
 
 load_dotenv()
-
 NLP = spacy.load(os.getenv("SPACY_MODEL"))
 NLP.add_pipe("emoji", first=True)
 REMOVE_LONG_WORD_THRESHOLD = int(os.getenv("REMOVE_LONG_WORD_THRESHOLD"))

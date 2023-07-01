@@ -1,4 +1,6 @@
-en-core-web-lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.5.0/en_core_web_lg-3.5.0-py3-none-any.whl#sha256=c8ac64840c1eb3e3ca7bd38bd1e1c48fb0faeb2449d54d01d5ce629af4595775
+# en-core-web-lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.5.0/en_core_web_lg-3.5.0-py3-none-any.whl#sha256=c8ac64840c1eb3e3ca7bd38bd1e1c48fb0faeb2449d54d01d5ce629af4595775
+#
+# If change this, don't forget to change docker/backend.base.Dockerfile
 Flask==2.3.2
 Flask-Cors==4.0.0
 langdetect==1.0.9
