@@ -65,7 +65,7 @@ def initialize_seed_jobs():
     Initializes the database.
     """
     LOG.info(f"Starting to insert {QUEUE_MANUAL_SEEDS} initial jobs.")
-    Job.create_initial_jobs_and_insert([URL(url, parent=None) for url in QUEUE_MANUAL_SEEDS])
+    Job.create_jobs_to_initialize_database([URL(url, parent=None) for url in QUEUE_MANUAL_SEEDS])
     LOG.info(f"Finished inserting {QUEUE_MANUAL_SEEDS} initial jobs.")
 
 

@@ -12,9 +12,6 @@ CREATE TABLE IF NOT EXISTS tfidfs
     h5                BLOB,
     h6                BLOB,
     body              BLOB,
-    -- Other fields
-    created_date      DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_time_changed DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     -- Foreign key
     FOREIGN KEY (id) REFERENCES documents (id) ON DELETE CASCADE ON UPDATE CASCADE
 );

@@ -4,12 +4,11 @@ Base model class for all models, defines the models connection.
 import json
 import os
 
-import datetime
 import pickle
 
 import peewee
 from dotenv import load_dotenv
-from crawler.utils import log
+from crawler.utils import log, dotdict
 
 load_dotenv()
 
@@ -25,6 +24,15 @@ DATABASE = peewee.MySQLDatabase(database=DB,
                                 user=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_USER"),
                                 password=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_PASSWORD"))
 DATABASE.connect()
+
+def execute_query_and_return_objects(query):
+    ret = []
+    for row in (cursor := DATABASE.execute_sql(query)).fetchall():
+        job = dotdict()
+        for column, value in zip(cursor.description, row):
+            job[column[0]] = value
+        ret.append(job)
+    return ret
 
 
 class LongTextField(peewee.TextField):
@@ -72,8 +80,6 @@ class BaseModel(peewee.Model):
     """
     Base model class for all models, defines the models connection.
     """
-    created_date = peewee.DateTimeField(default=datetime.datetime.now)
-    last_time_changed = peewee.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         """

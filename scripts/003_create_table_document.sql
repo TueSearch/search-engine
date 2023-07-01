@@ -32,7 +32,4 @@ CREATE TABLE IF NOT EXISTS documents
     body_tokens             LONGTEXT DEFAULT ('[]'),
     -- Classification
     relevant                BOOLEAN  DEFAULT TRUE,
-    -- Other fields
-    created_date            DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_time_changed       DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE = RocksDB;

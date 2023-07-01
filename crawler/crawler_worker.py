@@ -7,7 +7,6 @@ import random
 import time
 import traceback
 
-import requests
 from dotenv import load_dotenv
 from playhouse.shortcuts import model_to_dict
 from requests.adapters import HTTPAdapter, Retry
@@ -20,6 +19,8 @@ from crawler.relevance_classification.url_relevance import URL
 from crawler.relevance_classification.document_relevance import is_document_relevant
 from crawler.sql_models.job import Job
 import requests
+
+from crawler.utils import dotdict
 
 load_dotenv()
 
@@ -124,17 +125,16 @@ class Crawler:
 
     def loop(self):
         while True:
-            self.job = requests.get("http://localhost:6000/reserve_job").json()
-            self.job = self.job["url"]
+            self.job = dotdict(requests.get("http://localhost:6000/get_job").json())
             LOG.info("Retrieved new job: " + str(self.job))
             new_document, new_relevant_urls = self.crawl()
-            new_jobs = Job.create_jobs_to_send_to_master(relevant_links=new_relevant_urls)
-            new_document = model_to_dict(new_document)
-            del new_document["created_date"]
-            del new_document["last_time_changed"]
-            new_document = json.dumps(new_document)
-            requests.post(f"http://localhost:6000/save_crawling_results/{self.job.id}",
-                          json={"new_document": new_document, "new_jobs": new_jobs})
+            if new_document:
+                new_jobs = Job.create_jobs_from_worker_to_master(relevant_links=new_relevant_urls)
+                new_document = json.dumps(model_to_dict(new_document))
+                requests.post(f"http://localhost:6000/save_crawling_results/{self.job.id}",
+                              json={"new_document": new_document, "new_jobs": new_jobs})
+            else:
+                requests.post(f"http://localhost:6000/mark_job_as_fail/{self.job.id}")
 
 
 def main():

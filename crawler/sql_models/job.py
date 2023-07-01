@@ -4,14 +4,12 @@ This module contains the Job model. It represents a job in the crawler's queue.
 import json
 
 import peewee
-import urllib3
 from playhouse.shortcuts import model_to_dict
 
 from crawler import utils
-from crawler.sql_models.base import BaseModel, LongTextField, JSONField
-from crawler.sql_models.document import Document
-from crawler.sql_models.server import Server
 from crawler.relevance_classification.job_relevance import get_job_priority
+from crawler.sql_models.base import BaseModel, LongTextField, JSONField, execute_query_and_return_objects
+from crawler.sql_models.server import Server
 
 LOG = utils.get_logger(__file__)
 
@@ -22,8 +20,28 @@ class Job(BaseModel):
     """
     id = peewee.BigAutoField(primary_key=True)
     url = LongTextField()
-    server = peewee.ForeignKeyField(Server, backref="server_id")
-    parent = peewee.ForeignKeyField(Document, backref="parent_id")
+    server_id = peewee.BigIntegerField()
+
+    @property
+    def server(self) -> 'Server':
+        query = f"select * from servers where id = {self.server_id}"
+        return execute_query_and_return_objects(query)[0]
+
+    @server.setter
+    def server(self, value):
+        self.server_id = value.id
+
+    parent_id = peewee.BigIntegerField()
+
+    @property
+    def parent(self) -> 'Document':
+        query = f"select * from documents where id = {self.parent_id}"
+        return execute_query_and_return_objects(query)[0]
+
+    @parent.setter
+    def parent(self, value):
+        self.parent_id = value.id
+
     anchor_text = LongTextField(default="")
     anchor_text_tokens = JSONField(default=[])
     surrounding_text = LongTextField(default="")
@@ -31,19 +49,13 @@ class Job(BaseModel):
     title_text = LongTextField(default="")
     title_text_tokens = JSONField(default=[])
     priority = peewee.FloatField(default=0.0)
-    being_crawled = peewee.BooleanField(default=False)
     done = peewee.BooleanField(default=False)
     success = peewee.BooleanField(default=None, null=True)
 
-    def to_minimal_dict(self):
+    def to_dict_from_master_to_worker(self):
         return {
             "id": self.id,
             "url": self.url
-        }
-
-    def to_dict(self):
-        return {
-            ""
         }
 
     class Meta:
@@ -53,7 +65,7 @@ class Job(BaseModel):
         table_name = 'jobs'
 
     def __str__(self):
-        return f"Job[priority={self.priority}, server={self.server}, url={self.url}]"
+        return f"Job[priority={self.priority}, server_id={self.server_id}, url={self.url}]"
 
     def __repr__(self):
         return str(self)
@@ -71,7 +83,7 @@ class Job(BaseModel):
         return self.priority > 0
 
     @staticmethod
-    def create_initial_jobs_and_insert(relevant_links: list['URL']):
+    def create_jobs_to_initialize_database(relevant_links: list['URL']):
         if len(relevant_links) == 0:
             return
         servers = [link.server_name for link in relevant_links]
@@ -90,14 +102,11 @@ class Job(BaseModel):
                       title_text=link.title_text,
                       title_text_tokens=link.title_text_tokens)
             job_dict = model_to_dict(job)
-            job_dict['server_id'] = server.id
-            del job_dict['server']
-            del job_dict['parent']
             jobs_batch.append(job_dict)
         Job.insert_many(jobs_batch).on_conflict_ignore().execute()
 
     @staticmethod
-    def create_jobs_to_send_to_master(relevant_links: list['URL']):
+    def create_jobs_from_worker_to_master(relevant_links: list['URL']):
         jobs_batch = []
         for link in relevant_links:
             job = Job(url=link.url,
@@ -109,7 +118,5 @@ class Job(BaseModel):
                       title_text=link.title_text,
                       title_text_tokens=link.title_text_tokens)
             job_dict = model_to_dict(job)
-            del job_dict["created_date"]
-            del job_dict["last_time_changed"]
             jobs_batch.append(json.dumps(job_dict))
         return jobs_batch
