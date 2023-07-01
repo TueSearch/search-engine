@@ -38,7 +38,7 @@ TUEBINGEN_WRITING_STYLES = json.loads(os.getenv('TUEBINGEN_WRITING_STYLES'))
 
 class URL:
     def __init__(self, url: str,
-                 parent: Document,
+                 parent: Document = None,
                  anchor_text: str = "",
                  surrounding_text: str = "",
                  title_text: str = ""):
@@ -58,7 +58,7 @@ class URL:
         return str(self)
 
     @staticmethod
-    def get_links(parent_document: Document, parent_job: 'Job') -> list['URL']:
+    def get_links(parent_document: Document, parent_url: str) -> list['URL']:
         """
         Extracts all absolute links from HTML content.
 
@@ -86,7 +86,7 @@ class URL:
         for link in soup.find_all('a'):
             href = link.get('href')
             if href:
-                absolute_url = urljoin(parent_job.url, href)
+                absolute_url = urljoin(parent_url, href)
                 anchor_text = link.get_text()
                 links.append(
                     URL(url=absolute_url,

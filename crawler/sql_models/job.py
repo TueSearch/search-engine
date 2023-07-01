@@ -1,7 +1,10 @@
 """
 This module contains the Job model. It represents a job in the crawler's queue.
 """
+import json
+
 import peewee
+import urllib3
 from playhouse.shortcuts import model_to_dict
 
 from crawler import utils
@@ -57,7 +60,7 @@ class Job(BaseModel):
         return self.priority > 0
 
     @staticmethod
-    def create_jobs(relevant_links: list['URL'], parent: Document = None):
+    def create_initial_jobs_and_insert(relevant_links: list['URL']):
         if len(relevant_links) == 0:
             return
         servers = [link.server_name for link in relevant_links]
@@ -65,12 +68,8 @@ class Job(BaseModel):
         servers = {server.name: server for server in servers}
         link_to_server = {link: servers[link.server_name] for link in relevant_links}
         jobs_batch = []
-        parent_id = None if parent is None else parent.id
-        parent_job = None if parent is None else Job.get_or_none(id=parent_id)
-        inherited_priority = 0.0 if parent_job is None else min(10, parent_job.priority / 10.0)
         for link, server in link_to_server.items():
             job = Job(url=link.url,
-                      parent=parent_id,
                       server=server.id,
                       priority=get_job_priority(server, link),
                       anchor_text=link.anchor_text,
@@ -79,11 +78,27 @@ class Job(BaseModel):
                       surrounding_text_tokens=link.surrounding_text_tokens,
                       title_text=link.title_text,
                       title_text_tokens=link.title_text_tokens)
-            job.priority += inherited_priority
             job_dict = model_to_dict(job)
-            job_dict['parent_id'] = parent_id
             job_dict['server_id'] = server.id
             del job_dict['server']
             del job_dict['parent']
             jobs_batch.append(job_dict)
-            Job.insert_many(jobs_batch).on_conflict_ignore().execute()
+        Job.insert_many(jobs_batch).on_conflict_ignore().execute()
+
+    @staticmethod
+    def create_jobs_to_send_to_master(relevant_links: list['URL']):
+        jobs_batch = []
+        for link in relevant_links:
+            job = Job(url=link.url,
+                      priority=link.priority,
+                      anchor_text=link.anchor_text,
+                      anchor_text_tokens=link.anchor_text_tokens,
+                      surrounding_text=link.surrounding_text,
+                      surrounding_text_tokens=link.surrounding_text_tokens,
+                      title_text=link.title_text,
+                      title_text_tokens=link.title_text_tokens)
+            job_dict = model_to_dict(job)
+            del job_dict["created_date"]
+            del job_dict["last_time_changed"]
+            jobs_batch.append(json.dumps(job_dict))
+        return jobs_batch

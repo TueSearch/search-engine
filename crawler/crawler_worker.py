@@ -9,15 +9,17 @@ import traceback
 
 import requests
 from dotenv import load_dotenv
+from playhouse.shortcuts import model_to_dict
 from requests.adapters import HTTPAdapter, Retry
 from requests_html import HTMLSession
 
 from crawler import utils
 from crawler.sql_models.document import Document
-from crawler.sql_models.job import Job
 from crawler.relevance_classification import url_relevance
 from crawler.relevance_classification.url_relevance import URL
 from crawler.relevance_classification.document_relevance import is_document_relevant
+from crawler.sql_models.job import Job
+import requests
 
 load_dotenv()
 
@@ -54,38 +56,18 @@ random.seed(1)
 class Crawler:
     """Represents a web crawler that retrieves a single page, classifies its relevance, and extracts information."""
 
-    def __init__(self, job: Job):
-        """Initialize the Crawler object with a job to crawl.
-
-        Args:
-            job (Job): The job representing the URL to be crawled.
-        """
-        self.job: Job = job
+    def __init__(self):
+        self.url: str = ""
 
     def generate_document_from_html(self, html: str) -> (Document, list[URL]):
-        """Generate a Document object from the HTML content of a crawled page.
-
-        Args:
-            html (object): Response's text.
-        Returns:
-            Document: The generated Document object.
-            list[str]: The list of URLs found in the HTML content.
-        """
         document = utils.text.generate_text_document_from_html(html)
         document.relevant = is_document_relevant(document)
-        urls = url_relevance.URL.get_links(document, self.job)
+        urls = url_relevance.URL.get_links(document, self.url)
+        urls = [url for url in urls if url.is_relevant]
         document.job_id = self.job.id
         return document, urls
 
     def try_to_obtain_static_website_html(self):
-        """Send an HTTP request to the URL of the job.
-
-        Returns:
-            requests.Response: The response object of the HTTP request.
-
-        Raises:
-            Exception: If the response is not successful or the content type is not HTML.
-        """
         session = requests.Session()
         session.mount('http://', HTTPAdapter(max_retries=RETRIES))
         session.mount('https://', HTTPAdapter(max_retries=RETRIES))
@@ -99,14 +81,6 @@ class Crawler:
         return response
 
     def try_to_obtain_dynamic_website_html(self):
-        """Send an HTTP request to the URL of the job.
-
-        Returns:
-            requests.Response: The response object of the HTTP request.
-
-        Raises:
-            Exception: If the response is not successful or the content type is not HTML.
-        """
         session = HTMLSession()
         session.mount('http://', HTTPAdapter(max_retries=RETRIES))
         session.mount('https://', HTTPAdapter(max_retries=RETRIES))
@@ -121,43 +95,18 @@ class Crawler:
         return response
 
     def crawl_assume_website_is_static(self) -> (Document, list[URL]):
-        """Try to assume that the website is static and crawl it.
-
-        Returns:
-            Document: The crawled Document object.
-        """
         response = self.try_to_obtain_static_website_html()
         html = response.text
         new_document = self.generate_document_from_html(html)
         return new_document
 
     def crawl_assume_website_is_dynamic(self) -> (Document, list[URL]):
-        """
-        Try to assume that the website is dynamic and crawl it.
-        :return:
-            Document: The crawled Document object.
-        """
         response = self.try_to_obtain_dynamic_website_html()
         html = response.text
         new_document = self.generate_document_from_html(html)
         return new_document
 
     def crawl(self) -> (Document, list[URL]):
-        """Perform the crawling process for the given job.
-
-        This procedure tries to crawl the website at least twice.
-        One assuming the website is static and one assuming it is dynamic.
-        The static crawling is cheaper but less accurate.
-        The dynamic crawling is more expensive but more accurate.
-
-        If the static crawling is successful, the dynamic crawling is not performed.
-        A static crawling is successful if the website is relevant to Tuebingen and in english.
-
-        Since we use two different libraries, this code is a bit messy.
-
-        Returns:
-            The crawled document.
-        """
         new_document, urls = None, []
         try:  # First, try a cheaper static version.
             new_document, urls = self.crawl_assume_website_is_static()
@@ -172,3 +121,29 @@ class Crawler:
             except Exception as exception:
                 LOG.error(f"{str(exception)}")
         return new_document, urls
+
+    def loop(self):
+        while True:
+            self.job = requests.get("http://localhost:6000/reserve_job").json()
+            self.job = self.job["url"]
+            LOG.info("Retrieved new job: " + str(self.job))
+            new_document, new_relevant_urls = self.crawl()
+            new_jobs = Job.create_jobs_to_send_to_master(relevant_links=new_relevant_urls)
+            new_document = model_to_dict(new_document)
+            del new_document["created_date"]
+            del new_document["last_time_changed"]
+            new_document = json.dumps(new_document)
+            requests.post(f"http://localhost:6000/save_crawling_results/{self.job.id}",
+                          json={"new_document": new_document, "new_jobs": new_jobs})
+
+
+def main():
+    """
+    Start the processes to crawl the jobs.
+    """
+    crawler = Crawler()
+    crawler.loop()
+
+
+if __name__ == '__main__':
+    main()

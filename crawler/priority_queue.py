@@ -23,7 +23,7 @@ class PriorityQueue:
         """
         out_jobs = []
         query = f"""
-SELECT j.* FROM jobs j
+SELECT j.id, j.url FROM jobs j
 JOIN servers s ON j.server_id = s.id
 WHERE s.is_black_list = 0
   AND j.done = 0
@@ -57,9 +57,9 @@ LIMIT {n_jobs}
         """
         out_jobs = []
         query = f"""
-SELECT subquery.*
+SELECT subquery.id subquery.url
 FROM (
-    SELECT *,
+    SELECT j.*,
         ROW_NUMBER() OVER (PARTITION BY server_id ORDER BY priority DESC) AS row_num
     FROM jobs j where j.done = 0 and j.being_crawled = 0
 ) as subquery
@@ -82,14 +82,4 @@ LIMIT {n_jobs}
             list[Job]: A list of Job objects representing the URLs to be crawled.
         """
         LOG.info(f"Queue received command to obtain {n_jobs} jobs.")
-        returned_jobs = []
-        with DATABASE.atomic():
-            for job in PriorityQueue.get_one_highest_priority_job_from_each_server(n_jobs):
-                try:
-                    job.being_crawled = True
-                    job.save()
-                    returned_jobs.append(job)
-                    LOG.info(f"Marked job {job} as being crawled.")
-                except Exception as marking_job_as_safe_exception:
-                    LOG.error(f"Error retrieving marking job as safe: {marking_job_as_safe_exception}")
-        return returned_jobs
+        return list(PriorityQueue.get_one_highest_priority_job_from_each_server(n_jobs))

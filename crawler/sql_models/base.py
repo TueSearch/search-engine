@@ -1,7 +1,6 @@
 """
 Base model class for all models, defines the models connection.
 """
-import dataclasses
 import json
 import os
 
@@ -26,7 +25,6 @@ DATABASE = peewee.MySQLDatabase(database=DB,
                                 user=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_USER"),
                                 password=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_PASSWORD"))
 DATABASE.connect()
-LOG.info(f'Database connection successes. To host {HOST}:{PORT} database {DB}.')
 
 
 class LongTextField(peewee.TextField):
