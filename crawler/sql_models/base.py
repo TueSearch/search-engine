@@ -15,14 +15,14 @@ load_dotenv()
 DATABASE_LOG_FILE = os.getenv("DATABASE_LOG_FILE")
 LOG = log.get_logger(__name__)
 
-HOST = os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_HOST")
-PORT = int(os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_PORT"))
-DB = os.getenv("MYSQL_SEARCH_ENGINE_DATABASE")
+HOST = os.getenv("MYSQL_HOST")
+PORT = int(os.getenv("MYSQL_PORT"))
+DB = os.getenv("MYSQL_DATABASE")
 DATABASE = peewee.MySQLDatabase(database=DB,
                                 host=HOST,
                                 port=PORT,
-                                user=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_USER"),
-                                password=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_PASSWORD"))
+                                user=os.getenv("MYSQL_USER"),
+                                password=os.getenv("MYSQL_PASSWORD"))
 
 
 # pylint: disable=invalid-name

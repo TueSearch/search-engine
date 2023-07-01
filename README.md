@@ -19,7 +19,6 @@ Tübingen.
 
 1. Create output directories and initialize environment variables.
 ```bash
-cp -rf example.mysql.env .mysql.env
 cp -rf example.env .env
 cp -rf example.frontend.env frontend/.env
 ```

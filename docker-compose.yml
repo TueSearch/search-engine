@@ -13,12 +13,25 @@ services:
     restart: unless-stopped
     ports:
       - '3306:3306'
-    environment:
-      MYSQL_ROOT_HOST: '%'
     env_file:
-      - .mysql.env
+      - .env
     volumes:
       - tuesearch-percona-server:/var/lib/mysql
+    networks:
+      - mysql_net
+  ############################################################
+  # Viewing data
+  ############################################################
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    depends_on:
+      - mysql
+    env_file:
+      - .env
+    restart: always
+    ports:
+      - '8000:80'
     networks:
       - mysql_net
   ############################################################
