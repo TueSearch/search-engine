@@ -35,6 +35,17 @@ class Job(BaseModel):
     done = peewee.BooleanField(default=False)
     success = peewee.BooleanField(default=None, null=True)
 
+    def to_minimal_dict(self):
+        return {
+            "id": self.id,
+            "url": self.url
+        }
+
+    def to_dict(self):
+        return {
+            ""
+        }
+
     class Meta:
         """
         Meta class for the Job model.

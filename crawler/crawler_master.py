@@ -33,7 +33,7 @@ def index():
 
 
 @app.route('/reserve_job', methods=['GET'])
-def reserve_job():
+def reserve_job():l
     job = get_next_job_from_buffer()
     return jsonify({"url": job})
 
