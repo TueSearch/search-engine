@@ -1,0 +1,4 @@
+ALTER TABLE documents
+MODIFY COLUMN job_id BIGINT DEFAULT NULL,
+ADD CONSTRAINT FK_documents_job_id
+FOREIGN KEY (job_id) REFERENCES jobs (id);

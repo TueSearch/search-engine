@@ -1,123 +1,408 @@
 """
-This module contains functions to check if a URL is relevant for the crawler.
+This module contains utility functions for URL parsing.
 """
 import json
 import os
-from urllib.parse import urlparse
-
-from dotenv import load_dotenv
+from urllib.parse import urljoin, urlparse, urlunparse
+import functools
+import spacy
+import tldextract
 import validators
+from bs4 import BeautifulSoup
+from url_normalize import url_normalize
+from dotenv import load_dotenv
 
 from crawler import utils
-from tldextract import extract
+from crawler.relevance_classification.document_relevance import get_document_approximated_relevance_score_for
+from crawler.sql_models.document import Document
+from crawler.utils.text import tokenize_get_lang, make_text_human_readable
+
+from crawler.utils import text
 
 load_dotenv()
+
+# Credit: https://stackoverflow.com/a/68030892
+NLP = spacy.blank("en")
+NLP.tokenizer.url_match = None
+infixes = NLP.Defaults.infixes + [r'\.']
+infix_regex = spacy.util.compile_infix_regex(infixes)
+NLP.tokenizer.infix_finditer = infix_regex.finditer
 
 CRAWL_EXCLUDED_EXTENSIONS = set(json.loads(
     os.getenv("CRAWL_EXCLUDED_EXTENSIONS")))
 CRAWL_BLACK_LIST = set(json.loads(os.getenv("CRAWL_BLACK_LIST")))
 QUEUE_MANUAL_SEEDS = json.loads(os.getenv('QUEUE_MANUAL_SEEDS'))
 CRAWL_PRIORITY_LIST = json.loads(os.getenv('CRAWL_PRIORITY_LIST'))
-
-def get_url_extension(url):
-    parsed_url = urlparse(url)
-    path = parsed_url.path
-    _, file_extension = os.path.splitext(path)
-    return file_extension
+TUEBINGEN_WRITING_STYLES = json.loads(os.getenv('TUEBINGEN_WRITING_STYLES'))
 
 
-def is_url_media_link(url):
-    """
-    Check if a URL is a "normal" text URL.
+class URL:
+    def __init__(self, url: str,
+                 parent: Document = None,
+                 anchor_text: str = "",
+                 surrounding_text: str = "",
+                 title_text: str = ""):
+        url = url_normalize(url)
+        parsed_url = urlparse(url)
+        parsed_url = parsed_url._replace(fragment='')
+        self.url = urlunparse(parsed_url)
+        self.anchor_text = utils.text.make_text_human_readable(anchor_text)
+        self.surrounding_text = utils.text.make_text_human_readable(surrounding_text)
+        self.title_text = utils.text.make_text_human_readable(title_text)
+        self.parent = parent
 
-    Args:
-        url (str): The URL to check.
+    def __eq__(self, other):
+        return self.url == other.url
 
-    Returns:
-        bool: True if the URL is a "normal" text URL, False otherwise.
-    """
-    ext = get_url_extension(url)
-    for exclued_extension in CRAWL_EXCLUDED_EXTENSIONS:
-        if exclued_extension in ext:
-            return True
-    return False
+    def __neq__(self, other):
+        return self.url == other.url
 
+    def __hash__(self):
+        return hash(self.url)
 
-def get_url_priority(url: str) -> int:
-    """
-    Get the priority of a URL.
-    Args:
-        url: The URL to get the priority of.
+    def __str__(self):
+        return f"URL[url={self.url}, anchor_text={self.anchor_text}]"
 
-    Returns: The priority of the URL. The higher the number, the higher the priority.
+    def __repr__(self):
+        return str(self)
 
-    """
-    if not is_url(url):
-        return -1
+    @staticmethod
+    def get_links(parent_document: Document, parent_url: str) -> list['URL']:
+        """
+        Extracts all absolute links from HTML content.
 
-    if is_url_media_link(url):
-        return -1
+        Args:
+            html (str): The HTML content.
+            url (str): The URL used to resolve the absolute links.
 
-    if utils.url.get_server_name_from_url(url) in CRAWL_BLACK_LIST:
-        return -1
+        Returns:
+            list: A list of absolute links extracted from the HTML.
+        """
 
-    tokens = utils.url.tokenize_url(
-        "https://tuebingenresearchcampus.com/en/research-in-tuebingen/tnc/neuro-campus-initiatives/")
-    priority = 1
-    has_tuebingen = has_bingen = False
-    for token in tokens:
-        if "tübingen" in token or "tuebingen" in token or "tubingen" in token:
-            has_tuebingen = True
-        if "bingen" in token:
-            has_bingen = True
-    is_english = "en" in tokens or "/en/" in url or "en." in url or utils.text.do_text_contain_english_content(
-        " ".join(tokens))
-    for priority_url in CRAWL_PRIORITY_LIST:
-        if priority_url in url:
-            priority += 20
-    if has_bingen:
-        priority += 3
-    if has_tuebingen:
-        priority += 5
-    if is_english:
-        priority += 3
-    if is_english and has_bingen:
-        priority += 10
-    if is_english and has_tuebingen:
-        priority += 15
-    if url in QUEUE_MANUAL_SEEDS:
-        priority += 100
-    if extract(url).suffix == "com":
-        priority += 1
-    return priority
+        soup = BeautifulSoup(parent_document.html, 'html.parser')
+        body_text = make_text_human_readable(soup.body.get_text(separator=" "))
 
+        def get_surrounding_text(anchor) -> str:
+            # Search for the index of the anchor text in the body text
+            index = body_text.find(anchor)
+            if index != -1:
+                # Extract the substring of 20 words before and after the anchor text
+                return body_text[max(0, index - 20):index + len(anchor) + 20]
+            return ""
 
-def is_url(text: str) -> bool:
-    """
-    Check if a text is a URL.
-    """
+        links = []
 
-    def test1():
-        try:
-            result = urlparse(text)
-            return all([result.scheme, result.netloc])
-        except:
-            return False
+        for link in soup.find_all('a'):
+            href = link.get('href')
+            if href:
+                absolute_url = urljoin(parent_url, href)
+                anchor_text = link.get_text()
+                links.append(
+                    URL(url=absolute_url,
+                        anchor_text=anchor_text,
+                        surrounding_text=get_surrounding_text(anchor_text),
+                        title_text=link.get('title', ''),
+                        parent=parent_document))
+        return links
 
-    def test2():
-        result = validators.url(text)
-        if isinstance(result, validators.ValidationFailure):
-            return False
-        return result
+    @functools.cached_property
+    def server_name(self):
+        """
+        Extracts the server name of a URL.
+        """
+        return tldextract.extract(self.url).domain
 
-    return test1() and test2()
+    @functools.cached_property
+    def tld(self):
+        """
+        Extracts the top-level domain of a URL.
+        """
+        return tldextract.extract(self.url).suffix
 
+    @functools.cached_property
+    def url_tokens(self) -> list[str]:
+        """
+        Tokenizes a URL.
 
-def is_url_relevant(url: str) -> bool:
-    """
-    Check if a URL is relevant for the crawler.
-    Args:
-        url: The URL to check.
-    Returns: True if the URL is relevant, False otherwise.
-    """
-    return get_url_priority(url) > 0
+        Args:
+            url (str): Input URL.
+
+        Returns:
+            list[str]: List of tokens.
+        """
+        tokens = list(NLP(self.url))
+        tokens = [token.text for token in tokens if not token.is_punct]
+        return tokens
+
+    @functools.cached_property
+    def anchor_text_tokens(self) -> list[str]:
+        """
+        Tokenizes a URL.
+
+        Args:
+            url (str): Input URL.
+
+        Returns:
+            list[str]: List of tokens.
+        """
+        return text.advanced_tokenize_with_pos(self.anchor_text)
+
+    @functools.cached_property
+    def surrounding_text_tokens(self) -> list[str]:
+        """
+        Tokenizes a URL.
+
+        Args:
+            url (str): Input URL.
+
+        Returns:
+            list[str]: List of tokens.
+        """
+        return text.advanced_tokenize_with_pos(self.surrounding_text)
+
+    @functools.cached_property
+    def title_text_tokens(self) -> list[str]:
+        """
+        Tokenizes a URL.
+
+        Args:
+            url (str): Input URL.
+
+        Returns:
+            list[str]: List of tokens.
+        """
+        return text.advanced_tokenize_with_pos(self.title_text)
+
+    @functools.cached_property
+    def extension(self):
+        """
+        Extracts the extension of a URL.
+        """
+        parsed_url = urlparse(self.url)
+        path = parsed_url.path
+        _, file_extension = os.path.splitext(path)
+        return file_extension
+
+    @functools.cached_property
+    def is_properly_a_html_site(self):
+        """
+        Check if a URL is a "normal" text URL.
+
+        Returns:
+            bool: True if the URL is a "normal" text URL, False otherwise.
+        """
+        ext = self.extension
+        for media_extension in CRAWL_EXCLUDED_EXTENSIONS:
+            if media_extension in ext:
+                return False
+        return True
+
+    @functools.cached_property
+    def is_a_real_hyper_link(self) -> bool:
+        """
+        Check if a text is a URL.
+        """
+
+        def test1():
+            try:
+                result = urlparse(self.url)
+                return all([result.scheme, result.netloc])
+            # pylint: disable=broad-except
+            except:
+                return False
+
+        def test2():
+            result = validators.url(self.url)
+            if isinstance(result, validators.ValidationFailure):
+                return False
+            return result
+
+        return test1() and test2()
+
+    @functools.cached_property
+    def is_on_server_black_list(self) -> bool:
+        """
+        Check if a URL is on the server black list.
+        """
+        return self.server_name in CRAWL_BLACK_LIST
+
+    @functools.cached_property
+    def count_tuebingen_in_url(self) -> int:
+        """
+        Counts the number of times the word "tuebingen" appears in the URL.
+        """
+        count = 0
+        for token in self.url_tokens:
+            for tueb in TUEBINGEN_WRITING_STYLES:
+                if tueb in token:
+                    count += 1
+        return count
+
+    @functools.cached_property
+    def count_bingen_in_url(self) -> int:
+        """
+        Counts the number of times the word "bingen" appears in the URL.
+        """
+        count = 0
+        for token in self.url_tokens:
+            if "bingen" in token:
+                count += 1
+        return count
+
+    @functools.cached_property
+    def count_en_in_url(self) -> int:
+        """
+        Counts the number of times the word "en" appears in the URL.
+        """
+        count = 0
+        for token in self.url_tokens:
+            if "en" in token or "/en" in token or "/en/" in token or ".en" in token or ".en/" in token or ".en." in token:
+                count += 1
+        return count
+
+    @functools.cached_property
+    def get_priority_list_bonus(self) -> int:
+        """
+        Return a bonus if the URL is in the priority list.
+        """
+        count = 0
+        for priority_url in CRAWL_PRIORITY_LIST:
+            if priority_url in self.url:
+                count += 20
+        return count
+
+    @functools.cached_property
+    def get_initial_queue_list_bonus(self) -> int:
+        """
+        Return a bonus if the URL is in the initial queue list.
+        """
+        count = 0
+        for priority_url in QUEUE_MANUAL_SEEDS:
+            if priority_url in self.url:
+                count += 100000
+        return count
+
+    @functools.cached_property
+    def get_international_suffix_bonus(self) -> int:
+        """
+        If the tld is a international suffix, return a bonus.
+        """
+        count = 0
+        if "com" in self.tld:
+            count += 1
+        return count
+
+    @functools.cached_property
+    def count_tuebingen_in_anchor_text(self) -> int:
+        """
+        Counts the number of times the word "tuebingen" appears in the anchor text.
+        """
+        count = 0
+        for token in self.anchor_text_tokens:
+            for tueb in TUEBINGEN_WRITING_STYLES:
+                if tueb in token:
+                    count += 1
+        return count
+
+    @functools.cached_property
+    def count_bingen_in_anchor_text(self) -> int:
+        """
+        Counts the number of times the word "bingen" appears in the anchor text.
+        """
+        count = 0
+        for token_lang in tokenize_get_lang(self.anchor_text):
+            if "en" in token_lang:
+                count += 1
+        return count
+
+    @functools.cached_property
+    def count_tuebingen_in_surrounding_text(self) -> int:
+        """
+        Counts the number of times the word "tuebingen" appears in the surrounding text.
+        """
+        count = 0
+        for token in self.surrounding_text_tokens:
+            for tueb in TUEBINGEN_WRITING_STYLES:
+                if tueb in token:
+                    count += 1
+        return count
+
+    @functools.cached_property
+    def count_bingen_in_surrounding_text(self) -> int:
+        """
+        Counts the number of times the word "bingen" appears in the surrounding text.
+        """
+        count = 0
+        for token_lang in tokenize_get_lang(self.surrounding_text):
+            if "en" in token_lang:
+                count += 1
+        return count
+
+    @functools.cached_property
+    def count_tuebingen_in_title_text(self) -> int:
+        """
+        Counts the number of times the word "tuebingen" appears in the title text.
+        """
+        count = 0
+        for token in self.title_text_tokens:
+            for tueb in TUEBINGEN_WRITING_STYLES:
+                if tueb in token:
+                    count += 1
+        return count
+
+    @functools.cached_property
+    def count_bingen_in_title_text(self) -> int:
+        """
+        Counts the number of times the word "bingen" appears in the title text.
+        """
+        count = 0
+        for token_lang in tokenize_get_lang(self.title_text):
+            if "en" in token_lang:
+                count += 1
+        return count
+
+    @functools.cached_property
+    def count_english_in_url_tokens(self) -> int:
+        """
+        The word "english" appears in the URL.
+        """
+        count = 0
+        for token in self.url_tokens:
+            if "en" in token or "/en" in token or "/en/" in token or ".en" in token or ".en/" in token or ".en." in token:
+                count += 20
+        return count
+
+    @functools.cached_property
+    def priority(self) -> int:
+        """
+        Returns the priority of the URL.
+        """
+        if not self.is_properly_a_html_site:
+            return -1
+
+        if not self.is_a_real_hyper_link:
+            return -1
+
+        if self.is_on_server_black_list:
+            return -1
+
+        total_points = 0
+        total_points += 5 * self.count_tuebingen_in_url
+        total_points += 1 * self.count_bingen_in_url
+        total_points += 20 * self.count_en_in_url
+        total_points += self.get_priority_list_bonus
+        total_points += self.get_initial_queue_list_bonus
+        total_points += self.get_international_suffix_bonus
+        total_points += 10 * self.count_tuebingen_in_anchor_text
+        total_points += 5 * self.count_bingen_in_anchor_text
+        total_points += 10 * self.count_tuebingen_in_title_text
+        total_points += 5 * self.count_bingen_in_surrounding_text
+        total_points += 0 if self.parent is None else get_document_approximated_relevance_score_for(self.parent)
+        return total_points
+
+    @functools.cached_property
+    def is_relevant(self) -> bool:
+        """
+        Returns true if the URL is relevant.
+        """
+        return self.priority > 0

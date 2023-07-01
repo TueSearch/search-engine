@@ -3,7 +3,7 @@ Streamers for streaming sentences from relevant documents.
 """
 import functools
 from numpy.typing import ArrayLike
-from crawler.models.document import Document
+from crawler.sql_models.document import Document
 
 
 class DocumentStreamer:
@@ -61,6 +61,27 @@ class DocumentStreamer:
         return result
 
 
-DocumentTokensStreamer = functools.partial(DocumentStreamer, transform=lambda doc: " ".join(doc.body_tokens))
-DocumentBodyGlobalTfidfVectorStreamer = functools.partial(DocumentStreamer,
-                                                          transform=lambda doc: doc.body_tfidf)
+def partial(func):
+    """
+    Help function to create more streams.
+    """
+    # pylint: disable=invalid-name
+    DocumentTokensStreamer = functools.partial(DocumentStreamer, transform=func)
+    # pylint: disable=invalid-name
+    DocumentStringStreamer = functools.partial(DocumentStreamer,
+                                               transform=lambda doc: " ".join(func(doc)))
+    return DocumentTokensStreamer, DocumentStringStreamer
+
+
+DocumentTitleTokensStreamer, DocumentTitleStringStreamer = partial(lambda doc: doc.title_tokens)
+DocumentMetaDescriptionTokensStreamer, DocumentMetaDescriptionStringStreamer = partial(
+    lambda doc: doc.meta_description_tokens)
+DocumentMetaKeywordsTokensStreamer, DocumentMetaKeywordsStringStreamer = partial(lambda doc: doc.meta_keywords_tokens)
+DocumentMetaAuthorTokensStreamer, DocumentMetaAuthorStringStreamer = partial(lambda doc: doc.meta_author_tokens)
+DocumentH1TokensStreamer, DocumentH1StringStreamer = partial(lambda doc: doc.h1_tokens)
+DocumentH2TokensStreamer, DocumentH2StringStreamer = partial(lambda doc: doc.h2_tokens)
+DocumentH3TokensStreamer, DocumentH3StringStreamer = partial(lambda doc: doc.h3_tokens)
+DocumentH4TokensStreamer, DocumentH4StringStreamer = partial(lambda doc: doc.h4_tokens)
+DocumentH5TokensStreamer, DocumentH5StringStreamer = partial(lambda doc: doc.h5_tokens)
+DocumentH6TokensStreamer, DocumentH6StringStreamer = partial(lambda doc: doc.h6_tokens)
+DocumentBodyTokensStreamer, DocumentBodyStringStreamer = partial(lambda doc: doc.body_tokens)

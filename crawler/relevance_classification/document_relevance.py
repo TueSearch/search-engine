@@ -8,16 +8,16 @@ and
 """
 import json
 import os
+import functools
 
 from dotenv import load_dotenv
 
 from crawler import utils
-from crawler.relevance_classification.url_relevance import is_url_relevant
 
 load_dotenv()
 
-INVERTED_INDEX_TUEBINGEN_WRITING_STYLES = set(json.loads(
-    os.getenv("INVERTED_INDEX_TUEBINGEN_WRITING_STYLES")))
+TUEBINGEN_WRITING_STYLES = set(json.loads(
+    os.getenv("TUEBINGEN_WRITING_STYLES")))
 CRAWL_ENGLISH_CLASSIFICATION_THRESHOLD = float(
     os.getenv("CRAWL_ENGLISH_CLASSIFICATION_THRESHOLD"))
 CRAWL_ENGLISH_CLASSIFICATION_MULTI_THRESHOLD = float(
@@ -34,21 +34,52 @@ def do_tokens_contain_tuebingen(tokens: list[str]):
     Returns:
         bool: True if the word variations of "Tübingen" are present in the tokens, False otherwise.
     """
-    for tuebingen in INVERTED_INDEX_TUEBINGEN_WRITING_STYLES:
+    for tuebingen in TUEBINGEN_WRITING_STYLES:
         for token in tokens:
             if tuebingen in token:
                 return True
     return False
 
 
+@functools.lru_cache(maxsize=100)
+def get_document_approximated_relevance_score_for(document: 'Document'):
+    text_fields = [
+        document.body,
+        document.title,
+        document.meta_description,
+    ]
+    json_fields = [
+        document.body_tokens,
+        document.title_tokens,
+        document.meta_description_tokens,
+        document.meta_keywords_tokens,
+        document.meta_author_tokens,
+        document.h1_tokens,
+        document.h2_tokens,
+        document.h3_tokens,
+        document.h4_tokens,
+        document.h5_tokens,
+        document.h6_tokens
+    ]
+
+    english_score = 0
+    for field in text_fields:
+        english_score += utils.text.do_text_contain_english_content(field)
+    if english_score == 0:
+        return -1
+    tubingen_score = 0
+    for field in json_fields:
+        tubingen_score += do_tokens_contain_tuebingen(field)
+    if tubingen_score == 0:
+        return -1
+    return english_score + tubingen_score
+
+
+@functools.lru_cache(maxsize=100)
 def is_document_relevant(document: 'Document'):
     """Classify the relevance of a crawled document.
 
     Args:
         document (Document): The crawled document to be classified.
     """
-    title_is_relevant = do_tokens_contain_tuebingen(document.title_tokens)
-    body_is_relevant = do_tokens_contain_tuebingen(document.body_tokens)
-    url_is_relevant = is_url_relevant(document.url)
-    is_english = utils.text.do_text_contain_english_content(document.body)
-    return (title_is_relevant or body_is_relevant or url_is_relevant) and is_english
+    return get_document_approximated_relevance_score_for(document) > 0

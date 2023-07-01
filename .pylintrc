@@ -190,6 +190,13 @@ good-names=i,
            k,
            ex,
            Run,
+           h1,
+           h2,
+           h3,
+           h4,
+           h5,
+           h6,
+           dotdict
            _
 
 # Good variable names regexes, separated by a comma. If names match any regex,
@@ -303,7 +310,7 @@ max-locals=15
 max-parents=7
 
 # Maximum number of public methods for a class (see R0904).
-max-public-methods=20
+max-public-methods=30
 
 # Maximum number of return / yield for function / method body.
 max-returns=6

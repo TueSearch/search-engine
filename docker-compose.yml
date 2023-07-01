@@ -13,30 +13,25 @@ services:
     restart: unless-stopped
     ports:
       - '3306:3306'
-    environment:
-      MYSQL_ROOT_HOST: '%'
     env_file:
-      - .mysql.env
+      - .env
     volumes:
       - tuesearch-percona-server:/var/lib/mysql
     networks:
       - mysql_net
   ############################################################
-  # Drop the database
-  # Only do this in development
-  # will be thrown out in production
+  # Viewing data
   ############################################################
-  drop_database:
-    build:
-      context: .
-      dockerfile: docker/backend.Dockerfile
-    container_name: drop_database
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
     depends_on:
       - mysql
-    restart: 'on-failure'
-    command: 'python3 -m scripts.drop_database'
     env_file:
       - .env
+    restart: always
+    ports:
+      - '8000:80'
     networks:
       - mysql_net
   ############################################################
@@ -78,18 +73,38 @@ services:
     networks:
       - mysql_net
   ############################################################
-  # Send the crawler.
+  # Start manager.
   ############################################################
-  crawl:
+  manager:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
-    container_name: crawl
+    container_name: manager
+    restart: 'always'
+    depends_on:
+      - mysql
+      - initialize_database
+    command: 'python3 -m crawler.manager.main'
+    ports:
+      - '6000:6000'
+    env_file:
+      - .env
+    networks:
+      - mysql_net
+  ############################################################
+  # Start the worker.
+  ############################################################
+  worker:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: worker
     restart: 'on-failure'
     depends_on:
       - mysql
       - initialize_database
-    command: 'python3 -m crawler.main -n 1'
+      - manager
+    command: 'python3 -m crawler.worker.main -n 1'
     env_file:
       - .env
     networks:
@@ -97,40 +112,39 @@ services:
   ############################################################
   # Build indexer.
   ############################################################
-  build_inverted_index:
+  build_index:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
-    container_name: build_inverted_index
+    container_name: build_index
     depends_on:
       - mysql
       - initialize_database
     restart: 'on-failure'
-    command: 'python3 -m backend.build_inverted_index'
+    command: 'python3 -m backend.build_index'
     env_file:
       - .env
     volumes:
-      - tuesearch-models:/opt/tuesearch/data/
+      - tuesearch:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
-  # Build rankers.
+  # Build metrics.
   ############################################################
-  build_ranker:
+  build_metrics:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
-    container_name: build_ranker
+    container_name: build_metrics
     depends_on:
       - mysql
       - initialize_database
-      - build_inverted_index
     restart: 'on-failure'
-    command: 'python3 -m backend.build_ranker'
+    command: 'python3 -m backend.build_metrics'
     env_file:
       - .env
     volumes:
-      - tuesearch-models:/opt/tuesearch/data/
+      - tuesearch:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
@@ -146,15 +160,12 @@ services:
       - '4000:4000'
     depends_on:
       - mysql
-      - initialize_database
-      - build_inverted_index
-      - build_ranker
     restart: 'always'
     command: 'python3 -m backend.app'
     env_file:
       - .env
     volumes:
-      - tuesearch-models:/opt/tuesearch/data/
+      - tuesearch:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
@@ -179,6 +190,6 @@ services:
       - mysql_net
 volumes:
   tuesearch-percona-server:
-  tuesearch-models:
+  tuesearch:
 networks:
   mysql_net:

@@ -5,10 +5,12 @@ import json
 import os
 
 import peewee
-from crawler.models.base import BaseModel, DATABASE as db
-from crawler.models.job import Job
-from crawler.utils.log import get_logger
 from dotenv import load_dotenv
+
+from crawler.relevance_classification.url_relevance import URL
+from crawler.sql_models.base import BaseModel, DATABASE as db
+from crawler.sql_models.job import Job
+from crawler.utils.log import get_logger
 
 load_dotenv()
 LOG = get_logger(__name__)
@@ -24,6 +26,9 @@ class Migration(BaseModel):
     Model to represent the migration table.
     """
     name = peewee.CharField(unique=True)
+
+    class Meta:
+        table_name = 'migrations'
 
 
 def run_migration_scripts():
@@ -60,7 +65,7 @@ def initialize_seed_jobs():
     Initializes the database.
     """
     LOG.info(f"Starting to insert {QUEUE_MANUAL_SEEDS} initial jobs.")
-    Job.create_jobs(QUEUE_MANUAL_SEEDS)
+    Job.insert_initial_jobs_into_databases([URL(url) for url in QUEUE_MANUAL_SEEDS])
     LOG.info(f"Finished inserting {QUEUE_MANUAL_SEEDS} initial jobs.")
 
 

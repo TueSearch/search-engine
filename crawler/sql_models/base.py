@@ -4,7 +4,6 @@ Base model class for all models, defines the models connection.
 import json
 import os
 
-import datetime
 import pickle
 
 import peewee
@@ -16,16 +15,43 @@ load_dotenv()
 DATABASE_LOG_FILE = os.getenv("DATABASE_LOG_FILE")
 LOG = log.get_logger(__name__)
 
-HOST = os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_HOST")
-PORT = int(os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_PORT"))
-DB = os.getenv("MYSQL_SEARCH_ENGINE_DATABASE")
+HOST = os.getenv("MYSQL_HOST")
+PORT = int(os.getenv("MYSQL_PORT"))
+DB = os.getenv("MYSQL_DATABASE")
 DATABASE = peewee.MySQLDatabase(database=DB,
                                 host=HOST,
                                 port=PORT,
-                                user=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_USER"),
-                                password=os.getenv("MYSQL_SEARCH_ENGINE_CONNECTION_PASSWORD"))
-DATABASE.connect()
-LOG.info(f'Database connection successes. To host {HOST}:{PORT} database {DB}.')
+                                user=os.getenv("MYSQL_USER"),
+                                password=os.getenv("MYSQL_PASSWORD"))
+
+
+# pylint: disable=invalid-name
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
+def connect_to_database():
+    """
+    Connects to the database.
+    """
+    DATABASE.connect()
+
+
+def execute_query_and_return_objects(query: str):
+    """
+    Executes a query and returns the results as a list of objects.
+    Object are dotdicts, which means that you can access the values like this: object.key
+    """
+    ret = []
+    for row in (cursor := DATABASE.execute_sql(query)).fetchall():
+        job = dotdict()
+        for column, value in zip(cursor.description, row):
+            job[column[0]] = value
+        ret.append(job)
+    return ret
 
 
 class LongTextField(peewee.TextField):
@@ -56,12 +82,20 @@ class JSONField(LongTextField):
 
 
 class PickleField(peewee.BlobField):
+    """
+    Store binary blobs in the database.
+    """
+
     def db_value(self, value):
         return pickle.dumps(value)
 
     def python_value(self, value):
         if value is not None:
-            return pickle.loads(value)
+            try:
+                return pickle.loads(value)
+            except Exception as exception:
+                LOG.error(f"Error while unpickling: {exception}")
+                return None
         return value
 
 
@@ -69,8 +103,6 @@ class BaseModel(peewee.Model):
     """
     Base model class for all models, defines the models connection.
     """
-    created_date = peewee.DateTimeField(default=datetime.datetime.now)
-    last_time_changed = peewee.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         """

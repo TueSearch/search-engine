@@ -18,8 +18,8 @@ Tübingen.
 # Set up
 
 1. Create output directories and initialize environment variables.
+
 ```bash
-cp -rf example.mysql.env .mysql.env
 cp -rf example.env .env
 cp -rf example.frontend.env frontend/.env
 ```
@@ -30,24 +30,40 @@ cp -rf example.frontend.env frontend/.env
 docker-compose up -d --build
 ```
 
-
 # Crawler
 
 ## Crawler usage
 
 To use the web crawler, follow the workflow below:
 
-1. Once the setup is done, you can start the crawling process using the `crawler/main.py` script.
+1. Once the setup is done, you can start the crawling process using
 
 ```bash
-python3 -m crawler.main -n 10 # Crawl 10 items
+docker-compose up worker
 ```
 
-or simply
+2. To crawl in loop (more than once), remove `-n 1` in `docker-compose.yml`.
+
+3. To start up more than one crawler
 
 ```bash
-python3 -m crawler.main # Craw in loop
+docker-compose up --scale worker=12
 ```
+
+4. To send crawled data to remote server, set
+
+```dotenv
+# Where to retrieve jobs
+CRAWLER_MANAGER_PORT=6000
+
+# Where to retrieve jobs
+CRAWLER_MANAGER_HOST=http://manager:${CRAWLER_MANAGER_PORT}
+
+# Password
+CRAWLER_MANAGER_PASSWORD=pw
+```
+
+to desired remove server.
 
 # Backend
 
@@ -57,33 +73,24 @@ Same as described in the section [Crawler](#crawler).
 
 ## Backend usage
 
-1. After crawling, you can build the inverted index using the `backend/build_inverted_index.py` script. This script
-   analyzes
-   the crawled documents and constructs an inverted index to enable efficient searching.
+1. After collecting enough data, you can build the index as
 
 ```bash
-python3 -m backend.build_inverted_index
+
+docker-compose up build_index
 ```
 
 This step should be repeated regularly to keep the index fresh.
 
-2. Build the ranker using the `backend/build_ranker.py` script.
-   This script builds the models needed to rank websites. After training, the model
-   will be stored in paths defined in the `.env` file.
+2. For the ranking, the metrics must be built as
 
 ```bash
-python3 -m backend.build_ranker
+docker-compose up build_metrics
 ```
 
-This step should be repeated regularly to keep the ranker fresh.
+This step should be repeated regularly to keep the metrics fresh.
 
-3. You can run the Flask application to search for documents using the `backend/app.py` script.
-
-```bash
-python3 -m backend.app
-```
-
-4Test the API with
+4. Test the API with
 
 ```bash
 curl http://localhost:4000/search?q=tubingen

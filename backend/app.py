@@ -15,11 +15,13 @@ Usage:
 """
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
-from backend.rank import rank
+from backend.fused_ranker import FusedRanker
+from crawler.sql_models.base import connect_to_database
 
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
+ranker = FusedRanker()
 
 
 @app.route('/search', methods=['GET'])
@@ -27,13 +29,12 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 def search():
     """Handle the search request and return ranked documents."""
     query = request.args.get('q', '')  # Get the query parameter from the request
-
     if query:
         page = int(request.args.get('page', 0))  # Get the page parameter from the request
         page_size = int(request.args.get('page_size', 10))  # Get the page_size parameter from the request
 
-        query_tokens, documents = rank(query, page=page,
-                                       page_size=page_size)  # Call the rank() function to get ranked documents
+        query_tokens, documents = ranker.process_query(query, page=page,
+                                                       page_size=page_size)  # Call the rank() function to get ranked documents
 
         # Prepare the JSON response
         response = {
@@ -48,8 +49,7 @@ def search():
             result = {
                 'title': doc.title,
                 'body': doc.body,
-                'url': doc.job.url,
-                'server': doc.job.server.name,
+                'url': doc.job['url'],
                 'relevant': doc.relevant
             }
             response['results'].append(result)
@@ -58,5 +58,11 @@ def search():
     return jsonify({'error': 'Invalid query'})
 
 
-if __name__ == '__main__':
+def main():
+    """Start the Flask application."""
+    connect_to_database()
     app.run(debug=True, host="0.0.0.0", port=4000)
+
+
+if __name__ == '__main__':
+    main()
