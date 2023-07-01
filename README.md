@@ -46,7 +46,7 @@ docker-compose up worker
 
 3. To start up more than one crawler
 
-```
+```bash
 docker-compose up --scale worker=12
 ```
 
@@ -63,7 +63,7 @@ CRAWLER_MANAGER_HOST=http://manager:${CRAWLER_MANAGER_PORT}
 CRAWLER_MANAGER_PASSWORD=pw
 ```
 
-to desired remove server
+to desired remove server.
 
 # Backend
 

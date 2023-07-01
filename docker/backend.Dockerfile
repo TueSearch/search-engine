@@ -1,5 +1,5 @@
 # Use the image from the Docker Hub to accelerate the build
-FROM longpollehn/tuesearch-backend-base:latest
+FROM ghcr.io/tuesearch/search-engine/tuesearch-backend-base:latest
 
 # Copy the requirements.txt file to the container
 COPY requirements.txt .
