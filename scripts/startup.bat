@@ -1,6 +1,10 @@
 @echo off
 
 if "%~1"=="docker-compose.yml" (
+    if "%~2"=="test" (
+        echo. 2> pytest-results.xml
+        attrib -r pytest-results.xml
+    )
     docker-compose -f "%~1" down -v
     docker-compose -f "%~1" up --build -d mysql mysql
     docker-compose -f "%~1" up --build initialize_database initialize_database
@@ -11,6 +15,9 @@ if "%~1"=="docker-compose.yml" (
     docker-compose -f "%~1" up --build --exit-code-from build_metrics build_metrics
     docker-compose -f "%~1" up --build -d backend_server
     curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4000/search?q=tubingen"
+    if "%~2"=="test" (
+        docker-compose -f "%~1" up --build --exit-code-from run_unit_tests run_unit_tests
+    )
 ) else if "%~1"=="prod.docker-compose.yml" (
     docker-compose -f "%~1" down
     docker-compose -f "%~1" up --build -d prod_mysql prod_mysql
@@ -24,6 +31,8 @@ if "%~1"=="docker-compose.yml" (
     docker-compose -f "%~1" up --build -d prod_nginx
 ) else (
     echo Unknown docker-compose file: %~1
-    echo Usage: ./scripts/startup.bat docker-compose.yml or ./scripts/startup.bat prod.docker-compose.yml
+    echo Usage:
+    echo   .\scripts\startup.bat docker-compose.yml test
+    echo   .\scripts\startup.bat prod.docker-compose.yml
     exit /b 1
 )

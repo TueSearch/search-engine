@@ -33,6 +33,8 @@ elif [ "$1" == "prod.docker-compose.yml" ]; then
   docker-compose -f "$1" up --build -d prod_nginx
 else
   echo "Unknown docker-compose file: $1"
-  echo "Usage: ./scripts/startup.sh docker-compose.yml or ./scripts/startup.sh prod.docker-compose.yml"
+  echo "Usage:"
+  echo "  ./scripts/startup.sh docker-compose.yml test"
+  echo "  ./scripts/startup.sh prod.docker-compose.yml"
   exit 1
 fi
