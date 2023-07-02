@@ -15,4 +15,5 @@ docker.env
 **/opt/
 pytest-results.xml
 out
-prod.env
+.prod.env
+.worker.env

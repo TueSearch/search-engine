@@ -7,6 +7,9 @@ COPY requirements.txt .
 # Install the project dependencies
 RUN python3 -m pip install -r requirements.txt
 
+# Credit: https://github.com/miyakogi/pyppeteer/issues/74
+RUN python -c 'import pyppeteer; pyppeteer.chromium_downloader.download_chromium()'
+
 # Copy backend
 COPY backend ./backend
 
