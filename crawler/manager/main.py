@@ -49,16 +49,28 @@ def index():
     return "Master is running.\n"
 
 
-@app.route('/get_job/<int:num_of_requests_jobs>', methods=['GET'])
+@app.route('/reserve_jobs/<int:num_of_requests_jobs>', methods=['GET'])
 @check_password
-def get_job(num_of_requests_jobs):
+def reserve_jobs(num_of_requests_jobs):
     """
     Get the next job from the priority queue.
     """
     LOG.info(f"Received request for {num_of_requests_jobs} jobs")
-    jobs = PRIORITY_QUEUE.get_next_jobs(min(CRAWLER_MANAGER_JOB_BUFFER_SIZE, num_of_requests_jobs))
-    LOG.info(f"Sending {len(jobs)}jobs {jobs} to worker")
+    jobs = PRIORITY_QUEUE.get_next_jobs(min(CRAWLER_MANAGER_MAX_JOB_REQUESTS, num_of_requests_jobs))
+    LOG.info(f"Sending {len(jobs)} jobs {jobs} to worker")
     return jsonify(jobs)
+
+
+@app.route('/unreserve_jobs/', methods=['POST'])
+@check_password
+def unreserve_jobs():
+    """
+    Get the next job from the priority queue.
+    """
+    jobs_ids = request.get_json()
+    LOG.info(f"Received request for to unreserve jobs")
+    Job.update(being_crawled=False).where(Job.id.in_(jobs_ids)).execute()
+    return "Unreserve jobs successfully."
 
 
 @app.route('/mark_job_as_fail/<int:job_id>', methods=['POST'])
@@ -67,7 +79,7 @@ def mark_job_as_fail(job_id):
     """
     Mark a job as failed.
     """
-    Job.update(done=True, success=False).where(Job.id == job_id).execute()
+    Job.update(done=True, success=False, being_crawled=False).where(Job.id == job_id).execute()
     LOG.info(f"Marked job {job_id} as failed")
     return "Data updated."
 
@@ -96,7 +108,7 @@ def save_crawling_results(parent_job_id):
     Job.insert_many(new_jobs).on_conflict_ignore().execute()
     LOG.info(f"Created {len(new_jobs)} new jobs for document {new_document.id}")
 
-    Job.update(done=True, success=True).where(Job.id == parent_job_id).execute()
+    Job.update(done=True, success=True, being_crawled=False).where(Job.id == parent_job_id).execute()
     LOG.info("Updated parent job to done")
     return "Data saved."
 

@@ -12,7 +12,7 @@ BEGIN
        NEW.h4 != OLD.h4 OR
        NEW.h5 != OLD.h5 OR
        NEW.h6 != OLD.h6 OR
-       NEW.body != OLD.body
+       NEW.body != OLD.body OR
        NEW.created_date != OLD.created_date
     THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Updates on title, meta_description, meta_keywords, meta_author, h1, h2, h3, h4, h5, h6, body and created_date fields are forbidden.';

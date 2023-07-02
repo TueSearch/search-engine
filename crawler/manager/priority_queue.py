@@ -68,12 +68,12 @@ LIMIT {n_jobs}
             list[Job]: A list of Job objects representing the URLs to be crawled.
         """
         LOG.info(f"Queue received command to obtain {n_jobs} jobs.")
-        with DATABASE.atomic(isolation_level='') as transaction:
+        with DATABASE.atomic() as transaction:
             try:
                 jobs = list(PriorityQueue.get_from_random_servers_one_highest_priority_job(n_jobs))
+                LOG.info(f"Retrieved from database: {jobs}")
                 for job in jobs:
-                    job.being_crawled = True
-                    job.save()
+                    Job.update(being_crawled=True).where(Job.id == job.id).execute()
                 return jobs
             except Exception as exception:
                 LOG.error(f"Error while getting jobs from queue: {exception}")

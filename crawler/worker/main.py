@@ -2,10 +2,12 @@
 This module contains the main crawling logic.
 """
 import argparse
+import atexit
 import json
 import math
 import os
 import random
+import time
 import traceback
 
 import requests
@@ -25,7 +27,6 @@ from crawler.sql_models.job import Job
 load_dotenv()
 
 CRAWL_LOG_FILE = os.getenv("CRAWL_LOG_FILE")
-CRAWL_BATCH_SIZE = int(os.getenv("CRAWL_BATCH_SIZE"))
 CRAWL_RENDER_TIMEOUT = int(os.getenv("CRAWL_RENDER_TIMEOUT"))
 CRAWL_RETRIES = int(os.getenv("CRAWL_RETRIES"))
 CRAWL_RETRIES_IF_STATUS = json.loads(os.getenv("CRAWL_RETRIES_IF_STATUS"))
@@ -158,11 +159,12 @@ class Crawler:
         """
         if len(self.job_buffer) == 0:
             answer = requests.get(
-                f"{CRAWLER_MANAGER_HOST}/get_job/{CRAWL_WORKER_BATCH_SIZE}?pw={CRAWLER_MANAGER_PASSWORD}",
+                f"{CRAWLER_MANAGER_HOST}/reserve_jobs/{CRAWL_WORKER_BATCH_SIZE}?pw={CRAWLER_MANAGER_PASSWORD}",
                 timeout=CRAWLER_WORKER_TIMEOUT)
             job_buffer = answer.json()
             for job in job_buffer:
-                self.job_buffer.append(dotdict(json.loads(job)))
+                self.job_buffer.append(dotdict(job))
+            LOG.info(f"Reserved {len(self.job_buffer)} jobs from manager.")
         return self.job_buffer.pop()
 
     def save_crawling_results(self, json_new_document: str, json_new_jobs: str):
@@ -191,7 +193,7 @@ class Crawler:
         """
         while self.crawled_count < number_of_documents_to_be_crawled:
             try:
-                if self.current_job is not None:
+                if self.current_job is None:
                     self.current_job = self.get_job()
                 LOG.info(f"Retrieved new job: {self.current_job}")
                 if self.new_document is None or self.new_jobs is None:
@@ -215,7 +217,23 @@ class Crawler:
                         LOG.error(f"Error while marking job as failed: {e}")
             except Exception as exception:
                 LOG.error(f"Unexpected error: {str(exception)}")
-                continue
+                time.sleep(1)
+
+    def exit_handler(self):
+        """
+        Handle the exit of the crawler.
+        """
+        LOG.info("Crawler exiting")
+        try:
+            job_ids = []
+            for job in self.job_buffer:
+                job_ids.append(job.id)
+            url = f"{CRAWLER_MANAGER_HOST}/unreserve_jobs?pw={CRAWLER_MANAGER_PASSWORD}"
+            answer = requests.post(url, json=job_ids, timeout=CRAWLER_WORKER_TIMEOUT)
+            LOG.info("Manager answered to unreserve_jobs: " + answer.text)
+        except Exception as exception:
+            LOG.error(f"Error while unreserving jobs: {exception}")
+        LOG.info("Crawler exited")
 
 
 def main():
@@ -226,6 +244,7 @@ def main():
     parser.add_argument('-n', type=int, help='Number of rounds for the loop', default=math.inf)
     args = parser.parse_args()
     crawler = Crawler()
+    atexit.register(crawler.exit_handler)
     crawler.loop(args.n)
 
 
