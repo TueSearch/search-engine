@@ -8,5 +8,7 @@ CREATE TABLE IF NOT EXISTS servers
     page_rank          FLOAT    DEFAULT 0,
     total_jobs         BIGINT   DEFAULT 0,
     success_jobs       BIGINT   DEFAULT 0,
-    relevant_documents BIGINT   DEFAULT 0
+    relevant_documents BIGINT   DEFAULT 0,
+    -- Python invisible fields
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 ) ENGINE = RocksDB;

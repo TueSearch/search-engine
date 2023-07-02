@@ -16,24 +16,12 @@ from crawler.utils.log import get_logger
 load_dotenv()
 
 app = Flask(__name__)
-CRAWLER_MANAGER_JOB_BUFFER_SIZE = int(os.getenv("CRAWLER_MANAGER_JOB_BUFFER_SIZE"))
 CRAWLER_MANAGER_PORT = int(os.getenv("CRAWLER_MANAGER_PORT"))
 CRAWLER_MANAGER_PASSWORD = os.getenv("CRAWLER_MANAGER_PASSWORD")
 CRAWLER_MANAGER_PASSWORD_QUERY = os.getenv("CRAWLER_MANAGER_PASSWORD_QUERY")
+CRAWLER_MANAGER_MAX_JOB_REQUESTS = int(os.getenv("CRAWLER_MANAGER_MAX_JOB_REQUESTS"))
 PRIORITY_QUEUE = PriorityQueue()
 LOG = get_logger(__name__)
-CRAWLER_MANAGER_JOB_BUFFER = []
-
-
-def get_next_job_from_buffer():
-    """
-    Get the next job from the buffer.
-    """
-    global CRAWLER_MANAGER_JOB_BUFFER
-    if len(CRAWLER_MANAGER_JOB_BUFFER) == 0:
-        CRAWLER_MANAGER_JOB_BUFFER = PRIORITY_QUEUE.get_next_jobs(CRAWLER_MANAGER_JOB_BUFFER_SIZE)
-    print(CRAWLER_MANAGER_JOB_BUFFER)
-    return CRAWLER_MANAGER_JOB_BUFFER.pop()
 
 
 def check_password(func):
@@ -61,15 +49,16 @@ def index():
     return "Master is running.\n"
 
 
-@app.route('/get_job', methods=['GET'])
+@app.route('/get_job/<int:num_of_requests_jobs>', methods=['GET'])
 @check_password
-def get_job():
+def get_job(num_of_requests_jobs):
     """
     Get the next job from the priority queue.
     """
-    job = get_next_job_from_buffer()
-    LOG.info(f"Sending job {job} to worker")
-    return jsonify(job)
+    LOG.info(f"Received request for {num_of_requests_jobs} jobs")
+    jobs = PRIORITY_QUEUE.get_next_jobs(min(CRAWLER_MANAGER_JOB_BUFFER_SIZE, num_of_requests_jobs))
+    LOG.info(f"Sending {len(jobs)}jobs {jobs} to worker")
+    return jsonify(jobs)
 
 
 @app.route('/mark_job_as_fail/<int:job_id>', methods=['POST'])

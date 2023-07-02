@@ -49,7 +49,7 @@ def search():
             result = {
                 'title': doc.title,
                 'body': doc.body,
-                'url': doc.job['url'],
+                'url': doc.current_job['url'],
                 'relevant': doc.relevant
             }
             response['results'].append(result)

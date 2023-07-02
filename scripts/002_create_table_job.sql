@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS jobs
     priority                FLOAT    DEFAULT 0.0   NOT NULL,
     done                    BOOLEAN  DEFAULT FALSE NOT NULL,
     success                 BOOLEAN  DEFAULT NULL,
+    being_crawled           BOOLEAN  DEFAULT FALSE NOT NULL,
+    -- Python invisible fields
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     -- Checks
     CHECK ((done AND success IS NOT NULL) OR (NOT done AND success IS NULL)),
     CHECK ((done = FALSE AND success IS NULL) OR

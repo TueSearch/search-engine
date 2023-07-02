@@ -55,6 +55,7 @@ random.seed(1)
 CRAWLER_MANAGER_PORT = int(os.getenv("CRAWLER_MANAGER_PORT"))
 CRAWLER_MANAGER_PASSWORD = os.getenv("CRAWLER_MANAGER_PASSWORD")
 CRAWLER_MANAGER_HOST = os.getenv("CRAWLER_MANAGER_HOST")
+CRAWL_WORKER_BATCH_SIZE = int(os.getenv("CRAWL_WORKER_BATCH_SIZE"))
 
 
 class Crawler:
@@ -64,7 +65,8 @@ class Crawler:
 
     def __init__(self):
         self.url: str = ""
-        self.job: dotdict = None
+        self.job_buffer: list[dotdict] = []
+        self.current_job: dotdict = None
         self.new_document: dotdict = None
         self.new_relevant_urls: list = None
         self.new_jobs: list = None
@@ -78,7 +80,7 @@ class Crawler:
         document.relevant = is_document_relevant(document)
         urls = url_relevance.URL.get_links(document, self.url)
         urls = [url for url in urls if url.is_relevant]
-        document.job_id = self.job.id
+        document.job_id = self.current_job.id
         return document, urls
 
     def try_to_obtain_static_website_html(self):
@@ -88,13 +90,13 @@ class Crawler:
         session = requests.Session()
         session.mount('http://', HTTPAdapter(max_retries=RETRIES))
         session.mount('https://', HTTPAdapter(max_retries=RETRIES))
-        response = session.get(self.job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS)
+        response = session.get(self.current_job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS)
         if not response.ok:
             raise Exception(
-                f"Error while rendering static website. Response not ok: {response} for URL: {self.job.url}")
+                f"Error while rendering static website. Response not ok: {response} for URL: {self.current_job.url}")
         if "html" not in (data_type := response.headers.get("Content-Type")):
             raise Exception(
-                f"Error while rendering static website. Only accept HTML. Got {data_type} for URL: {self.job.url}")
+                f"Error while rendering static website. Only accept HTML. Got {data_type} for URL: {self.current_job.url}")
         return response
 
     def try_to_obtain_dynamic_website_html(self):
@@ -104,14 +106,14 @@ class Crawler:
         session = HTMLSession()
         session.mount('http://', HTTPAdapter(max_retries=RETRIES))
         session.mount('https://', HTTPAdapter(max_retries=RETRIES))
-        response = session.get(self.job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS)
+        response = session.get(self.current_job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS)
         response.html.render(timeout=CRAWL_RENDER_TIMEOUT)
         if not response.ok:
             raise Exception(
-                f"Error while rendering dynamic website. Response not ok: {response} for URL: {self.job.url}")
+                f"Error while rendering dynamic website. Response not ok: {response} for URL: {self.current_job.url}")
         if "html" not in (data_type := response.headers.get("Content-Type")):
             raise Exception(
-                f"Error while rendering dynamic website. Only accept HTML. Got {data_type} for URL: {self.job.url}")
+                f"Error while rendering dynamic website. Only accept HTML. Got {data_type} for URL: {self.current_job.url}")
         return response
 
     def crawl_assume_website_is_static(self) -> (Document, list[URL]):
@@ -150,21 +152,24 @@ class Crawler:
                 LOG.error(f"{str(exception)}")
         return new_document, urls
 
-    @staticmethod
-    def get_job() -> dotdict:
+    def get_job(self) -> dotdict:
         """
         Get a new job from the crawler manager.
         """
-        answer = requests.get(
-            f"{CRAWLER_MANAGER_HOST}/get_job?pw={CRAWLER_MANAGER_PASSWORD}",
-            timeout=CRAWLER_WORKER_TIMEOUT)
-        return dotdict(answer.json())
+        if len(self.job_buffer) == 0:
+            answer = requests.get(
+                f"{CRAWLER_MANAGER_HOST}/get_job/{CRAWL_WORKER_BATCH_SIZE}?pw={CRAWLER_MANAGER_PASSWORD}",
+                timeout=CRAWLER_WORKER_TIMEOUT)
+            job_buffer = answer.json()
+            for job in job_buffer:
+                self.job_buffer.append(dotdict(json.loads(job)))
+        return self.job_buffer.pop()
 
     def save_crawling_results(self, json_new_document: str, json_new_jobs: str):
         """
         Store the job in the database.
         """
-        url = f"{CRAWLER_MANAGER_HOST}/save_crawling_results/{self.job.id}?pw={CRAWLER_MANAGER_PASSWORD}"
+        url = f"{CRAWLER_MANAGER_HOST}/save_crawling_results/{self.current_job.id}?pw={CRAWLER_MANAGER_PASSWORD}"
         response = requests.post(url,
                                  json={"new_document": json_new_document, "new_jobs": json_new_jobs},
                                  timeout=CRAWLER_WORKER_TIMEOUT)
@@ -175,7 +180,7 @@ class Crawler:
         Mark the job as failed in the database.
         """
         response = requests.post(
-            f"{CRAWLER_MANAGER_HOST}/mark_job_as_fail/{self.job.id}?pw={CRAWLER_MANAGER_PASSWORD}",
+            f"{CRAWLER_MANAGER_HOST}/mark_job_as_fail/{self.current_job.id}?pw={CRAWLER_MANAGER_PASSWORD}",
             timeout=CRAWLER_WORKER_TIMEOUT)
         LOG.info(f"Manager answered to mark_job_as_fail: {response.text}")
 
@@ -186,9 +191,9 @@ class Crawler:
         """
         while self.crawled_count < number_of_documents_to_be_crawled:
             try:
-                if self.job is not None:
-                    self.job = self.get_job()
-                LOG.info(f"Retrieved new job: {self.job}")
+                if self.current_job is not None:
+                    self.current_job = self.get_job()
+                LOG.info(f"Retrieved new job: {self.current_job}")
                 if self.new_document is None or self.new_jobs is None:
                     self.new_document, self.new_relevant_urls = self.crawl()
                 if self.new_document:
@@ -209,7 +214,7 @@ class Crawler:
                     except Exception as e:
                         LOG.error(f"Error while marking job as failed: {e}")
             except Exception as exception:
-                LOG.error(f"{str(exception)}")
+                LOG.error(f"Unexpected error: {str(exception)}")
                 continue
 
 
