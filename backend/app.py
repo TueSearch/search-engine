@@ -22,7 +22,7 @@ app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 ranker = FusedRanker()
-
+connect_to_database()
 
 @app.route('/search', methods=['GET'])
 @cross_origin()
@@ -60,7 +60,6 @@ def search():
 
 def main():
     """Start the Flask application."""
-    connect_to_database()
     app.run(debug=True, host="0.0.0.0", port=4000)
 
 
