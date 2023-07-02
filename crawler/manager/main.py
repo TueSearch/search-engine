@@ -14,6 +14,7 @@ from crawler.sql_models.server import Server
 from crawler.utils.log import get_logger
 
 load_dotenv()
+connect_to_database()
 
 app = Flask(__name__)
 CRAWLER_MANAGER_PORT = int(os.getenv("CRAWLER_MANAGER_PORT"))
@@ -117,7 +118,6 @@ def main():
     """
     Start the server.
     """
-    connect_to_database()
     app.run(host="0.0.0.0", debug=True, port=CRAWLER_MANAGER_PORT)
 
 
