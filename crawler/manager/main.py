@@ -16,31 +16,19 @@ from crawler.utils.log import get_logger
 load_dotenv()
 
 app = Flask(__name__)
-CRAWL_BATCH_SIZE = int(os.getenv("CRAWL_BATCH_SIZE"))
 CRAWLER_MANAGER_PORT = int(os.getenv("CRAWLER_MANAGER_PORT"))
 CRAWLER_MANAGER_PASSWORD = os.getenv("CRAWLER_MANAGER_PASSWORD")
 CRAWLER_MANAGER_PASSWORD_QUERY = os.getenv("CRAWLER_MANAGER_PASSWORD_QUERY")
+CRAWLER_MANAGER_MAX_JOB_REQUESTS = int(os.getenv("CRAWLER_MANAGER_MAX_JOB_REQUESTS"))
 PRIORITY_QUEUE = PriorityQueue()
 LOG = get_logger(__name__)
 
-JOB_BUFFER = []
 
-
-def get_next_job_from_buffer():
-    """
-    Get the next job from the buffer.
-    """
-    global JOB_BUFFER
-    if len(JOB_BUFFER) == 0:
-        JOB_BUFFER = PRIORITY_QUEUE.get_next_jobs(CRAWL_BATCH_SIZE)
-    print(JOB_BUFFER)
-    return JOB_BUFFER.pop()
-
-
-def password(func):
+def check_password(func):
     """
     Check if the password is correct.
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         code = request.args.get("pw", '')
@@ -58,33 +46,46 @@ def index():
     """
     Check if the server is running.
     """
-    return "Master is running\n."
+    return "Master is running.\n"
 
 
-@app.route('/get_job', methods=['GET'])
-@password
-def get_job():
+@app.route('/reserve_jobs/<int:num_of_requests_jobs>', methods=['GET'])
+@check_password
+def reserve_jobs(num_of_requests_jobs):
     """
     Get the next job from the priority queue.
     """
-    job = get_next_job_from_buffer()
-    LOG.info(f"Sending job {job} to worker")
-    return jsonify(job)
+    LOG.info(f"Received request for {num_of_requests_jobs} jobs")
+    jobs = PRIORITY_QUEUE.get_next_jobs(min(CRAWLER_MANAGER_MAX_JOB_REQUESTS, num_of_requests_jobs))
+    LOG.info(f"Sending {len(jobs)} jobs {jobs} to worker")
+    return jsonify(jobs)
+
+
+@app.route('/unreserve_jobs/', methods=['POST'])
+@check_password
+def unreserve_jobs():
+    """
+    Get the next job from the priority queue.
+    """
+    jobs_ids = request.get_json()
+    LOG.info(f"Received request for to unreserve jobs")
+    Job.update(being_crawled=False).where(Job.id.in_(jobs_ids)).execute()
+    return "Unreserve jobs successfully."
 
 
 @app.route('/mark_job_as_fail/<int:job_id>', methods=['POST'])
-@password
+@check_password
 def mark_job_as_fail(job_id):
     """
     Mark a job as failed.
     """
-    Job.update(done=True, success=False).where(Job.id == job_id).execute()
+    Job.update(done=True, success=False, being_crawled=False).where(Job.id == job_id).execute()
     LOG.info(f"Marked job {job_id} as failed")
     return "Data updated."
 
 
 @app.route('/save_crawling_results/<int:parent_job_id>', methods=['POST'])
-@password
+@check_password
 def save_crawling_results(parent_job_id):
     """
     Save the crawling results.
@@ -107,9 +108,9 @@ def save_crawling_results(parent_job_id):
     Job.insert_many(new_jobs).on_conflict_ignore().execute()
     LOG.info(f"Created {len(new_jobs)} new jobs for document {new_document.id}")
 
-    Job.update(done=True, success=True).where(Job.id == parent_job_id).execute()
+    Job.update(done=True, success=True, being_crawled=False).where(Job.id == parent_job_id).execute()
     LOG.info("Updated parent job to done")
-    return "Data created."
+    return "Data saved."
 
 
 def main():

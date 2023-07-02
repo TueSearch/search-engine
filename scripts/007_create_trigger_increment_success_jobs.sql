@@ -1,11 +1,16 @@
 CREATE TRIGGER increment_success_jobs
-    AFTER UPDATE
+    BEFORE UPDATE
     ON jobs
     FOR EACH ROW
 BEGIN
-    IF NEW.success = TRUE THEN -- Only an approximation, but good enough.
-    UPDATE servers
-    SET success_jobs = success_jobs + 1
-    WHERE id = NEW.server_id;
-END IF;
+    IF NEW.done != OLD.done THEN
+        IF NEW.success = TRUE THEN -- Only an approximation, but good enough.
+            UPDATE servers
+            SET success_jobs = success_jobs + 1
+            WHERE id = NEW.server_id;
+        END IF;
+        UPDATE servers
+        set total_jobs = total_jobs + 1
+        WHERE id = NEW.server_id;
+    END IF;
 END;

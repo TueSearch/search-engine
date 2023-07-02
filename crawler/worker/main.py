@@ -2,6 +2,7 @@
 This module contains the main crawling logic.
 """
 import argparse
+import atexit
 import json
 import math
 import os
@@ -26,16 +27,14 @@ from crawler.sql_models.job import Job
 load_dotenv()
 
 CRAWL_LOG_FILE = os.getenv("CRAWL_LOG_FILE")
-CRAWL_BATCH_SIZE = int(os.getenv("CRAWL_BATCH_SIZE"))
-CRAWL_TIMEOUT = int(os.getenv("CRAWL_TIMEOUT"))
 CRAWL_RENDER_TIMEOUT = int(os.getenv("CRAWL_RENDER_TIMEOUT"))
 CRAWL_RETRIES = int(os.getenv("CRAWL_RETRIES"))
 CRAWL_RETRIES_IF_STATUS = json.loads(os.getenv("CRAWL_RETRIES_IF_STATUS"))
 CRAWL_BACKOFF_FACTOR = float(os.getenv("CRAWL_BACKOFF_FACTOR"))
-CRAWL_RANDOM_SLEEP_INTERVAL = list(json.loads(
-    os.getenv("CRAWL_RANDOM_SLEEP_INTERVAL")))
 CRAWL_REDIRECTION_LIMIT = int(os.getenv("CRAWL_REDIRECTION_LIMIT"))
 CRAWL_RAISE_ON_STATUS = bool(os.getenv("CRAWL_RAISE_ON_STATUS"))
+CRAWL_TIMEOUT = int(os.getenv("CRAWL_TIMEOUT"))
+CRAWLER_WORKER_TIMEOUT = int(os.getenv("CRAWLER_WORKER_TIMEOUT"))
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
@@ -57,6 +56,7 @@ random.seed(1)
 CRAWLER_MANAGER_PORT = int(os.getenv("CRAWLER_MANAGER_PORT"))
 CRAWLER_MANAGER_PASSWORD = os.getenv("CRAWLER_MANAGER_PASSWORD")
 CRAWLER_MANAGER_HOST = os.getenv("CRAWLER_MANAGER_HOST")
+CRAWL_WORKER_BATCH_SIZE = int(os.getenv("CRAWL_WORKER_BATCH_SIZE"))
 
 
 class Crawler:
@@ -66,7 +66,12 @@ class Crawler:
 
     def __init__(self):
         self.url: str = ""
-        self.job: dotdict = None
+        self.job_buffer: list[dotdict] = []
+        self.current_job: dotdict = None
+        self.new_document: dotdict = None
+        self.new_relevant_urls: list = None
+        self.new_jobs: list = None
+        self.crawled_count: int = 0
 
     def generate_document_from_html(self, html: str) -> (Document, list[URL]):
         """
@@ -76,7 +81,7 @@ class Crawler:
         document.relevant = is_document_relevant(document)
         urls = url_relevance.URL.get_links(document, self.url)
         urls = [url for url in urls if url.is_relevant]
-        document.job_id = self.job.id
+        document.job_id = self.current_job.id
         return document, urls
 
     def try_to_obtain_static_website_html(self):
@@ -86,13 +91,13 @@ class Crawler:
         session = requests.Session()
         session.mount('http://', HTTPAdapter(max_retries=RETRIES))
         session.mount('https://', HTTPAdapter(max_retries=RETRIES))
-        response = session.get(self.job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS)
+        response = session.get(self.current_job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS)
         if not response.ok:
             raise Exception(
-                f"Error while rendering static website. Response not ok: {response} for URL: {self.job.url}")
+                f"Error while rendering static website. Response not ok: {response} for URL: {self.current_job.url}")
         if "html" not in (data_type := response.headers.get("Content-Type")):
             raise Exception(
-                f"Error while rendering static website. Only accept HTML. Got {data_type} for URL: {self.job.url}")
+                f"Error while rendering static website. Only accept HTML. Got {data_type} for URL: {self.current_job.url}")
         return response
 
     def try_to_obtain_dynamic_website_html(self):
@@ -102,14 +107,14 @@ class Crawler:
         session = HTMLSession()
         session.mount('http://', HTTPAdapter(max_retries=RETRIES))
         session.mount('https://', HTTPAdapter(max_retries=RETRIES))
-        response = session.get(self.job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS)
+        response = session.get(self.current_job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS)
         response.html.render(timeout=CRAWL_RENDER_TIMEOUT)
         if not response.ok:
             raise Exception(
-                f"Error while rendering dynamic website. Response not ok: {response} for URL: {self.job.url}")
+                f"Error while rendering dynamic website. Response not ok: {response} for URL: {self.current_job.url}")
         if "html" not in (data_type := response.headers.get("Content-Type")):
             raise Exception(
-                f"Error while rendering dynamic website. Only accept HTML. Got {data_type} for URL: {self.job.url}")
+                f"Error while rendering dynamic website. Only accept HTML. Got {data_type} for URL: {self.current_job.url}")
         return response
 
     def crawl_assume_website_is_static(self) -> (Document, list[URL]):
@@ -142,54 +147,93 @@ class Crawler:
             traceback.print_exc()
 
         if new_document is None or not new_document.relevant:
-            time.sleep(random.randint(*CRAWL_RANDOM_SLEEP_INTERVAL))
             try:  # If not successful, try static version with vanilla requests.
                 new_document, urls = self.crawl_assume_website_is_dynamic()
             except Exception as exception:
                 LOG.error(f"{str(exception)}")
         return new_document, urls
 
-    @staticmethod
-    def get_job() -> dotdict:
+    def get_job(self) -> dotdict:
         """
         Get a new job from the crawler manager.
         """
-        answer = requests.get(
-            f"{CRAWLER_MANAGER_HOST}/get_job?pw={CRAWLER_MANAGER_PASSWORD}",
-            timeout=CRAWL_TIMEOUT)
-        return dotdict(answer.json())
+        if len(self.job_buffer) == 0:
+            answer = requests.get(
+                f"{CRAWLER_MANAGER_HOST}/reserve_jobs/{CRAWL_WORKER_BATCH_SIZE}?pw={CRAWLER_MANAGER_PASSWORD}",
+                timeout=CRAWLER_WORKER_TIMEOUT)
+            job_buffer = answer.json()
+            for job in job_buffer:
+                self.job_buffer.append(dotdict(job))
+            LOG.info(f"Reserved {len(self.job_buffer)} jobs from manager.")
+        return self.job_buffer.pop()
 
-    def store_results(self, json_new_document: str, json_new_jobs: str):
+    def save_crawling_results(self, json_new_document: str, json_new_jobs: str):
         """
         Store the job in the database.
         """
-        url = f"{CRAWLER_MANAGER_HOST}/save_crawling_results/{self.job.id}?pw={CRAWLER_MANAGER_PASSWORD}"
-        requests.post(url, json={"new_document": json_new_document, "new_jobs": json_new_jobs})
+        url = f"{CRAWLER_MANAGER_HOST}/save_crawling_results/{self.current_job.id}?pw={CRAWLER_MANAGER_PASSWORD}"
+        response = requests.post(url,
+                                 json={"new_document": json_new_document, "new_jobs": json_new_jobs},
+                                 timeout=CRAWLER_WORKER_TIMEOUT)
+        LOG.info(f"Manager answered to save_crawling_results: {response.text}")
 
     def mark_job_as_failed(self):
         """
         Mark the job as failed in the database.
         """
-        requests.post(
-            f"{CRAWLER_MANAGER_HOST}/mark_job_as_fail/{self.job.id}?pw={CRAWLER_MANAGER_PASSWORD}")
+        response = requests.post(
+            f"{CRAWLER_MANAGER_HOST}/mark_job_as_fail/{self.current_job.id}?pw={CRAWLER_MANAGER_PASSWORD}",
+            timeout=CRAWLER_WORKER_TIMEOUT)
+        LOG.info(f"Manager answered to mark_job_as_fail: {response.text}")
 
     def loop(self, number_of_documents_to_be_crawled: int):
         """
         Loop over the crawler, retrieving new jobs from the crawler manager,
         crawling them, and sending the results back.
         """
-        i = 0
-        while i < number_of_documents_to_be_crawled:
-            i += 1
-            self.job = self.get_job()
-            LOG.info(f"Retrieved new job: {self.job}")
-            new_document, new_relevant_urls = self.crawl()
-            if new_document:
-                new_jobs = Job.create_jobs_from_worker_to_master(relevant_links=new_relevant_urls)
-                new_document = json.dumps(model_to_dict(new_document))
-                self.store_results(new_document, new_jobs)
-            else:
-                self.mark_job_as_failed()
+        while self.crawled_count < number_of_documents_to_be_crawled:
+            try:
+                if self.current_job is None:
+                    self.current_job = self.get_job()
+                LOG.info(f"Retrieved new job: {self.current_job}")
+                if self.new_document is None or self.new_jobs is None:
+                    self.new_document, self.new_relevant_urls = self.crawl()
+                if self.new_document:
+                    self.new_jobs = Job.create_jobs_from_worker_to_master(relevant_links=self.new_relevant_urls)
+                    self.new_document = json.dumps(model_to_dict(self.new_document))
+                    try:
+                        self.save_crawling_results(self.new_document, self.new_jobs)
+                        self.crawled_count += 1
+                        self.new_jobs = None
+                        self.new_document = None
+                        self.new_relevant_urls = None
+                    except Exception as exception:
+                        LOG.error(f"Error while sending back to master: {exception} Try again")
+                else:
+                    try:
+                        self.mark_job_as_failed()
+                        self.new_relevant_urls = None
+                    except Exception as e:
+                        LOG.error(f"Error while marking job as failed: {e}")
+            except Exception as exception:
+                LOG.error(f"Unexpected error: {str(exception)}")
+                time.sleep(1)
+
+    def exit_handler(self):
+        """
+        Handle the exit of the crawler.
+        """
+        LOG.info("Crawler exiting")
+        try:
+            job_ids = []
+            for job in self.job_buffer:
+                job_ids.append(job.id)
+            url = f"{CRAWLER_MANAGER_HOST}/unreserve_jobs?pw={CRAWLER_MANAGER_PASSWORD}"
+            answer = requests.post(url, json=job_ids, timeout=CRAWLER_WORKER_TIMEOUT)
+            LOG.info("Manager answered to unreserve_jobs: " + answer.text)
+        except Exception as exception:
+            LOG.error(f"Error while unreserving jobs: {exception}")
+        LOG.info("Crawler exited")
 
 
 def main():
@@ -200,6 +244,7 @@ def main():
     parser.add_argument('-n', type=int, help='Number of rounds for the loop', default=math.inf)
     args = parser.parse_args()
     crawler = Crawler()
+    atexit.register(crawler.exit_handler)
     crawler.loop(args.n)
 
 

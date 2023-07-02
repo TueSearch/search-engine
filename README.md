@@ -44,10 +44,10 @@ docker-compose up worker
 
 2. To crawl in loop (more than once), remove `-n 1` in `docker-compose.yml`.
 
-3. To start up more than one crawler
+3. To start up more than one crawler, remove `name: worker` and do
 
 ```bash
-docker-compose up --scale worker=12
+docker-compose up --build --scale worker=12 worker
 ```
 
 4. To send crawled data to remote server, set

@@ -66,6 +66,7 @@ class Job(BaseModel):
     priority = peewee.FloatField(default=0.0)
     done = peewee.BooleanField(default=False)
     success = peewee.BooleanField(default=None, null=True)
+    being_crawled = peewee.BooleanField(default=False)
 
     class Meta:
         """

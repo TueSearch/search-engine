@@ -17,6 +17,8 @@ services:
       - .env
     volumes:
       - tuesearch-percona-server:/var/lib/mysql
+      - ./docker/my.cnf:/etc/mysql/my.cnf:ro # Mount project's MySQL configuration file
+      - ./docker/mysql.cnf:/etc/mysql/conf.d/mysql.cnf:ro # Mount project's MySQL configuration file
     networks:
       - mysql_net
   ############################################################
@@ -98,12 +100,7 @@ services:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
-    container_name: worker
     restart: 'on-failure'
-    depends_on:
-      - mysql
-      - initialize_database
-      - manager
     command: 'python3 -m crawler.worker.main -n 1'
     env_file:
       - .env

@@ -31,5 +31,7 @@ CREATE TABLE IF NOT EXISTS documents
     h6_tokens               LONGTEXT DEFAULT ('[]'),
     body_tokens             LONGTEXT DEFAULT ('[]'),
     -- Classification
-    relevant                BOOLEAN  DEFAULT TRUE
+    relevant                BOOLEAN  DEFAULT TRUE,
+    -- Python invisible fields
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 ) ENGINE = RocksDB;
