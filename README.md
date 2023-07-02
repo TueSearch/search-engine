@@ -20,23 +20,57 @@ Tübingen.
 1. Create output directories and initialize environment variables.
 
 ```bash
-cp -rf example.env .env
+cp -rf example.env .env 
+cp -rf example.prod.env .prod.env
 cp -rf example.frontend.env frontend/.env
+cp -rf example.worker.env .worker.env
 ```
 
-2. Start the project
+2. Start the project locally
 
 ```bash
-docker-compose up -d --build
+./scripts/startup.sh docker-compose.yml
 ```
+
+and tear down with 
+
+```bash
+./scripts/teardown.sh docker-compose.yml
+```
+
+3. Start the project on the server. Create unmanaged volumes (root access required)
+
+```bash
+sudo docker volume create prod_tuesearch_database
+```
+and in the similar manner
+
+```bash
+sudo docker volume create prod_tuesearch
+```
+
+Change passwords in .prod.env and start the containers with
+
+```bash
+./scripts/startup.sh prod.docker-compose.yml
+```
+
+Analog, tear down with 
+
+```bash
+./scripts/teardown.sh prod.docker-compose.yml
+```
+
+Note: the crawler is not meant to run on server. It is only meant to run locally. If 
+run on server, run only one instance of crawler.
 
 # Crawler
 
 ## Crawler usage
 
-To use the web crawler, follow the workflow below:
+The crawler should be used at local computer.
 
-1. Once the setup is done, you can start the crawling process using
+1. Once the setup is done, you can start the crawling process by 
 
 ```bash
 docker-compose up worker
@@ -50,20 +84,7 @@ docker-compose up worker
 docker-compose up --build --scale worker=12 worker
 ```
 
-4. To send crawled data to remote server, set
-
-```dotenv
-# Where to retrieve jobs
-CRAWLER_MANAGER_PORT=6000
-
-# Where to retrieve jobs
-CRAWLER_MANAGER_HOST=http://manager:${CRAWLER_MANAGER_PORT}
-
-# Password
-CRAWLER_MANAGER_PASSWORD=pw
-```
-
-to desired remove server.
+4. To send the crawler's data to remote database, change the variables in `.worker.env`.
 
 # Backend
 

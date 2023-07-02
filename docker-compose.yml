@@ -104,6 +104,7 @@ services:
     command: 'python3 -m crawler.worker.main -n 1'
     env_file:
       - .env
+      - .worker.env
     networks:
       - mysql_net
   ############################################################
