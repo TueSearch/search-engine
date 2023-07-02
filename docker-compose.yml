@@ -98,12 +98,7 @@ services:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
-    container_name: worker
     restart: 'on-failure'
-    depends_on:
-      - mysql
-      - initialize_database
-      - manager
     command: 'python3 -m crawler.worker.main -n 1'
     env_file:
       - .env

@@ -16,31 +16,31 @@ from crawler.utils.log import get_logger
 load_dotenv()
 
 app = Flask(__name__)
-CRAWL_BATCH_SIZE = int(os.getenv("CRAWL_BATCH_SIZE"))
+CRAWLER_MANAGER_JOB_BUFFER_SIZE = int(os.getenv("CRAWLER_MANAGER_JOB_BUFFER_SIZE"))
 CRAWLER_MANAGER_PORT = int(os.getenv("CRAWLER_MANAGER_PORT"))
 CRAWLER_MANAGER_PASSWORD = os.getenv("CRAWLER_MANAGER_PASSWORD")
 CRAWLER_MANAGER_PASSWORD_QUERY = os.getenv("CRAWLER_MANAGER_PASSWORD_QUERY")
 PRIORITY_QUEUE = PriorityQueue()
 LOG = get_logger(__name__)
-
-JOB_BUFFER = []
+CRAWLER_MANAGER_JOB_BUFFER = []
 
 
 def get_next_job_from_buffer():
     """
     Get the next job from the buffer.
     """
-    global JOB_BUFFER
-    if len(JOB_BUFFER) == 0:
-        JOB_BUFFER = PRIORITY_QUEUE.get_next_jobs(CRAWL_BATCH_SIZE)
-    print(JOB_BUFFER)
-    return JOB_BUFFER.pop()
+    global CRAWLER_MANAGER_JOB_BUFFER
+    if len(CRAWLER_MANAGER_JOB_BUFFER) == 0:
+        CRAWLER_MANAGER_JOB_BUFFER = PRIORITY_QUEUE.get_next_jobs(CRAWLER_MANAGER_JOB_BUFFER_SIZE)
+    print(CRAWLER_MANAGER_JOB_BUFFER)
+    return CRAWLER_MANAGER_JOB_BUFFER.pop()
 
 
-def password(func):
+def check_password(func):
     """
     Check if the password is correct.
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         code = request.args.get("pw", '')
@@ -58,11 +58,11 @@ def index():
     """
     Check if the server is running.
     """
-    return "Master is running\n."
+    return "Master is running.\n"
 
 
 @app.route('/get_job', methods=['GET'])
-@password
+@check_password
 def get_job():
     """
     Get the next job from the priority queue.
@@ -73,7 +73,7 @@ def get_job():
 
 
 @app.route('/mark_job_as_fail/<int:job_id>', methods=['POST'])
-@password
+@check_password
 def mark_job_as_fail(job_id):
     """
     Mark a job as failed.
@@ -84,7 +84,7 @@ def mark_job_as_fail(job_id):
 
 
 @app.route('/save_crawling_results/<int:parent_job_id>', methods=['POST'])
-@password
+@check_password
 def save_crawling_results(parent_job_id):
     """
     Save the crawling results.
@@ -109,7 +109,7 @@ def save_crawling_results(parent_job_id):
 
     Job.update(done=True, success=True).where(Job.id == parent_job_id).execute()
     LOG.info("Updated parent job to done")
-    return "Data created."
+    return "Data saved."
 
 
 def main():

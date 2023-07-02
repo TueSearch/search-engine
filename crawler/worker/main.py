@@ -6,7 +6,6 @@ import json
 import math
 import os
 import random
-import time
 import traceback
 
 import requests
@@ -27,15 +26,14 @@ load_dotenv()
 
 CRAWL_LOG_FILE = os.getenv("CRAWL_LOG_FILE")
 CRAWL_BATCH_SIZE = int(os.getenv("CRAWL_BATCH_SIZE"))
-CRAWL_TIMEOUT = int(os.getenv("CRAWL_TIMEOUT"))
 CRAWL_RENDER_TIMEOUT = int(os.getenv("CRAWL_RENDER_TIMEOUT"))
 CRAWL_RETRIES = int(os.getenv("CRAWL_RETRIES"))
 CRAWL_RETRIES_IF_STATUS = json.loads(os.getenv("CRAWL_RETRIES_IF_STATUS"))
 CRAWL_BACKOFF_FACTOR = float(os.getenv("CRAWL_BACKOFF_FACTOR"))
-CRAWL_RANDOM_SLEEP_INTERVAL = list(json.loads(
-    os.getenv("CRAWL_RANDOM_SLEEP_INTERVAL")))
 CRAWL_REDIRECTION_LIMIT = int(os.getenv("CRAWL_REDIRECTION_LIMIT"))
 CRAWL_RAISE_ON_STATUS = bool(os.getenv("CRAWL_RAISE_ON_STATUS"))
+CRAWL_TIMEOUT = int(os.getenv("CRAWL_TIMEOUT"))
+CRAWLER_WORKER_TIMEOUT = int(os.getenv("CRAWLER_WORKER_TIMEOUT"))
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
@@ -67,6 +65,10 @@ class Crawler:
     def __init__(self):
         self.url: str = ""
         self.job: dotdict = None
+        self.new_document: dotdict = None
+        self.new_relevant_urls: list = None
+        self.new_jobs: list = None
+        self.crawled_count: int = 0
 
     def generate_document_from_html(self, html: str) -> (Document, list[URL]):
         """
@@ -142,7 +144,6 @@ class Crawler:
             traceback.print_exc()
 
         if new_document is None or not new_document.relevant:
-            time.sleep(random.randint(*CRAWL_RANDOM_SLEEP_INTERVAL))
             try:  # If not successful, try static version with vanilla requests.
                 new_document, urls = self.crawl_assume_website_is_dynamic()
             except Exception as exception:
@@ -156,40 +157,60 @@ class Crawler:
         """
         answer = requests.get(
             f"{CRAWLER_MANAGER_HOST}/get_job?pw={CRAWLER_MANAGER_PASSWORD}",
-            timeout=CRAWL_TIMEOUT)
+            timeout=CRAWLER_WORKER_TIMEOUT)
         return dotdict(answer.json())
 
-    def store_results(self, json_new_document: str, json_new_jobs: str):
+    def save_crawling_results(self, json_new_document: str, json_new_jobs: str):
         """
         Store the job in the database.
         """
         url = f"{CRAWLER_MANAGER_HOST}/save_crawling_results/{self.job.id}?pw={CRAWLER_MANAGER_PASSWORD}"
-        requests.post(url, json={"new_document": json_new_document, "new_jobs": json_new_jobs})
+        response = requests.post(url,
+                                 json={"new_document": json_new_document, "new_jobs": json_new_jobs},
+                                 timeout=CRAWLER_WORKER_TIMEOUT)
+        LOG.info(f"Manager answered to save_crawling_results: {response.text}")
 
     def mark_job_as_failed(self):
         """
         Mark the job as failed in the database.
         """
-        requests.post(
-            f"{CRAWLER_MANAGER_HOST}/mark_job_as_fail/{self.job.id}?pw={CRAWLER_MANAGER_PASSWORD}")
+        response = requests.post(
+            f"{CRAWLER_MANAGER_HOST}/mark_job_as_fail/{self.job.id}?pw={CRAWLER_MANAGER_PASSWORD}",
+            timeout=CRAWLER_WORKER_TIMEOUT)
+        LOG.info(f"Manager answered to mark_job_as_fail: {response.text}")
 
     def loop(self, number_of_documents_to_be_crawled: int):
         """
         Loop over the crawler, retrieving new jobs from the crawler manager,
         crawling them, and sending the results back.
         """
-        i = 0
-        while i < number_of_documents_to_be_crawled:
-            i += 1
-            self.job = self.get_job()
-            LOG.info(f"Retrieved new job: {self.job}")
-            new_document, new_relevant_urls = self.crawl()
-            if new_document:
-                new_jobs = Job.create_jobs_from_worker_to_master(relevant_links=new_relevant_urls)
-                new_document = json.dumps(model_to_dict(new_document))
-                self.store_results(new_document, new_jobs)
-            else:
-                self.mark_job_as_failed()
+        while self.crawled_count < number_of_documents_to_be_crawled:
+            try:
+                if self.job is not None:
+                    self.job = self.get_job()
+                LOG.info(f"Retrieved new job: {self.job}")
+                if self.new_document is None or self.new_jobs is None:
+                    self.new_document, self.new_relevant_urls = self.crawl()
+                if self.new_document:
+                    self.new_jobs = Job.create_jobs_from_worker_to_master(relevant_links=self.new_relevant_urls)
+                    self.new_document = json.dumps(model_to_dict(self.new_document))
+                    try:
+                        self.save_crawling_results(self.new_document, self.new_jobs)
+                        self.crawled_count += 1
+                        self.new_jobs = None
+                        self.new_document = None
+                        self.new_relevant_urls = None
+                    except Exception as exception:
+                        LOG.error(f"Error while sending back to master: {exception} Try again")
+                else:
+                    try:
+                        self.mark_job_as_failed()
+                        self.new_relevant_urls = None
+                    except Exception as e:
+                        LOG.error(f"Error while marking job as failed: {e}")
+            except Exception as exception:
+                LOG.error(f"{str(exception)}")
+                continue
 
 
 def main():
