@@ -101,7 +101,7 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
     restart: 'on-failure'
-    command: 'python3 -m crawler.worker.main -n 1'
+    command: 'python3 -m crawler.worker.main -n 4'
     env_file:
       - .env
       - .worker.env

@@ -106,7 +106,7 @@ services:
     image: ghcr.io/tuesearch/search-engine/backend-server:latest
     container_name: prod_worker
     restart: 'on-failure'
-    command: 'python3 -m crawler.worker.main -n 1'
+    command: 'python3 -m crawler.worker.main -n 4'
     env_file:
       - .env
       - .prod.env
