@@ -13,8 +13,17 @@ volumes:
     external: true
   prod_tuesearch:
     external: true
-
 services:
+  ############################################################
+  # Redis Server for distributed lock
+  ############################################################
+  prod_redis:
+    image: redis
+    container_name: prod_redis
+    restart: always
+    networks:
+      prod_mysql_net:
+        ipv4_address: 172.20.0.13
   ############################################################
   # Nginx Server
   ############################################################

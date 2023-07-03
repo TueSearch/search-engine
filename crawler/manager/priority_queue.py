@@ -1,11 +1,22 @@
 """
 This module manages the priority queue of URLs to be crawled.
 """
+import os
+import time
+
 from crawler import utils
 from crawler.sql_models.base import execute_query_and_return_objects, DATABASE
 from crawler.sql_models.job import Job
+import redis
 
 LOG = utils.get_logger(__file__)
+# Create a Redis connection
+LOCK_REDIS_HOST = os.environ.get('LOCK_REDIS_HOST')
+LOCK_REDIS_RETRY = int(os.environ.get('LOCK_REDIS_RETRY'))
+LOCK_REDIS_TIMEOUT = int(os.environ.get('LOCK_REDIS_TIMEOUT'))
+LOCK_REDIS_KEY = os.environ.get('LOCK_REDIS_KEY', 'lock_key')
+LOCK_REDIS_RETRY_INTERVAL = float(os.environ.get('LOCK_REDIS_RETRY_INTERVAL'))
+redis_client = redis.Redis(host=LOCK_REDIS_HOST, port=6379)
 
 
 class PriorityQueue:
@@ -82,14 +93,33 @@ FROM jobs where done = 0 and being_crawled = 0 ORDER BY priority DESC LIMIT {n_j
             list[Job]: A list of Job objects representing the URLs to be crawled.
         """
         LOG.info(f"Queue received command to obtain {n_jobs} jobs.")
-        with DATABASE.atomic() as transaction:
-            try:
-                jobs = list(PriorityQueue.get_highest_priority_jobs(n_jobs))
-                LOG.info(f"Retrieved from database: {jobs}")
-                for job in jobs:
-                    Job.update(being_crawled=True).where(Job.id == job.id).execute()
-                return jobs
-            except Exception as exception:
-                LOG.error(f"Error while getting jobs from queue: {exception}")
-                transaction.rollback()
-                raise exception
+
+        retries = 0
+
+        while retries < LOCK_REDIS_RETRY:
+            # Attempt to acquire the distributed lock
+            lock_acquired = redis_client.set(LOCK_REDIS_KEY, 'locked', nx=True, ex=LOCK_REDIS_TIMEOUT)
+
+            if lock_acquired:
+                with DATABASE.atomic() as transaction:
+                    try:
+                        jobs = list(PriorityQueue.get_highest_priority_jobs(n_jobs))
+                        LOG.info(f"Retrieved from database: {jobs}")
+                        for job in jobs:
+                            Job.update(being_crawled=True).where(Job.id == job.id).execute()
+                        return jobs
+                    except Exception as exception:
+                        LOG.error(f"Error while getting jobs from queue: {exception}")
+                        transaction.rollback()
+                        raise exception
+                    finally:
+                        # Release the distributed lock
+                        redis_client.delete(LOCK_REDIS_KEY)
+            else:
+                LOG.info("Failed to acquire lock. Another process is currently accessing the code.")
+                retries += 1
+                time.sleep(LOCK_REDIS_RETRY_INTERVAL)
+
+        # Maximum retries reached, handle the case when the lock couldn't be acquired
+        LOG.error("Failed to acquire lock after maximum retries.")
+        # Handle the case when the lock couldn't be acquired (retry logic or error handling)
