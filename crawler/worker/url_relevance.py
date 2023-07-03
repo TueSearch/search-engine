@@ -13,7 +13,7 @@ from url_normalize import url_normalize
 from dotenv import load_dotenv
 
 from crawler import utils
-from crawler.relevance_classification.document_relevance import get_document_approximated_relevance_score_for
+from crawler.worker.document_relevance import get_document_approximated_relevance_score_for
 from crawler.sql_models.document import Document
 from crawler.utils.text import tokenize_get_lang, make_text_human_readable
 
@@ -31,7 +31,6 @@ NLP.tokenizer.infix_finditer = infix_regex.finditer
 CRAWL_EXCLUDED_EXTENSIONS = set(json.loads(
     os.getenv("CRAWL_EXCLUDED_EXTENSIONS")))
 CRAWL_BLACK_LIST = set(json.loads(os.getenv("CRAWL_BLACK_LIST")))
-QUEUE_MANUAL_SEEDS = json.loads(os.getenv('QUEUE_MANUAL_SEEDS'))
 CRAWL_PRIORITY_LIST = json.loads(os.getenv('CRAWL_PRIORITY_LIST'))
 CRAWL_SURROUNDING_TEXT_LENGTH = int(os.getenv('CRAWL_SURROUNDING_TEXT_LENGTH'))
 TUEBINGEN_WRITING_STYLES = json.loads(os.getenv('TUEBINGEN_WRITING_STYLES'))
@@ -88,7 +87,8 @@ class URL:
             index = body_text.find(anchor)
             if index != -1:
                 # Extract the substring of CRAWL_SURROUNDING_TEXT_LENGTH words before and after the anchor text
-                return body_text[max(0, index - CRAWL_SURROUNDING_TEXT_LENGTH):index + len(anchor) + CRAWL_SURROUNDING_TEXT_LENGTH]
+                return body_text[max(0, index - CRAWL_SURROUNDING_TEXT_LENGTH):index + len(
+                    anchor) + CRAWL_SURROUNDING_TEXT_LENGTH]
             return ""
 
         links = []
@@ -256,41 +256,32 @@ class URL:
         Counts the number of times the word "en" appears in the URL.
         """
         count = 0
-        for token in self.url_tokens:
+        for token in tokenize_get_lang(self.url):
             if "en" in token or "/en" in token or "/en/" in token or ".en" in token or ".en/" in token or ".en." in token:
                 count += 1
         return count
 
     @functools.cached_property
-    def get_priority_list_bonus(self) -> int:
+    def get_priority_list_appearance(self) -> int:
         """
         Return a bonus if the URL is in the priority list.
         """
         count = 0
         for priority_url in CRAWL_PRIORITY_LIST:
             if priority_url in self.url:
-                count += 20
+                count += 1
         return count
 
     @functools.cached_property
-    def get_initial_queue_list_bonus(self) -> int:
+    def get_initial_queue_list_appearance(self) -> int:
         """
         Return a bonus if the URL is in the initial queue list.
         """
+        from scripts.initialize_database import get_seed_jobs
         count = 0
-        for priority_url in QUEUE_MANUAL_SEEDS:
+        for priority_url in get_seed_jobs():
             if priority_url in self.url:
-                count += 100000
-        return count
-
-    @functools.cached_property
-    def get_international_suffix_bonus(self) -> int:
-        """
-        If the tld is a international suffix, return a bonus.
-        """
-        count = 0
-        if "com" in self.tld:
-            count += 1
+                count += 1
         return count
 
     @functools.cached_property
@@ -311,8 +302,8 @@ class URL:
         Counts the number of times the word "bingen" appears in the anchor text.
         """
         count = 0
-        for token_lang in tokenize_get_lang(self.anchor_text):
-            if "en" in token_lang:
+        for token in self.anchor_text_tokens:
+            if "bingen" in token:
                 count += 1
         return count
 
@@ -334,8 +325,8 @@ class URL:
         Counts the number of times the word "bingen" appears in the surrounding text.
         """
         count = 0
-        for token_lang in tokenize_get_lang(self.surrounding_text):
-            if "en" in token_lang:
+        for token in self.surrounding_text_tokens:
+            if "bingen" in token:
                 count += 1
         return count
 
@@ -357,20 +348,9 @@ class URL:
         Counts the number of times the word "bingen" appears in the title text.
         """
         count = 0
-        for token_lang in tokenize_get_lang(self.title_text):
-            if "en" in token_lang:
+        for token in self.title_text_tokens:
+            if "bingen" in token:
                 count += 1
-        return count
-
-    @functools.cached_property
-    def count_english_in_url_tokens(self) -> int:
-        """
-        The word "english" appears in the URL.
-        """
-        count = 0
-        for token in self.url_tokens:
-            if "en" in token or "/en" in token or "/en/" in token or ".en" in token or ".en/" in token or ".en." in token:
-                count += 20
         return count
 
     @functools.cached_property
@@ -388,17 +368,24 @@ class URL:
             return -1
 
         total_points = 0
+
+        total_points += 0.001 * self.count_en_in_url
+
         total_points += 5 * self.count_tuebingen_in_url
-        total_points += 1 * self.count_bingen_in_url
-        total_points += 20 * self.count_en_in_url
-        total_points += self.get_priority_list_bonus
-        total_points += self.get_initial_queue_list_bonus
-        total_points += self.get_international_suffix_bonus
-        total_points += 10 * self.count_tuebingen_in_anchor_text
-        total_points += 5 * self.count_bingen_in_anchor_text
-        total_points += 10 * self.count_tuebingen_in_title_text
-        total_points += 5 * self.count_bingen_in_surrounding_text
+        total_points += 3 * self.count_bingen_in_url
+
+        total_points += 0.25 * self.count_bingen_in_anchor_text
+        total_points += 0.5 * self.count_tuebingen_in_anchor_text
+
+        total_points += 0.01 * self.count_bingen_in_title_text
+        total_points += 0.05 * self.count_tuebingen_in_title_text
+
+        total_points += 0.001 * self.count_bingen_in_surrounding_text
+        total_points += 0.05 * self.count_tuebingen_in_surrounding_text
+
         total_points += 0 if self.parent is None else get_document_approximated_relevance_score_for(self.parent)
+        total_points += 100 * self.get_priority_list_appearance
+        total_points += 100 * self.get_initial_queue_list_appearance
         return total_points
 
     @functools.cached_property

@@ -5,8 +5,9 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 
+from crawler.manager.server_importance import server_importance
 from crawler.manager.priority_queue import PriorityQueue
-from crawler.relevance_classification.url_relevance import URL
+from crawler.worker.url_relevance import URL
 from crawler.sql_models.base import connect_to_database, dotdict
 from crawler.sql_models.document import Document
 from crawler.sql_models.job import Job
@@ -91,21 +92,33 @@ def save_crawling_results(parent_job_id):
     """
     Save the crawling results.
     """
+    # Load data from JSON
     entry = dotdict(request.get_json())
     new_document = dotdict(json.loads(entry.new_document))
     new_jobs = [dotdict(json.loads(job)) for job in entry.new_jobs]
 
+    # Create new document
     new_document = Document(**new_document)
     new_document.save()
     LOG.info(f"Created document {new_document.id}")
 
+    # Create new servers from URLs if new servers were met while crawling.
     new_jobs_links = list(set(URL(job.url) for job in new_jobs))
     new_links_to_server_id = Server.create_servers_and_return_ids(new_jobs_links)
     LOG.info(f"Created new servers to save jobs {new_links_to_server_id}")
 
+    # Compute the priority of new servers
+    servers_ids = set(new_links_to_server_id.values())
+    servers_ids_to_priority = {server_id: server_importance(server_id=server_id) for server_id in servers_ids}
+
+    # Save new jobs
+    # Meanwhile, add server's importance to each job for additional priority bonus.
     for new_job in new_jobs:
-        new_job["server_id"] = new_links_to_server_id[URL(new_job.url)]
+        new_job_url = URL(new_job.url)
+        new_job_server_id = new_links_to_server_id[new_job_url]
+        new_job["server_id"] = new_job_server_id
         new_job["parent_id"] = new_document.id
+        new_job["priority"] = new_job.priority + servers_ids_to_priority[new_job_server_id]
     Job.insert_many(new_jobs).on_conflict_ignore().execute()
     LOG.info(f"Created {len(new_jobs)} new jobs for document {new_document.id}")
 

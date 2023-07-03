@@ -1,13 +1,14 @@
 """
 Methods to execute SQL scripts in order. This is useful for database migrations.
 """
+import functools
 import json
 import os
 
 import peewee
 from dotenv import load_dotenv
 
-from crawler.relevance_classification.url_relevance import URL
+from crawler.worker.url_relevance import URL
 from crawler.sql_models.base import BaseModel, DATABASE as db
 from crawler.sql_models.job import Job
 from crawler.utils.log import get_logger
@@ -17,7 +18,6 @@ LOG = get_logger(__name__)
 
 # SQL scripts directory path
 SCRIPTS_DIRECTORY = 'scripts'
-QUEUE_MANUAL_SEEDS = json.loads(os.getenv('QUEUE_MANUAL_SEEDS'))
 
 
 # Create a model to represent the migration table
@@ -28,6 +28,9 @@ class Migration(BaseModel):
     name = peewee.CharField(unique=True)
 
     class Meta:
+        """
+        Meta class for the migration model.
+        """
         table_name = 'migrations'
 
 
@@ -60,13 +63,22 @@ def run_migration_scripts():
             LOG.info(f'Migration {migration_name} executed successfully')
 
 
+@functools.lru_cache()
+def get_seed_jobs():
+    """
+    Returns the seed jobs from the seeds.json file.
+    """
+    with open("scripts/seeds.json") as f:
+        return json.loads(f.read())
+
+
 def initialize_seed_jobs():
     """
     Initializes the database.
     """
-    LOG.info(f"Starting to insert {QUEUE_MANUAL_SEEDS} initial jobs.")
-    Job.insert_initial_jobs_into_databases([URL(url) for url in QUEUE_MANUAL_SEEDS])
-    LOG.info(f"Finished inserting {QUEUE_MANUAL_SEEDS} initial jobs.")
+    LOG.info(f"Starting to insert {get_seed_jobs()} initial jobs.")
+    Job.insert_initial_jobs_into_databases([URL(url) for url in get_seed_jobs()])
+    LOG.info(f"Finished inserting {get_seed_jobs()} initial jobs.")
 
 
 def main():

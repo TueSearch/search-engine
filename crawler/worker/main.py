@@ -8,7 +8,6 @@ import math
 import os
 import random
 import time
-import traceback
 
 import requests
 from dotenv import load_dotenv
@@ -17,9 +16,9 @@ from requests.adapters import HTTPAdapter, Retry
 from requests_html import HTMLSession
 
 from crawler import utils
-from crawler.relevance_classification import url_relevance
-from crawler.relevance_classification.document_relevance import is_document_relevant
-from crawler.relevance_classification.url_relevance import URL
+from crawler.worker import url_relevance
+from crawler.worker.document_relevance import is_document_relevant
+from crawler.worker.url_relevance import URL
 from crawler.sql_models.base import dotdict
 from crawler.sql_models.document import Document
 from crawler.sql_models.job import Job
@@ -77,11 +76,14 @@ class Crawler:
         """
         Generate a document from the HTML of a website.
         """
-        LOG.info(f"Crawled successfully. Parsing HTML of {self.current_job.url}.")
         document = utils.text.generate_text_document_from_html(html)
         document.relevant = is_document_relevant(document)
         urls = url_relevance.URL.get_links(document, self.url)
         urls = [url for url in urls if url.is_relevant]
+        if document.relevant:
+            LOG.info(f"Relevant document found: {self.current_job.url}. {len(urls)} relevant URLs found.")
+        else:
+            LOG.info(f"Irrelevant document found: {self.current_job.url}. {len(urls)} relevant URLs found.")
         document.job_id = self.current_job.id
         return document, urls
 
@@ -140,21 +142,15 @@ class Crawler:
         """
         Crawl the website, first assuming it is static, then assuming it is dynamic.
         """
-        LOG.info(f"Start visiting website {self.current_job.url}")
         new_document, urls = None, []
         try:  # First, try a cheaper static version.
-            LOG.info(f"Try static version of {self.current_job.url}.")
             new_document, urls = self.crawl_assume_website_is_static()
-            LOG.info(f"Crawled static version of {self.current_job.url} successfully.")
         except Exception as exception:
             LOG.error(f"Failed: Crawled static version of {self.current_job.url} unsucessfully: {str(exception)}")
 
         if new_document is None or not new_document.relevant:
             try:  # If not successful, try static version with vanilla requests.
-                LOG.info(
-                    f"Static version not successfully or not relevant. Try dynamic version of {self.current_job.url}.")
                 new_document, urls = self.crawl_assume_website_is_dynamic()
-                LOG.info(f"Crawled dynamic version of {self.current_job.url} successfully.")
             except Exception as exception:
                 LOG.error(f"Failed: Crawled dynamic version of {self.current_job.url} unsucessfully: {str(exception)}")
         return new_document, urls
@@ -167,6 +163,8 @@ class Crawler:
             answer = requests.get(
                 f"{CRAWLER_MANAGER_HOST}/reserve_jobs/{CRAWL_WORKER_BATCH_SIZE}?pw={CRAWLER_MANAGER_PASSWORD}",
                 timeout=CRAWLER_WORKER_TIMEOUT)
+            if not answer.ok:
+                raise Exception(f"Error while reserving jobs: {answer}")
             job_buffer = answer.json()
             for job in job_buffer:
                 self.job_buffer.append(dotdict(job))
@@ -181,7 +179,10 @@ class Crawler:
         response = requests.post(url,
                                  json={"new_document": json_new_document, "new_jobs": json_new_jobs},
                                  timeout=CRAWLER_WORKER_TIMEOUT)
-        LOG.info(f"Manager answered to save_crawling_results: {response.text}")
+        if response.ok:
+            LOG.info(f"Manager answered to save_crawling_results of {self.current_job.url}: {response.text}")
+        else:
+            raise Exception(f"Error while saving crawling results: {response.text}")
 
     def mark_job_as_failed(self):
         """
@@ -190,7 +191,10 @@ class Crawler:
         response = requests.post(
             f"{CRAWLER_MANAGER_HOST}/mark_job_as_fail/{self.current_job.id}?pw={CRAWLER_MANAGER_PASSWORD}",
             timeout=CRAWLER_WORKER_TIMEOUT)
-        LOG.info(f"Manager answered to mark_job_as_fail: {response.text}")
+        if response.ok:
+            LOG.info(f"Manager answered to mark_job_as_fail of {self.current_job.url}: {response.text}")
+        else:
+            raise Exception(f"Error while marking job as failed: {response.text}")
 
     def loop(self, number_of_documents_to_be_crawled: int):
         """
@@ -201,9 +205,6 @@ class Crawler:
             try:
                 if self.current_job is None:
                     self.current_job = self.get_job()
-                    LOG.info(f"Retrieved new job: {self.current_job}")
-                else:
-                    LOG.info(f"Continuing job: {self.current_job}")
                 if self.new_document is None or self.new_jobs is None:
                     self.new_document, self.new_relevant_urls = self.crawl()
                     if self.new_document is not None:
