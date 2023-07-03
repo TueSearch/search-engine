@@ -124,7 +124,7 @@ curl http://localhost:4000/search?q=tubingen
 docker-compose -f docker-compose.yml up --build backend_mockup_server
 ```
 
-and test the mock API at `localhost:401/search?q=tubingen`
+and test the mock API at `localhost:4001/search?q=tubingen`
 
 2. Install dependencies
 
@@ -132,13 +132,13 @@ and test the mock API at `localhost:401/search?q=tubingen`
 npm install
 ```
 
-3Start the frontend
+3. Start the frontend
 
 ```bash
 npm run dev
 ```
 
-4Open the browser at `http://localhost:5000/`
+4. pen the browser at `http://localhost:5000/`
 
 # Team Members
 
