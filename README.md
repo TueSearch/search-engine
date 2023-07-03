@@ -3,6 +3,12 @@
 This project contains the source code of the final project from the course modern search engines at the University of
 Tübingen.
 
+# Table of Contents
+- [Local set up for development](#local-set-up-for-development)
+- [Remote set up for deployment](#remote-set-up-for-deployment)
+- [Crawler set up at local computer](#crawler-set-up-at-local-computer)
+- [Frontend](#frontend)
+
 # Local set up for development
 
 1. Tear down everything
