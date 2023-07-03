@@ -147,7 +147,7 @@ class Crawler:
             new_document, urls = self.crawl_assume_website_is_static()
             LOG.info(f"Crawled static version of {self.current_job.url} successfully.")
         except Exception as exception:
-            LOG.error(f"Crawled static version of {self.current_job.url} unsucessfully: {str(exception)}")
+            LOG.error(f"Failed: Crawled static version of {self.current_job.url} unsucessfully: {str(exception)}")
 
         if new_document is None or not new_document.relevant:
             try:  # If not successful, try static version with vanilla requests.
@@ -156,7 +156,7 @@ class Crawler:
                 new_document, urls = self.crawl_assume_website_is_dynamic()
                 LOG.info(f"Crawled dynamic version of {self.current_job.url} successfully.")
             except Exception as exception:
-                LOG.error(f"Crawled dynamic version of {self.current_job.url} unsucessfully: {str(exception)}")
+                LOG.error(f"Failed: Crawled dynamic version of {self.current_job.url} unsucessfully: {str(exception)}")
         return new_document, urls
 
     def get_job(self) -> dotdict:
