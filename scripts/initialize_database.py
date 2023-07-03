@@ -28,6 +28,9 @@ class Migration(BaseModel):
     name = peewee.CharField(unique=True)
 
     class Meta:
+        """
+        Meta class for the migration model.
+        """
         table_name = 'migrations'
 
 
@@ -62,6 +65,9 @@ def run_migration_scripts():
 
 @functools.lru_cache()
 def get_seed_jobs():
+    """
+    Returns the seed jobs from the seeds.json file.
+    """
     with open("scripts/seeds.json") as f:
         return json.loads(f.read())
 
