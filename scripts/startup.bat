@@ -29,6 +29,7 @@ if "%~1"=="docker-compose.yml" (
     docker-compose -f "%~1" up --build -d prod_backend_server
     docker-compose -f "%~1" up --build -d prod_frontend_server
     docker-compose -f "%~1" up --build -d prod_nginx
+    docker-compose -f "%~1" up --build -d prod_phpmyadmin
 ) else (
     echo Unknown docker-compose file: %~1
     echo Usage:

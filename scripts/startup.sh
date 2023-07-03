@@ -25,12 +25,12 @@ elif [ "$1" == "prod.docker-compose.yml" ]; then
   docker-compose -f "$1" up --build -d prod_mysql prod_mysql
   docker-compose -f "$1" up --build prod_initialize_database prod_initialize_database
   docker-compose -f "$1" up -d --build prod_manager
-  docker-compose -f "$1" up --build --exit-code-from prod_worker prod_worker
   docker-compose -f "$1" up --build --exit-code-from prod_build_index prod_build_index
   docker-compose -f "$1" up --build --exit-code-from prod_build_metrics prod_build_metrics
   docker-compose -f "$1" up --build -d prod_backend_server
   docker-compose -f "$1" up --build -d prod_frontend_server
   docker-compose -f "$1" up --build -d prod_nginx
+  docker-compose -f "$1" up --build -d prod_phpmyadmin
 else
   echo "Unknown docker-compose file: $1"
   echo "Usage:"
