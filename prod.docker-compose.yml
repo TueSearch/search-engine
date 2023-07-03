@@ -87,6 +87,8 @@ services:
       pip install gunicorn; 
       /home/tuesearch/.local/bin/gunicorn -w 8 -b 0.0.0.0:6000 crawler.manager.main:app;
       "
+    volumes:
+      - ./scripts/seeds.json/:/app/scripts/seeds.json:ro
     env_file:
       - .env
     ports:
@@ -106,6 +108,7 @@ services:
       - .env
     volumes:
       - prod_tuesearch:/opt/tuesearch
+      - ./scripts/seeds.json/:/app/scripts/seeds.json:ro
     networks:
       prod_mysql_net:
         ipv4_address: 172.20.0.7
@@ -121,6 +124,7 @@ services:
       - .env
     volumes:
       - prod_tuesearch:/opt/tuesearch
+      - ./scripts/seeds.json/:/app/scripts/seeds.json:ro
     networks:
       prod_mysql_net:
         ipv4_address: 172.20.0.8
@@ -141,6 +145,7 @@ services:
       - .env
     volumes:
       - prod_tuesearch:/opt/tuesearch
+      - ./scripts/seeds.json/:/app/scripts/seeds.json:ro
     networks:
       prod_mysql_net:
         ipv4_address: 172.20.0.9
