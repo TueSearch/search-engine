@@ -64,12 +64,12 @@ services:
   # Will run once.
   ############################################################
   prod_initialize_database:
-    image: ghcr.io/tuesearch/search-engine/backend-server:latest
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
     container_name: prod_initialize_database
     restart: 'on-failure'
     command: 'python3 -m scripts.initialize_database'
-    volumes:
-      - ./scripts/seeds.json/:/app/scripts/seeds.json:ro
     env_file:
       - .env
     networks:
@@ -79,16 +79,12 @@ services:
   # Start manager.
   ############################################################
   prod_manager:
-    image: ghcr.io/tuesearch/search-engine/backend-server:latest
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
     container_name: prod_manager
     restart: 'always'
-    command: >
-      sh -c "
-      pip install gunicorn; 
-      /home/tuesearch/.local/bin/gunicorn -w 8 -b 0.0.0.0:6000 crawler.manager.main:app;
-      "
-    volumes:
-      - ./scripts/seeds.json/:/app/scripts/seeds.json:ro
+    command: '/home/tuesearch/.local/bin/gunicorn -w 8 -b 0.0.0.0:6000 crawler.manager.main:app'
     env_file:
       - .env
     ports:
@@ -100,7 +96,9 @@ services:
   # Build indexer.
   ############################################################
   prod_build_index:
-    image: ghcr.io/tuesearch/search-engine/backend-server:latest
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
     container_name: prod_build_index
     restart: 'on-failure'
     command: 'python3 -m backend.build_index'
@@ -108,7 +106,6 @@ services:
       - .env
     volumes:
       - prod_tuesearch:/opt/tuesearch
-      - ./scripts/seeds.json/:/app/scripts/seeds.json:ro
     networks:
       prod_mysql_net:
         ipv4_address: 172.20.0.7
@@ -116,7 +113,9 @@ services:
   # Build rankers.
   ############################################################
   prod_build_metrics:
-    image: ghcr.io/tuesearch/search-engine/backend-server:latest
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
     container_name: prod_build_metrics
     restart: 'on-failure'
     command: 'python3 -m backend.build_metrics'
@@ -124,7 +123,6 @@ services:
       - .env
     volumes:
       - prod_tuesearch:/opt/tuesearch
-      - ./scripts/seeds.json/:/app/scripts/seeds.json:ro
     networks:
       prod_mysql_net:
         ipv4_address: 172.20.0.8
@@ -133,19 +131,16 @@ services:
   # Persistent process.
   ############################################################
   prod_backend_server:
-    image: ghcr.io/tuesearch/search-engine/backend-server:latest
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
     container_name: prod_backend_server
     restart: 'always'
-    command: >
-      sh -c "
-      pip install gunicorn; 
-      /home/tuesearch/.local/bin/gunicorn -w 1 -b 0.0.0.0:4000 backend.app:app;
-      "
+    command: '/home/tuesearch/.local/bin/gunicorn -w 1 -b 0.0.0.0:4000 backend.app:app'
     env_file:
       - .env
     volumes:
       - prod_tuesearch:/opt/tuesearch
-      - ./scripts/seeds.json/:/app/scripts/seeds.json:ro
     networks:
       prod_mysql_net:
         ipv4_address: 172.20.0.9
