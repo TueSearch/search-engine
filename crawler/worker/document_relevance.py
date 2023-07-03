@@ -13,7 +13,6 @@ import functools
 from dotenv import load_dotenv
 
 from crawler import utils
-from crawler.worker.url_relevance import URL
 
 load_dotenv()
 
@@ -60,7 +59,7 @@ def does_text_contain_tuebingen(text: str):
 
 
 @functools.lru_cache(maxsize=5)
-def get_document_approximated_relevance_score_for(url: URL, document: 'Document'):
+def get_document_approximated_relevance_score_for(url: 'URL', document: 'Document'):
     text_fields = [
         document.body,
         document.title,
@@ -100,7 +99,7 @@ def get_document_approximated_relevance_score_for(url: URL, document: 'Document'
 
 
 @functools.lru_cache(maxsize=5)
-def is_document_relevant(url: URL, document: 'Document'):
+def is_document_relevant(url: 'URL', document: 'Document'):
     """Classify the relevance of a crawled document.
 
     Args:
