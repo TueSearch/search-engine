@@ -78,6 +78,8 @@ docker-compose -f docker-compose.yml  up --build --scale loop_worker=2 loop_work
 Change the number `2` to the number of crawlers you want to start. Start slowly and increase the number of crawlers
 gracefully to see if everything works fine.
 
+Be polite to other websites and use at most `4` crawlers at the same time to avoid overloading the crawled websites.
+
 # Frontend
 
 1. Start mock up server
