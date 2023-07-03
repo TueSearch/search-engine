@@ -7,7 +7,7 @@ import peewee
 from playhouse.shortcuts import model_to_dict
 
 from crawler import utils
-from crawler.relevance_classification.job_relevance import get_job_priority
+from crawler.manager.server_importance import server_importance
 from crawler.sql_models.base import BaseModel, LongTextField, JSONField, execute_query_and_return_objects
 from crawler.sql_models.server import Server
 
@@ -107,7 +107,7 @@ class Job(BaseModel):
         for link, server_id in link_to_server_id.items():
             job = Job(url=link.url,
                       server=server_id,
-                      priority=get_job_priority(server_id, link),
+                      priority=server_importance(server_id),
                       anchor_text=link.anchor_text,
                       anchor_text_tokens=link.anchor_text_tokens,
                       surrounding_text=link.surrounding_text,
