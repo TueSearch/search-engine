@@ -69,7 +69,7 @@ services:
     restart: 'on-failure'
     command: 'python3 -m scripts.initialize_database'
     volumes:
-      - scripts/seeds.json/:/app/scripts/seeds.json:ro
+      - ./scripts/seeds.json/:/app/scripts/seeds.json:ro
     env_file:
       - .env
     networks:
