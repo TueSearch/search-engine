@@ -32,6 +32,19 @@ services:
       prod_mysql_net:
         ipv4_address: 172.20.0.12
   ############################################################
+  # phpmyadmin
+  ############################################################
+  prod_phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: prod_phpmyadmin
+    env_file:
+      - .env
+    restart: always
+    networks:
+      - prod_mysql_net
+    ports:
+      - '8080:80'
+  ############################################################
   # MySQL models
   ############################################################
   prod_mysql:

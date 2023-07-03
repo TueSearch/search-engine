@@ -164,8 +164,8 @@ class Crawler:
             job_buffer = answer.json()
             for job in job_buffer:
                 self.job_buffer.append(dotdict(job))
-            LOG.info(f"Reserved {len(self.job_buffer)} jobs from manager.")
-        return self.job_buffer.pop()
+            LOG.info(f"Reserved {job_buffer} from manager.")
+        return self.job_buffer.pop(0)
 
     def save_crawling_results(self, json_new_document: str, json_new_jobs: str):
         """
@@ -195,7 +195,9 @@ class Crawler:
             try:
                 if self.current_job is None:
                     self.current_job = self.get_job()
-                LOG.info(f"Retrieved new job: {self.current_job}")
+                    LOG.info(f"Retrieved new job: {self.current_job}")
+                else:
+                    LOG.info(f"Continuing job: {self.current_job}")
                 if self.new_document is None or self.new_jobs is None:
                     self.new_document, self.new_relevant_urls = self.crawl()
                 if self.new_document:
@@ -204,17 +206,18 @@ class Crawler:
                     try:
                         self.save_crawling_results(self.new_document, self.new_jobs)
                         self.crawled_count += 1
-                        self.new_jobs = None
-                        self.new_document = None
-                        self.new_relevant_urls = None
                     except Exception as exception:
                         LOG.error(f"Error while sending back to master: {exception} Try again")
+                        continue
                 else:
                     try:
                         self.mark_job_as_failed()
-                        self.new_relevant_urls = None
                     except Exception as e:
                         LOG.error(f"Error while marking job as failed: {e}")
+                        continue
+                self.new_jobs = None
+                self.new_document = None
+                self.new_relevant_urls = None
             except Exception as exception:
                 LOG.error(f"Unexpected error: {str(exception)}")
                 time.sleep(1)

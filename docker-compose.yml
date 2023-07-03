@@ -84,6 +84,19 @@ services:
     networks:
       - mysql_net
   ############################################################
+  # Start the worker in loop.
+  ############################################################
+  loop_worker:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    restart: 'on-failure'
+    command: 'python3 -m crawler.worker.main'
+    env_file:
+      - .env
+    networks:
+      - mysql_net
+  ############################################################
   # Build indexer.
   ############################################################
   build_index:
