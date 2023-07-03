@@ -67,7 +67,7 @@ def get_always_keep_documents():
 @functools.lru_cache(maxsize=5)
 def get_document_approximated_relevance_score_for(url: 'URL', document: 'Document'):
     for always_keep_document in get_always_keep_documents():
-        if always_keep_document in url.url:
+        if always_keep_document in str(url):
             return 100
 
     text_fields = [
