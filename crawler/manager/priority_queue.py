@@ -13,7 +13,7 @@ from crawler.sql_models.job import Job
 LOG = utils.get_logger(__file__)
 # Create a Redis connection
 LOCK_FILE_PATH = os.environ.get('LOCK_FILE_PATH')
-LOCK_RETRIES = int(os.environ.get('LOCK_RETRIES'))
+LOCK_RETRY = int(os.environ.get('LOCK_RETRY'))
 LOCK_TIMEOUT = int(os.environ.get('LOCK_TIMEOUT'))
 LOCK_RETRY_INTERVAL = float(os.environ.get('LOCK_RETRY_INTERVAL'))
 
@@ -26,7 +26,7 @@ def file_lock(func):
     def wrapper(*args, **kwargs):
         retries = 0
 
-        while retries < LOCK_RETRIES:
+        while retries < LOCK_RETRY:
             try:
                 lock_file = open(LOCK_FILE_PATH, 'w')
                 fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)

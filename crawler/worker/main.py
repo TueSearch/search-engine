@@ -8,6 +8,7 @@ import math
 import os
 import random
 import time
+import traceback
 
 import requests
 from dotenv import load_dotenv
@@ -147,6 +148,7 @@ class Crawler:
             new_document, urls = self.crawl_assume_website_is_static()
         except Exception as exception:
             LOG.error(f"Failed: Crawled static version of {self.current_job.url} unsucessfully: {str(exception)}")
+            traceback.print_exc()
 
         if new_document is None or not new_document.relevant:
             try:  # If not successful, try static version with vanilla requests.
