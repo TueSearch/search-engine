@@ -60,6 +60,20 @@ LIMIT {n_jobs}
 """
         return execute_query_and_return_objects(query)
 
+    @staticmethod
+    def get_highest_priority_jobs(n_jobs: int) -> list[Job]:
+        """
+        Retrieves a list of jobs from the models to be crawled.
+
+        Returns:
+            list[Job]: A list of Job objects representing the URLs to be crawled.
+        """
+        query = f"""
+SELECT id, url
+FROM jobs where done = 0 and being_crawled = 0 OR DER BY priority DESC LIMIT {n_jobs}
+"""
+        return execute_query_and_return_objects(query)
+
     def get_next_jobs(self, n_jobs: int) -> list[Job]:
         """
         Retrieves a list of jobs from the models to be crawled.
@@ -70,7 +84,7 @@ LIMIT {n_jobs}
         LOG.info(f"Queue received command to obtain {n_jobs} jobs.")
         with DATABASE.atomic() as transaction:
             try:
-                jobs = list(PriorityQueue.get_from_random_servers_one_highest_priority_job(n_jobs))
+                jobs = list(PriorityQueue.get_highest_priority_jobs(n_jobs))
                 LOG.info(f"Retrieved from database: {jobs}")
                 for job in jobs:
                     Job.update(being_crawled=True).where(Job.id == job.id).execute()
