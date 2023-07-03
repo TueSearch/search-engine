@@ -22,21 +22,6 @@ services:
     networks:
       - mysql_net
   ############################################################
-  # Viewing data
-  ############################################################
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
-    depends_on:
-      - mysql
-    env_file:
-      - .env
-    restart: always
-    ports:
-      - '8000:80'
-    networks:
-      - mysql_net
-  ############################################################
   # Initialize models.
   # Feed the models with initial jobs and initial documents.
   # Will run once.
@@ -46,8 +31,6 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
     container_name: initialize_database
-    depends_on:
-      - mysql
     restart: 'on-failure'
     command: 'python3 -m scripts.initialize_database'
     env_file:
@@ -63,9 +46,6 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
     container_name: run_unit_tests
-    depends_on:
-      - initialize_database
-      - mysql
     restart: 'no'
     command: './scripts/run-tests.sh'
     env_file:
@@ -83,9 +63,6 @@ services:
       dockerfile: docker/backend.Dockerfile
     container_name: manager
     restart: 'always'
-    depends_on:
-      - mysql
-      - initialize_database
     command: 'python3 -m crawler.manager.main'
     ports:
       - '6000:6000'
@@ -104,7 +81,6 @@ services:
     command: 'python3 -m crawler.worker.main -n 4'
     env_file:
       - .env
-      - .worker.env
     networks:
       - mysql_net
   ############################################################
@@ -115,9 +91,6 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
     container_name: build_index
-    depends_on:
-      - mysql
-      - initialize_database
     restart: 'on-failure'
     command: 'python3 -m backend.build_index'
     env_file:
@@ -134,9 +107,6 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
     container_name: build_metrics
-    depends_on:
-      - mysql
-      - initialize_database
     restart: 'on-failure'
     command: 'python3 -m backend.build_metrics'
     env_file:
@@ -166,6 +136,19 @@ services:
       - tuesearch:/opt/tuesearch
     networks:
       - mysql_net
+  ############################################################
+  # Start backend.
+  # Persistent process.
+  ############################################################
+  backend_mockup_server:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: backend_mockup_server
+    ports:
+      - '4001:4001'
+    restart: 'always'
+    command: 'python3 -m scripts.mockup_server'
   ############################################################
   # Start frontend.
   # Persistent process.
