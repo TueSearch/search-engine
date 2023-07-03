@@ -104,12 +104,25 @@ npm run dev
 
 # Quality check
 
-Some regularly used SQL queries to check quality
+Some regularly used SQL queries to check quality:
+
+- Test relevance ratio:
 
 ```sql
 SELECT count(*) FROM `documents` where relevant = 1;
 SELECT count(*) FROM `documents` where relevant = 0;
 ```
+
+- Update priority list:
+```sql
+SELECT j.url, j.priority from jobs as j join documents as d where j.id = d.job_id and d.relevant = 1;
+```
+
+- Update block list:
+```sql
+SELECT j.url, j.priority from jobs as j join documents as d where j.id = d.job_id and d.relevant = 0;
+```
+
 
 # Team Members
 
