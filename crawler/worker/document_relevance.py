@@ -66,12 +66,17 @@ def get_always_keep_documents():
 
 
 def has_lang_en(html_content: str) -> bool:
-    soup = BeautifulSoup(html_content, 'html.parser')
-    lang_attribute = soup.html.get('lang')
-    return "en" in lang_attribute
+    """
+    Checks if the html content has the lang attribute set to "en".
+    """
+    try:
+        soup = BeautifulSoup(html_content, 'html.parser')
+        lang_attribute = soup.html.get('lang')
+        return "en" in lang_attribute
+    except:
+        return False
 
 
-@functools.lru_cache(maxsize=5)
 def get_document_approximated_relevance_score_for(url: 'URL', document: 'Document'):
     for always_keep_document in get_always_keep_documents():
         if always_keep_document in str(url):
@@ -121,7 +126,6 @@ def get_document_approximated_relevance_score_for(url: 'URL', document: 'Documen
     return english_score + tubingen_score + url_relevance_score
 
 
-@functools.lru_cache(maxsize=5)
 def is_document_relevant(url: 'URL', document: 'Document'):
     """Classify the relevance of a crawled document.
 
