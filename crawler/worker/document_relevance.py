@@ -109,6 +109,8 @@ def get_document_approximated_relevance_score_for(url: 'URL', document: 'Documen
         url_relevance_score += 1
     if url.contains_bonus_patterns:
         url_relevance_score += 1
+    if url.contains_blocked_patterns:
+        return -1
     return english_score + tubingen_score + url_relevance_score
 
 
