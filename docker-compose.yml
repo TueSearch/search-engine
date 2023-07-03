@@ -87,13 +87,21 @@ services:
       - tuesearch:/opt/tuesearch
   ############################################################
   # Start the worker in loop.
+  #
+  # So there's apparently problem with long running processes
+  # which use spacy.
+  # The current solution is to restart the processes sporadically.
+  #
+  # See: https://github.com/explosion/spaCy/issues/3618
+  #
+  # This task will run the worker on 50 websites and restart it.
   ############################################################
   loop_worker:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
     restart: 'unless-stopped'
-    command: 'python3 -m crawler.worker.main -n 100'
+    command: 'python3 -m crawler.worker.main -n 50'
     env_file:
       - .env
     networks:
