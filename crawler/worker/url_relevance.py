@@ -18,6 +18,7 @@ from crawler.sql_models.document import Document
 from crawler.utils.text import tokenize_get_lang, make_text_human_readable
 
 from crawler.utils import text
+from scripts.initialize_database import get_seed_jobs
 
 load_dotenv()
 
@@ -31,7 +32,7 @@ NLP.tokenizer.infix_finditer = infix_regex.finditer
 CRAWL_EXCLUDED_EXTENSIONS = set(json.loads(
     os.getenv("CRAWL_EXCLUDED_EXTENSIONS")))
 CRAWL_BLACK_LIST = set(json.loads(os.getenv("CRAWL_BLACK_LIST")))
-QUEUE_MANUAL_SEEDS = json.loads(os.getenv('QUEUE_MANUAL_SEEDS'))
+QUEUE_MANUAL_SEEDS = get_seed_jobs()
 CRAWL_PRIORITY_LIST = json.loads(os.getenv('CRAWL_PRIORITY_LIST'))
 CRAWL_SURROUNDING_TEXT_LENGTH = int(os.getenv('CRAWL_SURROUNDING_TEXT_LENGTH'))
 TUEBINGEN_WRITING_STYLES = json.loads(os.getenv('TUEBINGEN_WRITING_STYLES'))

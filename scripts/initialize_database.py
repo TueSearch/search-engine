@@ -17,7 +17,6 @@ LOG = get_logger(__name__)
 
 # SQL scripts directory path
 SCRIPTS_DIRECTORY = 'scripts'
-QUEUE_MANUAL_SEEDS = json.loads(os.getenv('QUEUE_MANUAL_SEEDS'))
 
 
 # Create a model to represent the migration table
@@ -60,13 +59,18 @@ def run_migration_scripts():
             LOG.info(f'Migration {migration_name} executed successfully')
 
 
+def get_seed_jobs():
+    with open("scripts/seeds.json") as f:
+        return json.loads(f.read())
+
+
 def initialize_seed_jobs():
     """
     Initializes the database.
     """
-    LOG.info(f"Starting to insert {QUEUE_MANUAL_SEEDS} initial jobs.")
-    Job.insert_initial_jobs_into_databases([URL(url) for url in QUEUE_MANUAL_SEEDS])
-    LOG.info(f"Finished inserting {QUEUE_MANUAL_SEEDS} initial jobs.")
+    LOG.info(f"Starting to insert {get_seed_jobs()} initial jobs.")
+    Job.insert_initial_jobs_into_databases([URL(url) for url in get_seed_jobs()])
+    LOG.info(f"Finished inserting {get_seed_jobs()} initial jobs.")
 
 
 def main():
