@@ -47,19 +47,6 @@ services:
       prod_mysql_net:
         ipv4_address: 172.20.0.2
   ############################################################
-  # Viewing data
-  ############################################################
-  prod_phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: prod_phpmyadmin
-    env_file:
-      - .env
-      - .prod.env
-    restart: always
-    networks:
-      prod_mysql_net:
-        ipv4_address: 172.20.0.3
-  ############################################################
   # Initialize models.
   # Feed the models with initial jobs and initial documents.
   # Will run once.
