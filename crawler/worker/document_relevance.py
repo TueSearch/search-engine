@@ -10,6 +10,7 @@ import json
 import os
 import functools
 
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 from crawler import utils
@@ -64,6 +65,12 @@ def get_always_keep_documents():
         return set(json.load(f))
 
 
+def has_lang_en(html_content: str) -> bool:
+    soup = BeautifulSoup(html_content, 'html.parser')
+    lang_attribute = soup.html.get('lang')
+    return "en" in lang_attribute
+
+
 @functools.lru_cache(maxsize=5)
 def get_document_approximated_relevance_score_for(url: 'URL', document: 'Document'):
     for always_keep_document in get_always_keep_documents():
@@ -89,7 +96,7 @@ def get_document_approximated_relevance_score_for(url: 'URL', document: 'Documen
         document.h6_tokens
     ]
 
-    english_score = 0
+    english_score = int(has_lang_en(document.html))
     for field in text_fields:
         english_score += utils.text.do_text_contain_english_content(field)
     if english_score == 0:
@@ -98,15 +105,15 @@ def get_document_approximated_relevance_score_for(url: 'URL', document: 'Documen
     for field in json_fields:
         tubingen_score += do_tokens_contain_tuebingen(field)
     tubingen_score += int(does_text_contain_tuebingen(document.body))
-    if tubingen_score == 0:
-        return -1
-    url_relevance_score = 0
 
     if isinstance(url, str):
         from crawler.worker.url_relevance import URL
         url = URL(url)
     if url.count_tuebingen_in_url > 0:
-        url_relevance_score += 1
+        tubingen_score += 1
+    if tubingen_score == 0:
+        return -1
+    url_relevance_score = 0
     if url.contains_bonus_patterns:
         url_relevance_score += 1
     if url.contains_blocked_patterns:
