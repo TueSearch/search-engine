@@ -70,7 +70,7 @@ LIMIT {n_jobs}
         """
         query = f"""
 SELECT id, url
-FROM jobs where done = 0 and being_crawled = 0 OR DER BY priority DESC LIMIT {n_jobs}
+FROM jobs where done = 0 and being_crawled = 0 ORDER BY priority DESC LIMIT {n_jobs}
 """
         return execute_query_and_return_objects(query)
 
