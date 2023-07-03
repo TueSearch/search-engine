@@ -13,7 +13,6 @@ volumes:
     external: true
   prod_tuesearch:
     external: true
-
 services:
   ############################################################
   # Nginx Server

@@ -83,6 +83,8 @@ services:
       - .env
     networks:
       - mysql_net
+    volumes:
+      - tuesearch:/opt/tuesearch
   ############################################################
   # Start the worker in loop.
   ############################################################
@@ -96,6 +98,8 @@ services:
       - .env
     networks:
       - mysql_net
+    volumes:
+      - tuesearch:/opt/tuesearch
   ############################################################
   # Build indexer.
   ############################################################

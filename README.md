@@ -78,6 +78,8 @@ docker-compose -f docker-compose.yml  up --build --scale loop_worker=2 loop_work
 Change the number `2` to the number of crawlers you want to start. Start slowly and increase the number of crawlers
 gracefully to see if everything works fine.
 
+Be polite to other websites and use at most `4` crawlers at the same time to avoid overloading the crawled websites.
+
 # Frontend
 
 1. Start mock up server
@@ -104,12 +106,25 @@ npm run dev
 
 # Quality check
 
-Some regularly used SQL queries to check quality
+Some regularly used SQL queries to check quality:
+
+- Test relevance ratio:
 
 ```sql
 SELECT count(*) FROM `documents` where relevant = 1;
 SELECT count(*) FROM `documents` where relevant = 0;
 ```
+
+- Update priority list:
+```sql
+SELECT j.url, j.priority from jobs as j join documents as d where j.id = d.job_id and d.relevant = 1;
+```
+
+- Update block list:
+```sql
+SELECT j.url, j.priority from jobs as j join documents as d where j.id = d.job_id and d.relevant = 0;
+```
+
 
 # Team Members
 

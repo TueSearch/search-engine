@@ -30,10 +30,20 @@ NLP.tokenizer.infix_finditer = infix_regex.finditer
 
 CRAWL_EXCLUDED_EXTENSIONS = set(json.loads(
     os.getenv("CRAWL_EXCLUDED_EXTENSIONS")))
-CRAWL_BLACK_LIST = set(json.loads(os.getenv("CRAWL_BLACK_LIST")))
-CRAWL_PRIORITY_LIST = json.loads(os.getenv('CRAWL_PRIORITY_LIST'))
 CRAWL_SURROUNDING_TEXT_LENGTH = int(os.getenv('CRAWL_SURROUNDING_TEXT_LENGTH'))
 TUEBINGEN_WRITING_STYLES = json.loads(os.getenv('TUEBINGEN_WRITING_STYLES'))
+
+
+@functools.lru_cache
+def get_blocked_patterns():
+    with open("scripts/blocked_patterns.json", "r") as f:
+        return json.loads(f.read())
+
+
+@functools.lru_cache
+def get_bonus_patterns():
+    with open("scripts/bonus_patterns.json", "r") as f:
+        return json.loads(f.read())
 
 
 class URL:
@@ -221,13 +231,6 @@ class URL:
         return test1() and test2()
 
     @functools.cached_property
-    def is_on_server_black_list(self) -> bool:
-        """
-        Check if a URL is on the server black list.
-        """
-        return self.server_name in CRAWL_BLACK_LIST
-
-    @functools.cached_property
     def count_tuebingen_in_url(self) -> int:
         """
         Counts the number of times the word "tuebingen" appears in the URL.
@@ -258,17 +261,6 @@ class URL:
         count = 0
         for token in tokenize_get_lang(self.url):
             if "en" in token or "/en" in token or "/en/" in token or ".en" in token or ".en/" in token or ".en." in token:
-                count += 1
-        return count
-
-    @functools.cached_property
-    def get_priority_list_appearance(self) -> int:
-        """
-        Return a bonus if the URL is in the priority list.
-        """
-        count = 0
-        for priority_url in CRAWL_PRIORITY_LIST:
-            if priority_url in self.url:
                 count += 1
         return count
 
@@ -354,17 +346,37 @@ class URL:
         return count
 
     @functools.cached_property
+    def contains_blocked_patterns(self) -> bool:
+        """
+        Check if the URL contains blocked patterns.
+        """
+        for pattern in get_blocked_patterns():
+            if pattern in self.url:
+                return True
+        return False
+
+    @functools.cached_property
+    def contains_bonus_patterns(self) -> bool:
+        """
+        Check if the URL contains blocked patterns.
+        """
+        for pattern in get_bonus_patterns():
+            if pattern in self.url:
+                return True
+        return False
+
+    @functools.cached_property
     def priority(self) -> int:
         """
         Returns the priority of the URL.
         """
+        if self.contains_blocked_patterns:
+            return -1
+
         if not self.is_properly_a_html_site:
             return -1
 
         if not self.is_a_real_hyper_link:
-            return -1
-
-        if self.is_on_server_black_list:
             return -1
 
         total_points = 0
@@ -383,9 +395,10 @@ class URL:
         total_points += 0.001 * self.count_bingen_in_surrounding_text
         total_points += 0.05 * self.count_tuebingen_in_surrounding_text
 
-        total_points += 0 if self.parent is None else get_document_approximated_relevance_score_for(self.parent)
-        total_points += 100 * self.get_priority_list_appearance
+        total_points += 0 if self.parent is None else get_document_approximated_relevance_score_for(self.url,
+                                                                                                    self.parent)
         total_points += 100 * self.get_initial_queue_list_appearance
+        total_points += 50 * int(self.contains_bonus_patterns)
         return total_points
 
     @functools.cached_property
