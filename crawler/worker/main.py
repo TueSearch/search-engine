@@ -77,14 +77,15 @@ class Crawler:
         """
         Generate a document from the HTML of a website.
         """
-        LOG.info(f"Crawled successfully. Parsing HTML of {self.current_job.url}.")
         document = utils.text.generate_text_document_from_html(html)
         document.relevant = is_document_relevant(document)
         if document.relevant:
             urls = url_relevance.URL.get_links(document, self.url)
             urls = [url for url in urls if url.is_relevant]
+            LOG.info(f"Relevant document found: {self.current_job.url}. {len(urls)} relevant URLs found.")
         else:
             urls = []  # No jobs generation if document's not relevant
+            LOG.info(f"Irrelevant document found: {self.current_job.url}. No relevant URLs found.")
         document.job_id = self.current_job.id
         return document, urls
 
@@ -146,18 +147,13 @@ class Crawler:
         LOG.info(f"Start visiting website {self.current_job.url}")
         new_document, urls = None, []
         try:  # First, try a cheaper static version.
-            LOG.info(f"Try static version of {self.current_job.url}.")
             new_document, urls = self.crawl_assume_website_is_static()
-            LOG.info(f"Crawled static version of {self.current_job.url} successfully.")
         except Exception as exception:
             LOG.error(f"Failed: Crawled static version of {self.current_job.url} unsucessfully: {str(exception)}")
 
         if new_document is None or not new_document.relevant:
             try:  # If not successful, try static version with vanilla requests.
-                LOG.info(
-                    f"Static version not successfully or not relevant. Try dynamic version of {self.current_job.url}.")
                 new_document, urls = self.crawl_assume_website_is_dynamic()
-                LOG.info(f"Crawled dynamic version of {self.current_job.url} successfully.")
             except Exception as exception:
                 LOG.error(f"Failed: Crawled dynamic version of {self.current_job.url} unsucessfully: {str(exception)}")
         return new_document, urls
