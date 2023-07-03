@@ -3,17 +3,6 @@
 version: '3.9'
 services:
   ############################################################
-  # Redis Server for distributed lock
-  ############################################################
-  redis:
-    image: redis
-    container_name: redis
-    restart: always
-    ports:
-      - '6379:6379'
-    networks:
-      mysql_net:
-  ############################################################
   # MySQL models
   ############################################################
   mysql:
@@ -94,6 +83,8 @@ services:
       - .env
     networks:
       - mysql_net
+    volumes:
+      - tuesearch:/opt/tuesearch
   ############################################################
   # Start the worker in loop.
   ############################################################
@@ -107,6 +98,8 @@ services:
       - .env
     networks:
       - mysql_net
+    volumes:
+      - tuesearch:/opt/tuesearch
   ############################################################
   # Build indexer.
   ############################################################

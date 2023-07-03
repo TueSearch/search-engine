@@ -3,20 +3,18 @@ This module manages the priority queue of URLs to be crawled.
 """
 import os
 import time
+import fcntl
 
 from crawler import utils
 from crawler.sql_models.base import execute_query_and_return_objects, DATABASE
 from crawler.sql_models.job import Job
-import redis
 
 LOG = utils.get_logger(__file__)
 # Create a Redis connection
-LOCK_REDIS_HOST = os.environ.get('LOCK_REDIS_HOST')
-LOCK_REDIS_RETRY = int(os.environ.get('LOCK_REDIS_RETRY'))
-LOCK_REDIS_TIMEOUT = int(os.environ.get('LOCK_REDIS_TIMEOUT'))
-LOCK_REDIS_KEY = os.environ.get('LOCK_REDIS_KEY', 'lock_key')
-LOCK_REDIS_RETRY_INTERVAL = float(os.environ.get('LOCK_REDIS_RETRY_INTERVAL'))
-redis_client = redis.Redis(host=LOCK_REDIS_HOST, port=6379)
+LOCK_FILE_PATH = os.environ.get('LOCK_FILE_PATH')
+LOCK_RETRIES = int(os.environ.get('LOCK_RETRIES'))
+LOCK_TIMEOUT = int(os.environ.get('LOCK_TIMEOUT'))
+LOCK_RETRY_INTERVAL = float(os.environ.get('LOCK_RETRY_INTERVAL'))
 
 
 class PriorityQueue:
@@ -96,11 +94,10 @@ FROM jobs where done = 0 and being_crawled = 0 ORDER BY priority DESC LIMIT {n_j
 
         retries = 0
 
-        while retries < LOCK_REDIS_RETRY:
-            # Attempt to acquire the distributed lock
-            lock_acquired = redis_client.set(LOCK_REDIS_KEY, 'locked', nx=True, ex=LOCK_REDIS_TIMEOUT)
-
-            if lock_acquired:
+        while retries < LOCK_RETRIES:
+            try:
+                lock_file = open(LOCK_FILE_PATH, 'w')
+                fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 with DATABASE.atomic() as transaction:
                     try:
                         jobs = list(PriorityQueue.get_highest_priority_jobs(n_jobs))
@@ -113,13 +110,14 @@ FROM jobs where done = 0 and being_crawled = 0 ORDER BY priority DESC LIMIT {n_j
                         transaction.rollback()
                         raise exception
                     finally:
-                        # Release the distributed lock
-                        redis_client.delete(LOCK_REDIS_KEY)
-            else:
+                        # Release the lock
+                        fcntl.flock(lock_file, fcntl.LOCK_UN)
+            except IOError:
                 LOG.info("Failed to acquire lock. Another process is currently accessing the code.")
                 retries += 1
-                time.sleep(LOCK_REDIS_RETRY_INTERVAL)
+                time.sleep(LOCK_RETRY_INTERVAL)
+            finally:
+                lock_file.close()
 
         # Maximum retries reached, handle the case when the lock couldn't be acquired
-        LOG.error("Failed to acquire lock after maximum retries.")
-        # Handle the case when the lock couldn't be acquired (retry logic or error handling)
+        raise Exception("Failed to acquire lock after maximum retries.")
