@@ -13,6 +13,7 @@ import functools
 from dotenv import load_dotenv
 
 from crawler import utils
+from crawler.worker.url_relevance import URL
 
 load_dotenv()
 
@@ -42,7 +43,7 @@ def do_tokens_contain_tuebingen(tokens: list[str]):
 
 
 @functools.lru_cache(maxsize=5)
-def get_document_approximated_relevance_score_for(document: 'Document'):
+def get_document_approximated_relevance_score_for(url: URL, document: 'Document'):
     text_fields = [
         document.body,
         document.title,
@@ -72,14 +73,19 @@ def get_document_approximated_relevance_score_for(document: 'Document'):
         tubingen_score += do_tokens_contain_tuebingen(field)
     if tubingen_score == 0:
         return -1
-    return english_score + tubingen_score
+    url_relevance_score = 0
+    if url.count_tuebingen_in_url > 0:
+        url_relevance_score += 1
+    if url.contains_bonus_patterns:
+        url_relevance_score += 1
+    return english_score + tubingen_score + url_relevance_score
 
 
 @functools.lru_cache(maxsize=5)
-def is_document_relevant(document: 'Document'):
+def is_document_relevant(url: URL, document: 'Document'):
     """Classify the relevance of a crawled document.
 
     Args:
         document (Document): The crawled document to be classified.
     """
-    return get_document_approximated_relevance_score_for(document) > 0
+    return get_document_approximated_relevance_score_for(url, document) > 0

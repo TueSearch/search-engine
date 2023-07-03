@@ -77,7 +77,7 @@ class Crawler:
         Generate a document from the HTML of a website.
         """
         document = utils.text.generate_text_document_from_html(html)
-        document.relevant = is_document_relevant(document)
+        document.relevant = is_document_relevant(URL(self.url), document)
         urls = url_relevance.URL.get_links(document, self.url)
         urls = [url for url in urls if url.is_relevant]
         if document.relevant:
