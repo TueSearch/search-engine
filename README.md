@@ -60,9 +60,6 @@ Analog, tear down with
 ./scripts/teardown.sh prod.docker-compose.yml
 ```
 
-Note: the crawler is not meant to run on server. It is only meant to run locally. If
-run on server, run only one instance of crawler.
-
 # Crawler
 
 ## Crawler usage
@@ -141,7 +138,7 @@ npm install
 npm run dev
 ```
 
-4. pen the browser at `http://localhost:5000/`
+4. Open the browser at `http://localhost:5000/`
 
 # Team Members
 

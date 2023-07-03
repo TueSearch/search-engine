@@ -78,19 +78,6 @@ services:
       prod_mysql_net:
         ipv4_address: 172.20.0.5
   ############################################################
-  # Start the worker.
-  ############################################################
-  prod_worker:
-    image: ghcr.io/tuesearch/search-engine/backend-server:latest
-    container_name: prod_worker
-    restart: 'on-failure'
-    command: 'python3 -m crawler.worker.main -n 4'
-    env_file:
-      - .env
-    networks:
-      prod_mysql_net:
-        ipv4_address: 172.20.0.6
-  ############################################################
   # Build indexer.
   ############################################################
   prod_build_index:
