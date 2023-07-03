@@ -42,6 +42,23 @@ def do_tokens_contain_tuebingen(tokens: list[str]):
     return False
 
 
+def does_text_contain_tuebingen(text: str):
+    """
+    Checks if a list of tokens contains variations of the word "Tübingen".
+
+    Args:
+        tokens (list): List of tokens.
+
+    Returns:
+        bool: True if the word variations of "Tübingen" are present in the tokens, False otherwise.
+    """
+    text = text.lower()
+    for tuebingen in TUEBINGEN_WRITING_STYLES:
+        if tuebingen in text:
+            return True
+    return False
+
+
 @functools.lru_cache(maxsize=5)
 def get_document_approximated_relevance_score_for(url: URL, document: 'Document'):
     text_fields = [
@@ -71,6 +88,7 @@ def get_document_approximated_relevance_score_for(url: URL, document: 'Document'
     tubingen_score = 0
     for field in json_fields:
         tubingen_score += do_tokens_contain_tuebingen(field)
+    tubingen_score += int(does_text_contain_tuebingen(document.body))
     if tubingen_score == 0:
         return -1
     url_relevance_score = 0
