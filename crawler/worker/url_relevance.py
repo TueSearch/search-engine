@@ -372,9 +372,9 @@ class URL:
         total_points += 0.001 * self.count_en_in_url
 
         total_points += 5 * self.count_tuebingen_in_url
-        total_points += 0.5 * self.count_bingen_in_url
+        total_points += 3 * self.count_bingen_in_url
 
-        total_points += 0.1 * self.count_bingen_in_anchor_text
+        total_points += 0.25 * self.count_bingen_in_anchor_text
         total_points += 0.5 * self.count_tuebingen_in_anchor_text
 
         total_points += 0.01 * self.count_bingen_in_title_text

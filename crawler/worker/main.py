@@ -78,13 +78,12 @@ class Crawler:
         """
         document = utils.text.generate_text_document_from_html(html)
         document.relevant = is_document_relevant(document)
+        urls = url_relevance.URL.get_links(document, self.url)
+        urls = [url for url in urls if url.is_relevant]
         if document.relevant:
-            urls = url_relevance.URL.get_links(document, self.url)
-            urls = [url for url in urls if url.is_relevant]
             LOG.info(f"Relevant document found: {self.current_job.url}. {len(urls)} relevant URLs found.")
         else:
-            urls = []  # No jobs generation if document's not relevant
-            LOG.info(f"Irrelevant document found: {self.current_job.url}. No relevant URLs found.")
+            LOG.info(f"Irrelevant document found: {self.current_job.url}. {len(urls)} relevant URLs found.")
         document.job_id = self.current_job.id
         return document, urls
 
