@@ -80,8 +80,11 @@ class Crawler:
         LOG.info(f"Crawled successfully. Parsing HTML of {self.current_job.url}.")
         document = utils.text.generate_text_document_from_html(html)
         document.relevant = is_document_relevant(document)
-        urls = url_relevance.URL.get_links(document, self.url)
-        urls = [url for url in urls if url.is_relevant]
+        if document.relevant:
+            urls = url_relevance.URL.get_links(document, self.url)
+            urls = [url for url in urls if url.is_relevant]
+        else:
+            urls = []  # No jobs generation if document's not relevant
         document.job_id = self.current_job.id
         return document, urls
 
