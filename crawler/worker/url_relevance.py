@@ -36,13 +36,13 @@ TUEBINGEN_WRITING_STYLES = json.loads(os.getenv('TUEBINGEN_WRITING_STYLES'))
 
 @functools.lru_cache
 def get_blocked_patterns():
-    with open("scripts/blocked_patterns.txt", "r") as f:
+    with open("scripts/blocked_patterns.json", "r") as f:
         return json.loads(f.read())
 
 
 @functools.lru_cache
 def get_bonus_patterns():
-    with open("scripts/bonus_patterns.txt", "r") as f:
+    with open("scripts/bonus_patterns.json", "r") as f:
         return json.loads(f.read())
 
 
