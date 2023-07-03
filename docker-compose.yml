@@ -163,8 +163,6 @@ services:
       - '4001:4001'
     restart: 'always'
     command: 'python3 -m scripts.mockup_server'
-    networks:
-      - mysql_net
   ############################################################
   # Start frontend.
   # Persistent process.
