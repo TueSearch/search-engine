@@ -198,6 +198,24 @@ class Crawler:
         else:
             raise Exception(f"Error while marking job as failed: {response.text}")
 
+    @staticmethod
+    def create_jobs_from_worker_to_master(relevant_links: list[str]):
+        """
+        Creates jobs to be sent from the worker to the master.
+        """
+        jobs_batch = []
+        for link in relevant_links:
+            job = Job(url=link.url,
+                      priority=link.priority,
+                      anchor_text=link.anchor_text,
+                      anchor_text_tokens=link.anchor_text_tokens,
+                      surrounding_text=link.surrounding_text,
+                      surrounding_text_tokens=link.surrounding_text_tokens,
+                      title_text=link.title_text,
+                      title_text_tokens=link.title_text_tokens)
+            jobs_batch.append(json.dumps(model_to_dict(job)))
+        return jobs_batch
+
     def loop(self, number_of_documents_to_be_crawled: int):
         """
         Loop over the crawler, retrieving new jobs from the crawler manager,
@@ -210,7 +228,7 @@ class Crawler:
                 if self.new_document is None or self.new_jobs is None:
                     self.new_document, self.new_relevant_urls = self.crawl()
                     if self.new_document is not None:
-                        self.new_jobs = Job.create_jobs_from_worker_to_master(relevant_links=self.new_relevant_urls)
+                        self.new_jobs = Crawler.create_jobs_from_worker_to_master(relevant_links=self.new_relevant_urls)
                         self.new_document = json.dumps(model_to_dict(self.new_document))
                 if self.new_document is not None:
                     try:
