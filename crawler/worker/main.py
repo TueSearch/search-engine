@@ -143,7 +143,6 @@ class Crawler:
         """
         Crawl the website, first assuming it is static, then assuming it is dynamic.
         """
-        LOG.info(f"Start visiting website {self.current_job.url}")
         new_document, urls = None, []
         try:  # First, try a cheaper static version.
             new_document, urls = self.crawl_assume_website_is_static()
@@ -165,6 +164,8 @@ class Crawler:
             answer = requests.get(
                 f"{CRAWLER_MANAGER_HOST}/reserve_jobs/{CRAWL_WORKER_BATCH_SIZE}?pw={CRAWLER_MANAGER_PASSWORD}",
                 timeout=CRAWLER_WORKER_TIMEOUT)
+            if not answer.ok:
+                raise Exception(f"Error while reserving jobs: {answer}")
             job_buffer = answer.json()
             for job in job_buffer:
                 self.job_buffer.append(dotdict(job))
@@ -179,7 +180,10 @@ class Crawler:
         response = requests.post(url,
                                  json={"new_document": json_new_document, "new_jobs": json_new_jobs},
                                  timeout=CRAWLER_WORKER_TIMEOUT)
-        LOG.info(f"Manager answered to save_crawling_results: {response.text}")
+        if response.ok:
+            LOG.info(f"Manager answered to save_crawling_results of {self.current_job.url}: {response.text}")
+        else:
+            raise Exception(f"Error while saving crawling results: {response.text}")
 
     def mark_job_as_failed(self):
         """
@@ -188,7 +192,10 @@ class Crawler:
         response = requests.post(
             f"{CRAWLER_MANAGER_HOST}/mark_job_as_fail/{self.current_job.id}?pw={CRAWLER_MANAGER_PASSWORD}",
             timeout=CRAWLER_WORKER_TIMEOUT)
-        LOG.info(f"Manager answered to mark_job_as_fail: {response.text}")
+        if response.ok:
+            LOG.info(f"Manager answered to mark_job_as_fail of {self.current_job.url}: {response.text}")
+        else:
+            raise Exception(f"Error while marking job as failed: {response.text}")
 
     def loop(self, number_of_documents_to_be_crawled: int):
         """
@@ -199,9 +206,6 @@ class Crawler:
             try:
                 if self.current_job is None:
                     self.current_job = self.get_job()
-                    LOG.info(f"Retrieved new job: {self.current_job}")
-                else:
-                    LOG.info(f"Continuing job: {self.current_job}")
                 if self.new_document is None or self.new_jobs is None:
                     self.new_document, self.new_relevant_urls = self.crawl()
                     if self.new_document is not None:
