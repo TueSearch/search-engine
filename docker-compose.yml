@@ -22,19 +22,6 @@ services:
     networks:
       - mysql_net
   ############################################################
-  # Viewing data
-  ############################################################
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
-    env_file:
-      - .env
-    restart: always
-    ports:
-      - '8000:80'
-    networks:
-      - mysql_net
-  ############################################################
   # Initialize models.
   # Feed the models with initial jobs and initial documents.
   # Will run once.
@@ -94,7 +81,6 @@ services:
     command: 'python3 -m crawler.worker.main -n 4'
     env_file:
       - .env
-      - .worker.env
     networks:
       - mysql_net
   ############################################################

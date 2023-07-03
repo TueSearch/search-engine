@@ -21,9 +21,7 @@ Tübingen.
 
 ```bash
 cp -rf example.env .env 
-cp -rf example.prod.env .prod.env
 cp -rf example.frontend.env frontend/.env
-cp -rf example.worker.env .worker.env
 ```
 
 2. Start the project locally
@@ -32,7 +30,7 @@ cp -rf example.worker.env .worker.env
 ./scripts/startup.sh docker-compose.yml
 ```
 
-and tear down with 
+and tear down with
 
 ```bash
 ./scripts/teardown.sh docker-compose.yml
@@ -43,25 +41,26 @@ and tear down with
 ```bash
 sudo docker volume create prod_tuesearch_database
 ```
+
 and in the similar manner
 
 ```bash
 sudo docker volume create prod_tuesearch
 ```
 
-Change passwords in .prod.env and start the containers with
+Change passwords in `.env` and start the containers with
 
 ```bash
 ./scripts/startup.sh prod.docker-compose.yml
 ```
 
-Analog, tear down with 
+Analog, tear down with
 
 ```bash
 ./scripts/teardown.sh prod.docker-compose.yml
 ```
 
-Note: the crawler is not meant to run on server. It is only meant to run locally. If 
+Note: the crawler is not meant to run on server. It is only meant to run locally. If
 run on server, run only one instance of crawler.
 
 # Crawler
@@ -70,10 +69,10 @@ run on server, run only one instance of crawler.
 
 The crawler should be used at local computer.
 
-1. Once the setup is done, you can start the crawling process by 
+1. Once the setup is done, you can start the crawling process by
 
 ```bash
-docker-compose up worker
+docker-compose -f docker-compose.yml up worker
 ```
 
 2. To crawl in loop (more than once), remove `-n 1` in `docker-compose.yml`.
@@ -81,10 +80,11 @@ docker-compose up worker
 3. To start up more than one crawler, remove `name: worker` and do
 
 ```bash
-docker-compose up --build --scale worker=12 worker
+docker-compose -f docker-compose.yml  up --build --scale worker=12 worker
 ```
 
-4. To send the crawler's data to remote database, change the variables in `.worker.env`.
+4. To send the crawler's data to remote database, change the variables `CRAWLER_MANAGER_HOST`
+   and `CRAWLER_MANAGER_PASSWORD` in `.env`.
 
 # Backend
 
@@ -98,18 +98,20 @@ Same as described in the section [Crawler](#crawler).
 
 ```bash
 
-docker-compose up build_index
+docker-compose -f docker-compose.yml up build_index
 ```
 
-This step should be repeated regularly to keep the index fresh.
+This step should be repeated regularly to keep the index fresh. Replace `docker-compose.yml`
+with `prod.docker-compose.yml` for production.
 
 2. For the ranking, the metrics must be built as
 
 ```bash
-docker-compose up build_metrics
+docker-compose -f docker-compose.yml up build_metrics
 ```
 
-This step should be repeated regularly to keep the metrics fresh.
+This step should be repeated regularly to keep the metrics fresh. Replace `docker-compose.yml`
+with `prod.docker-compose.yml` for production.
 
 4. Test the API with
 
@@ -119,7 +121,8 @@ curl http://localhost:4000/search?q=tubingen
 
 # Frontend
 
-1. Start mock up server 
+1. Start mock up server
+
 ```bash
 docker-compose -f docker-compose.yml up --build backend_mockup_server
 ```
