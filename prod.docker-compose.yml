@@ -52,8 +52,6 @@ services:
   prod_phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: prod_phpmyadmin
-    depends_on:
-      - prod_mysql
     env_file:
       - .env
       - .prod.env
@@ -69,8 +67,6 @@ services:
   prod_initialize_database:
     image: ghcr.io/tuesearch/search-engine/backend-server:latest
     container_name: prod_initialize_database
-    depends_on:
-      - prod_mysql
     restart: 'on-failure'
     command: 'python3 -m scripts.initialize_database'
     env_file:
@@ -86,8 +82,6 @@ services:
     image: ghcr.io/tuesearch/search-engine/backend-server:latest
     container_name: prod_manager
     restart: 'always'
-    depends_on:
-      - prod_mysql
     command: >
       sh -c "
       pip install gunicorn; 
@@ -119,8 +113,6 @@ services:
   prod_build_index:
     image: ghcr.io/tuesearch/search-engine/backend-server:latest
     container_name: prod_build_index
-    depends_on:
-      - prod_mysql
     restart: 'on-failure'
     command: 'python3 -m backend.build_index'
     env_file:
@@ -137,8 +129,6 @@ services:
   prod_build_metrics:
     image: ghcr.io/tuesearch/search-engine/backend-server:latest
     container_name: prod_build_metrics
-    depends_on:
-      - prod_mysql
     restart: 'on-failure'
     command: 'python3 -m backend.build_metrics'
     env_file:
@@ -156,8 +146,6 @@ services:
   prod_backend_server:
     image: ghcr.io/tuesearch/search-engine/backend-server:latest
     container_name: prod_backend_server
-    depends_on:
-      - prod_mysql
     restart: 'always'
     command: >
       sh -c "
