@@ -1,15 +1,18 @@
+"""
+Module to add additional priority to a job's priority.
+
+Will be done by manager since only manager has access to server.
+
+This could also be done at client side but I decided not to to save time.
+"""
 from crawler.sql_models.server import Server
-from crawler.worker.url_relevance import URL
 
 
-def additional_priority_of_job_by_consider_server_importance(server_id: int, link: URL):
+def server_importance(server_id: int):
     """
     Get the priority of a job.
     """
-    priority = link.priority
-    if priority < 0:
-        return priority
-
+    priority = 0
     server = Server.select().where(Server.id == server_id).get()
     priority += min(5, server.page_rank * 5)
     if server.total_jobs > 0:

@@ -13,7 +13,7 @@ from url_normalize import url_normalize
 from dotenv import load_dotenv
 
 from crawler import utils
-from crawler.relevance_classification.document_relevance import get_document_approximated_relevance_score_for
+from crawler.worker.document_relevance import get_document_approximated_relevance_score_for
 from crawler.sql_models.document import Document
 from crawler.utils.text import tokenize_get_lang, make_text_human_readable
 

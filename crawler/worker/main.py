@@ -8,7 +8,6 @@ import math
 import os
 import random
 import time
-import traceback
 
 import requests
 from dotenv import load_dotenv
@@ -17,9 +16,9 @@ from requests.adapters import HTTPAdapter, Retry
 from requests_html import HTMLSession
 
 from crawler import utils
-from crawler.relevance_classification import url_relevance
-from crawler.relevance_classification.document_relevance import is_document_relevant
-from crawler.relevance_classification.url_relevance import URL
+from crawler.worker import url_relevance
+from crawler.worker.document_relevance import is_document_relevant
+from crawler.worker.url_relevance import URL
 from crawler.sql_models.base import dotdict
 from crawler.sql_models.document import Document
 from crawler.sql_models.job import Job
