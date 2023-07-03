@@ -18,7 +18,6 @@ from crawler.sql_models.document import Document
 from crawler.utils.text import tokenize_get_lang, make_text_human_readable
 
 from crawler.utils import text
-from scripts.initialize_database import get_seed_jobs
 
 load_dotenv()
 
@@ -32,7 +31,6 @@ NLP.tokenizer.infix_finditer = infix_regex.finditer
 CRAWL_EXCLUDED_EXTENSIONS = set(json.loads(
     os.getenv("CRAWL_EXCLUDED_EXTENSIONS")))
 CRAWL_BLACK_LIST = set(json.loads(os.getenv("CRAWL_BLACK_LIST")))
-QUEUE_MANUAL_SEEDS = get_seed_jobs()
 CRAWL_PRIORITY_LIST = json.loads(os.getenv('CRAWL_PRIORITY_LIST'))
 CRAWL_SURROUNDING_TEXT_LENGTH = int(os.getenv('CRAWL_SURROUNDING_TEXT_LENGTH'))
 TUEBINGEN_WRITING_STYLES = json.loads(os.getenv('TUEBINGEN_WRITING_STYLES'))
@@ -258,7 +256,7 @@ class URL:
         Counts the number of times the word "en" appears in the URL.
         """
         count = 0
-        for token in self.url_tokens:
+        for token in tokenize_get_lang(self.url):
             if "en" in token or "/en" in token or "/en/" in token or ".en" in token or ".en/" in token or ".en." in token:
                 count += 1
         return count
@@ -279,8 +277,9 @@ class URL:
         """
         Return a bonus if the URL is in the initial queue list.
         """
+        from scripts.initialize_database import get_seed_jobs
         count = 0
-        for priority_url in QUEUE_MANUAL_SEEDS:
+        for priority_url in get_seed_jobs():
             if priority_url in self.url:
                 count += 1
         return count

@@ -1,6 +1,7 @@
 """
 Methods to execute SQL scripts in order. This is useful for database migrations.
 """
+import functools
 import json
 import os
 
@@ -59,6 +60,7 @@ def run_migration_scripts():
             LOG.info(f'Migration {migration_name} executed successfully')
 
 
+@functools.lru_cache()
 def get_seed_jobs():
     with open("scripts/seeds.json") as f:
         return json.loads(f.read())
