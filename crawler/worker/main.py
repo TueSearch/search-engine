@@ -226,6 +226,7 @@ class Crawler:
                 if self.current_job is None:
                     self.current_job = self.get_job()
                 if self.new_document is None or self.new_jobs is None:
+                    time.sleep(1)
                     self.new_document, self.new_relevant_urls = self.crawl()
                     if self.new_document is not None:
                         self.new_jobs = Crawler.create_jobs_from_worker_to_master(relevant_links=self.new_relevant_urls)
