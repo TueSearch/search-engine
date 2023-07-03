@@ -10,6 +10,7 @@ from crawler import utils
 from crawler.manager.server_importance import server_importance
 from crawler.sql_models.base import BaseModel, LongTextField, JSONField, execute_query_and_return_objects
 from crawler.sql_models.server import Server
+from crawler.worker.url_relevance import URL
 
 LOG = utils.get_logger(__file__)
 
@@ -107,7 +108,7 @@ class Job(BaseModel):
         for link, server_id in link_to_server_id.items():
             job = Job(url=link.url,
                       server=server_id,
-                      priority=server_importance(server_id),
+                      priority=server_importance(server_id) + URL(link.url).priority,
                       anchor_text=link.anchor_text,
                       anchor_text_tokens=link.anchor_text_tokens,
                       surrounding_text=link.surrounding_text,
