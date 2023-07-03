@@ -33,6 +33,7 @@ CRAWL_EXCLUDED_EXTENSIONS = set(json.loads(
 CRAWL_BLACK_LIST = set(json.loads(os.getenv("CRAWL_BLACK_LIST")))
 QUEUE_MANUAL_SEEDS = json.loads(os.getenv('QUEUE_MANUAL_SEEDS'))
 CRAWL_PRIORITY_LIST = json.loads(os.getenv('CRAWL_PRIORITY_LIST'))
+CRAWL_SURROUNDING_TEXT_LENGTH = int(os.getenv('CRAWL_SURROUNDING_TEXT_LENGTH'))
 TUEBINGEN_WRITING_STYLES = json.loads(os.getenv('TUEBINGEN_WRITING_STYLES'))
 
 
@@ -86,8 +87,8 @@ class URL:
             # Search for the index of the anchor text in the body text
             index = body_text.find(anchor)
             if index != -1:
-                # Extract the substring of 20 words before and after the anchor text
-                return body_text[max(0, index - 20):index + len(anchor) + 20]
+                # Extract the substring of CRAWL_SURROUNDING_TEXT_LENGTH words before and after the anchor text
+                return body_text[max(0, index - CRAWL_SURROUNDING_TEXT_LENGTH):index + len(anchor) + CRAWL_SURROUNDING_TEXT_LENGTH]
             return ""
 
         links = []

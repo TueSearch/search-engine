@@ -87,6 +87,8 @@ services:
       "
     env_file:
       - .env
+    ports:
+      - '6000:6000'
     networks:
       prod_mysql_net:
         ipv4_address: 172.20.0.5

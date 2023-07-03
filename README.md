@@ -3,36 +3,34 @@
 This project contains the source code of the final project from the course modern search engines at the University of
 Tübingen.
 
-## Table of Contents
-
-- [TueSearch](#tuesearch)
-    - [Table of Contents](#table-of-contents)
-- [Set up](#crawler-set-up)
-- [Crawler](#crawler)
-    - [Crawler usage](#crawler-usage)
+# Table of Contents
+- [Local set up for development](#local-set-up-for-development)
+- [Remote set up for deployment](#remote-set-up-for-deployment)
+- [Crawler set up at local computer](#crawler-set-up-at-local-computer)
 - [Frontend](#frontend)
-- [Team Members](#team-members)
 
-# Set up
+# Local set up for development
 
-1. Create output directories and initialize environment variables.
+1. Tear down everything
+
+```bash
+./scripts/teardown.sh docker-compose.yml
+```
+
+2. Create output directories and initialize environment variables.
 
 ```bash
 cp -rf example.env .env 
 cp -rf example.frontend.env frontend/.env
 ```
 
-2. Start the project locally
+3. Start the project locally
 
 ```bash
 ./scripts/startup.sh docker-compose.yml
 ```
 
-and tear down with
-
-```bash
-./scripts/teardown.sh docker-compose.yml
-```
+# Remote set up for deployment
 
 3. Start the project on the server. Create external volumes
 
@@ -53,23 +51,18 @@ Analog, tear down with
 ./scripts/teardown.sh prod.docker-compose.yml
 ```
 
-And remove the external volumes (if needed) with 
+And remove the external volumes (if needed) with
 
 ```bash
 docker volume rm prod_tuesearch_database
 docker volume rm prod_tuesearch
 ```
 
-# Crawler
+# Crawler set up at local computer
 
-## Crawler usage
+Important note: when stop a crawler, stop gracefully so it has time to unreserve its reserved jobs.
 
-1. Once the setup is done, you can start the crawling process at `local computer` by 
-changing the variables 
-- `CRAWLER_MANAGER_HOST` 
-- `CRAWLER_MANAGER_PASSWORD`
-- `CRAWL_WORKER_BATCH_SIZE`
-in `.env` and run
+1. Add the `.env` file from Discord to the root directory and start the crawler with
 
 ```bash
 docker-compose -f docker-compose.yml up loop_worker
@@ -78,8 +71,11 @@ docker-compose -f docker-compose.yml up loop_worker
 2. To start more than once crawler, do
 
 ```bash
-docker-compose -f docker-compose.yml  up --build --scale loop_worker=12 loop_worker
+docker-compose -f docker-compose.yml  up --build --scale loop_worker=2 loop_worker
 ```
+
+Change the number `2` to the number of crawlers you want to start. Start slowly and increase the number of crawlers
+gracefully to see if everything works fine.
 
 # Frontend
 
