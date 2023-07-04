@@ -5,7 +5,7 @@ This module contains the Job model. It represents a job in the crawler's queue.
 import peewee
 
 from crawler import utils
-from crawler.sql_models.base import BaseModel, LongTextField, JSONField, execute_query_and_return_objects
+from crawler.sql_models.base import BaseModel, LongTextField, JSONField, execute_query_and_return_objects, dotdict
 from crawler.sql_models.server import Server
 
 LOG = utils.get_logger(__file__)
