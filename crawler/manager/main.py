@@ -88,7 +88,7 @@ def mark_job_as_fail(job_id):
 
 @app.route('/save_crawling_results/<int:parent_job_id>', methods=['POST'])
 @check_password
-@file_lock
+@file_lock(lock_file_path="save_crawling_results.lock")
 def save_crawling_results(parent_job_id):
     """
     Save the crawling results.
@@ -108,7 +108,7 @@ def save_crawling_results(parent_job_id):
         new_document_server = new_document.job.server
         new_document_server.relevant_documents += 1
         new_document_server.save()
-        
+
     # Create new servers from URLs if new servers were met while crawling.
     new_jobs_links = list(set(URL(job.url) for job in new_jobs))
     new_links_to_server_id = Server.create_servers_and_return_ids(new_jobs_links)

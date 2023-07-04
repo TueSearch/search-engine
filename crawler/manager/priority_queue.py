@@ -18,7 +18,7 @@ LOCK_TIMEOUT = int(os.environ.get('LOCK_TIMEOUT'))
 LOCK_RETRY_INTERVAL = float(os.environ.get('LOCK_RETRY_INTERVAL'))
 
 
-def file_lock(func):
+def file_lock(func, lock_file_path=LOCK_FILE_PATH):
     """
     Decorator to lock the file while the function is running.
     """
@@ -28,7 +28,7 @@ def file_lock(func):
 
         while retries < LOCK_RETRY:
             try:
-                lock_file = open(LOCK_FILE_PATH, 'w')
+                lock_file = open(lock_file_path, 'w')
                 fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 result = func(*args, **kwargs)
                 fcntl.flock(lock_file, fcntl.LOCK_UN)
