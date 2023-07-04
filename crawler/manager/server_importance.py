@@ -6,13 +6,26 @@ Will be done by manager since only manager has access to server.
 This could also be done at client side but I decided not to to save time.
 """
 from crawler.sql_models.server import Server
-import math
 
-SUCCESS_BONUS = 3
-RELEVANT_BONUS = 10
+SUCCESS_BONUS = 20
+RELEVANT_BONUS = 20
+
+SUCCESS_PENALTY = 50
+RELEVANT_PENALTY = 100
+
 THRESHOLD = 0.05
 MIN_PRIORITY = -100
 MIN_SAMPLE = 5
+
+
+def rho(x, a, b, c):
+    """
+    Defined in the report
+    """
+    if x >= a:
+        return b / (1 - a) ** 2 * (x - a) ** 2
+    return -c / a ** 2 * (x - a) ** 2
+
 
 def server_importance(server_id: int):
     """
@@ -27,15 +40,10 @@ def server_importance(server_id: int):
 
         # Servers visited often enough
         if server.total_done_jobs > MIN_SAMPLE:
-            if success_ratio < THRESHOLD:
-                priority -= 5
-            else:
-                priority += SUCCESS_BONUS * (success_ratio - THRESHOLD)**2
-
-            if relevant_ratio < THRESHOLD:
-                priority += math.log(success_ratio / (1 - (success_ratio + 0.5 * THRESHOLD)))
-            else:
-                priority += RELEVANT_BONUS * (relevant_ratio - THRESHOLD)**2
+            # Server successful enough
+            priority += rho(success_ratio, THRESHOLD, SUCCESS_PENALTY, SUCCESS_BONUS)
+            # Server relevant enough
+            priority += rho(relevant_ratio, THRESHOLD, RELEVANT_PENALTY, RELEVANT_BONUS)
         # Server visited not often enough, only constant penalty.
         else:
             if success_ratio < THRESHOLD:

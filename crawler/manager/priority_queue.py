@@ -1,12 +1,11 @@
 """
 This module manages the priority queue of URLs to be crawled.
 """
-import os
 
 from crawler import utils
 from crawler.sql_models.base import execute_query_and_return_objects, DATABASE
 from crawler.sql_models.job import Job
-
+from crawler.manager.lock import lock
 LOG = utils.get_logger(__file__)
 
 
@@ -76,6 +75,7 @@ FROM jobs where done = 0 and being_crawled = 0 ORDER BY priority DESC LIMIT {n_j
 """
         return execute_query_and_return_objects(query)
 
+    @lock("get_next_jobs")
     def get_next_jobs(self, n_jobs: int) -> list[Job]:
         """
         Retrieves a list of jobs from the models to be crawled.

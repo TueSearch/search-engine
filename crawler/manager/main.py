@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 
+from crawler.manager.lock import lock
 from crawler.manager.server_importance import server_importance
 from crawler.manager.priority_queue import PriorityQueue
 from crawler.worker.url_relevance import URL
@@ -88,6 +89,7 @@ def mark_job_as_fail(job_id):
 
 @app.route('/save_crawling_results/<int:parent_job_id>', methods=['POST'])
 @check_password
+@lock("save_crawling_results")
 def save_crawling_results(parent_job_id):
     """
     Save the crawling results.
