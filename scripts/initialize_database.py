@@ -12,7 +12,7 @@ from playhouse.shortcuts import model_to_dict
 from crawler.manager.server_importance import server_importance
 from crawler.sql_models.server import Server
 from crawler.worker.url_relevance import URL
-from crawler.sql_models.base import BaseModel, DATABASE as db
+from crawler.sql_models.base import BaseModel, DATABASE as db, DATABASE
 from crawler.sql_models.job import Job
 from crawler.utils.log import get_logger
 
@@ -106,12 +106,34 @@ def initialize_seed_jobs():
     LOG.info(f"Finished inserting {get_seed_jobs()} initial jobs.")
 
 
+@functools.lru_cache()
+def get_block_patterns():
+    """
+    Returns the seed jobs from the seeds.json file.
+    """
+    with open("scripts/blocked_patterns.json") as f:
+        return json.loads(f.read())
+
+
+def mark_blocked_patterns_as_priority_0():
+    """
+    Initializes the database.
+    """
+    for block_pattern in get_block_patterns():
+        LOG.info(f"Marking job with url pattern {block_pattern} as invalid")
+        DATABASE.execute_sql(f"""UPDATE jobs
+SET priority = 0
+WHERE url like '{block_pattern}';""")
+        LOG.info(f"Finished marking useless url pattern {block_pattern}")
+
+
 def main():
     """
     Main method.
     """
     run_migration_scripts()
     initialize_seed_jobs()
+    mark_blocked_patterns_as_priority_0()
 
 
 if __name__ == '__main__':
