@@ -34,7 +34,7 @@ elif [ "$1" == "prod.docker-compose.yml" ]; then
 else
   echo "Unknown docker-compose file: $1"
   echo "Usage:"
-  echo "  ./scripts/startup.sh docker-compose.yml test"
+  echo "  ./scripts/startup.sh docker-compose.yml [test]"
   echo "  ./scripts/startup.sh prod.docker-compose.yml"
   exit 1
 fi

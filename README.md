@@ -51,13 +51,6 @@ Analog, tear down with
 ./scripts/teardown.sh prod.docker-compose.yml
 ```
 
-And remove the external volumes (if needed) with
-
-```bash
-docker volume rm prod_tuesearch_database
-docker volume rm prod_tuesearch
-```
-
 # Crawler set up at local computer
 
 Important note: when stop a crawler, stop gracefully so it has time to unreserve its reserved jobs.
