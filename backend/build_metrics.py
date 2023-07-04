@@ -9,10 +9,10 @@ Usage:
 """
 from dotenv import load_dotenv
 
+from backend.rankers import page_rank
 from backend.vector_spaces.tfidf import train_tf_idf_vectorizer, tfidf_vectorize_indexed_documents
 from crawler import utils
 from crawler.sql_models.base import connect_to_database
-from backend.rankers import page_rank
 
 load_dotenv()
 

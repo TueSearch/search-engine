@@ -87,8 +87,8 @@ def update_page_rank_of_servers_in_database():
                 server.page_rank = page_rank.get(server.name, 0)
                 server.save()
                 LOG.info(f"Updated page rank of {server.name} to {server.page_rank}")
-            except Exception as e:
-                LOG.error(f"Error while updating page rank of {server.name}: {e}")
+            except Exception as exception:
+                LOG.error(f"Error while updating page rank of {server.name}: {exception}")
     except Exception as error:
         LOG.error(f"Error while updating page rank: {error}")
         traceback.print_exc()

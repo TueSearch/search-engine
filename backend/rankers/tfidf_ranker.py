@@ -1,3 +1,6 @@
+"""
+This module is responsible for ranking documents based on their TF-IDF scores.
+"""
 from collections import defaultdict
 
 import numpy as np

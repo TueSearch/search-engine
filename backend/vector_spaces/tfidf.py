@@ -52,7 +52,10 @@ class Tfidf(BaseModel):
         table_name = 'tfidfs'
 
     def not_null_vectors(self) -> dict[str, np.array]:
-        returned_vectors = dict()
+        """
+        Returns the vectors that are not null.
+        """
+        returned_vectors = {}
         if self.title is not None:
             returned_vectors["title"] = self.title
         if self.meta_description is not None:

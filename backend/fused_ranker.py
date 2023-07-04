@@ -1,3 +1,6 @@
+"""
+This module contains the FusedRanker class.
+"""
 from collections import defaultdict
 
 from dotenv import load_dotenv
