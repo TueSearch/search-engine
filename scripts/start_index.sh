@@ -5,8 +5,8 @@ set -e
 if [ "$1" == "prod.docker-compose.yml" ]; then
   docker-compose -f "$1" down
   docker-compose -f "$1" up --build -d prod_mysql prod_mysql
-  docker-compose -f "$1" up --build --exit-code-from build_index build_index
-  docker-compose -f "$1" up --build --exit-code-from build_metrics build_metrics
+  docker-compose -f "$1" up --build --exit-code-from prod_build_index prod_build_index
+  docker-compose -f "$1" up --build --exit-code-from prod_build_metrics prod_build_metrics
 else
   echo "Unknown docker-compose file: $1"
   echo "Usage:"
