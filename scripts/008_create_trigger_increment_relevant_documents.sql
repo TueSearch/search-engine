@@ -8,7 +8,7 @@ BEGIN
         WHERE id = (
             SELECT server_id
             FROM jobs
-            WHERE id = NEW.job_id
+            WHERE jobs.id = NEW.job_id
         );
     END IF;
 END
