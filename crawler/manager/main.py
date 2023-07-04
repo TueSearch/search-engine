@@ -98,12 +98,13 @@ def save_crawling_results(parent_job_id):
     new_jobs = [dotdict(json.loads(job)) for job in entry.new_jobs]
 
     # Create new document
+    LOG.info(f"Creating document {new_document.id} of job {new_document.job_id}")
     new_document = Document(**new_document)
     new_document.save()
     LOG.info(f"Created document {new_document.id}")
 
     # Update server's relevance
-    if new_document_server.relevant:
+    if new_document.relevant:
         new_document_server = new_document.job.server
         new_document_server.relevant_documents += 1
         new_document_server.save()
