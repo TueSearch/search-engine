@@ -105,7 +105,7 @@ def save_crawling_results(parent_job_id):
 
     # Update server's relevance
     if new_document.relevant:
-        new_document_server = Server.select().where(Server.id == new_document.job.server_id).get()
+        new_document_server = Server.select().where(Server.id == new_document.job["server_id"]).get()
         new_document_server.relevant_documents += 1
         new_document_server.save()
 
