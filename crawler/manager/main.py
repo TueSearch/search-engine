@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 
 from crawler.manager.server_importance import server_importance
-from crawler.manager.priority_queue import PriorityQueue, file_lock
+from crawler.manager.priority_queue import PriorityQueue
 from crawler.worker.url_relevance import URL
 from crawler.sql_models.base import connect_to_database, dotdict
 from crawler.sql_models.document import Document
