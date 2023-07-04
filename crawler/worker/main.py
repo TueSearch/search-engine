@@ -234,7 +234,6 @@ class Crawler:
                 if self.new_document is not None:
                     try:
                         self.save_crawling_results(self.new_document, self.new_jobs)
-                        self.crawled_count += 1
                     except Exception as exception:
                         LOG.error(f"Error while sending back to master: {exception} Try again")
                         continue
@@ -251,6 +250,7 @@ class Crawler:
             except Exception as exception:
                 LOG.error(f"Unexpected error: {str(exception)}")
                 time.sleep(1)
+            self.crawled_count += 1
 
     def exit_handler(self):
         """
