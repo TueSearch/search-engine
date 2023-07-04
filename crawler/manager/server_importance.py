@@ -7,8 +7,8 @@ This could also be done at client side but I decided not to to save time.
 """
 from crawler.sql_models.server import Server
 
-SUCCESS_FACTOR = 3
-RELEVANT_FACTOR = 50
+SUCCESS_BONUS = 3
+RELEVANT_BONUS = 100
 THRESHOLD = 0.05
 UNDERTHRESHOLD_PENALTY = 5
 
@@ -22,8 +22,8 @@ def server_importance(server_id: int):
     if server.total_done_jobs > 0:
         success_ratio = server.success_jobs / server.total_done_jobs
         relevant_ratio = server.relevant_documents / server.total_done_jobs
-        priority += SUCCESS_FACTOR * (success_ratio - THRESHOLD) ** 3
-        priority += RELEVANT_FACTOR * (relevant_ratio - THRESHOLD) ** 3
+        priority += SUCCESS_BONUS * (success_ratio - THRESHOLD) ** 3
+        priority += RELEVANT_BONUS * (relevant_ratio - THRESHOLD) ** 3
         if success_ratio < THRESHOLD:
             priority -= UNDERTHRESHOLD_PENALTY
         if relevant_ratio < THRESHOLD:
