@@ -9,7 +9,8 @@ from crawler.sql_models.server import Server
 
 SUCCESS_FACTOR = 3
 RELEVANT_FACTOR = 50
-THRESHOLD = 0.1
+THRESHOLD = 0.05
+UNDERTHRESHOLD_PENALTY = 5
 
 def server_importance(server_id: int):
     """
@@ -24,7 +25,7 @@ def server_importance(server_id: int):
         priority += SUCCESS_FACTOR * (success_ratio - THRESHOLD) ** 3
         priority += RELEVANT_FACTOR * (relevant_ratio - THRESHOLD) ** 3
         if success_ratio < THRESHOLD:
-            priority -= 2
+            priority -= UNDERTHRESHOLD_PENALTY
         if relevant_ratio < THRESHOLD:
-            priority -= 2
+            priority -= UNDERTHRESHOLD_PENALTY
     return priority
