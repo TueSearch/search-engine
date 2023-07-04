@@ -14,13 +14,15 @@ SUCCESS_PENALTY = 50
 RELEVANT_PENALTY = 100
 
 THRESHOLD = 0.05
-MIN_PRIORITY = -100
 MIN_SAMPLE = 5
 
 
 def rho(x, a, b, c):
     """
     Defined in the report
+    a: threshold.
+    b: max reward.
+    c: min penalty.
     """
     if x >= a:
         return b / (1 - a) ** 2 * (x - a) ** 2
@@ -41,14 +43,13 @@ def server_importance(server_id: int):
         # Servers visited often enough
         if server.total_done_jobs > MIN_SAMPLE:
             # Server successful enough
-            priority += rho(success_ratio, THRESHOLD, SUCCESS_PENALTY, SUCCESS_BONUS)
+            priority += rho(success_ratio, THRESHOLD, SUCCESS_BONUS, SUCCESS_PENALTY)
             # Server relevant enough
-            priority += rho(relevant_ratio, THRESHOLD, RELEVANT_PENALTY, RELEVANT_BONUS)
+            priority += rho(relevant_ratio, THRESHOLD, SUCCESS_BONUS, RELEVANT_PENALTY)
         # Server visited not often enough, only constant penalty.
         else:
             if success_ratio < THRESHOLD:
                 priority -= 5
             if relevant_ratio < THRESHOLD:
                 priority -= 5
-        priority = max(priority, MIN_PRIORITY)
     return priority
