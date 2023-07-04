@@ -119,6 +119,7 @@ def save_crawling_results(parent_job_id):
         new_job["server_id"] = new_job_server_id
         new_job["parent_id"] = new_document.id
         new_job["priority"] = new_job.priority + servers_ids_to_priority[new_job_server_id]
+        new_job["priority"] = max(1, new_job["priority"]) # Not too low, just not too high
     Job.insert_many(new_jobs).on_conflict_ignore().execute()
     LOG.info(f"Created {len(new_jobs)} new jobs for document {new_document.id}")
 
