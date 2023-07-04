@@ -398,7 +398,7 @@ class URL:
         total_points += 0 if self.parent is None else get_document_approximated_relevance_score_for(self.url,
                                                                                                     self.parent)
         total_points += 100 * self.get_initial_queue_list_appearance
-        total_points += 50 * int(self.contains_bonus_patterns)
+        total_points += 100 * int(self.contains_bonus_patterns)
         return total_points
 
     @functools.cached_property
