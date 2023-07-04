@@ -12,7 +12,7 @@ from playhouse.shortcuts import model_to_dict
 from crawler.manager.server_importance import server_importance
 from crawler.sql_models.server import Server
 from crawler.worker.url_relevance import URL
-from crawler.sql_models.base import BaseModel, DATABASE as db, DATABASE
+from crawler.sql_models.base import BaseModel, DATABASE
 from crawler.sql_models.job import Job
 from crawler.utils.log import get_logger
 
@@ -44,7 +44,7 @@ def run_migration_scripts():
     # Sort the SQL files based on their filename
     sql_files = sorted([f for f in os.listdir(SCRIPTS_DIRECTORY) if f.endswith('.sql')])
 
-    db.create_tables([Migration])
+    DATABASE.create_tables([Migration])
     # Execute each SQL script in order
     for sql_file in sql_files:
         LOG.info(f'Executing migration: {sql_file}')
@@ -58,7 +58,7 @@ def run_migration_scripts():
                 continue
 
             # Execute the SQL script
-            db.execute_sql(script)
+            DATABASE.execute_sql(script)
 
             # Add the migration to the migration table
             Migration.create(name=migration_name)
@@ -71,8 +71,8 @@ def get_seed_jobs():
     """
     Returns the seed jobs from the seeds.json file.
     """
-    with open("scripts/seeds.json") as f:
-        return json.loads(f.read())
+    with open("scripts/seeds.json", encoding="utf-8") as file:
+        return json.loads(file.read())
 
 
 def insert_initial_jobs_into_databases(relevant_links: list['URL']):
@@ -111,8 +111,8 @@ def get_block_patterns():
     """
     Returns the seed jobs from the seeds.json file.
     """
-    with open("scripts/blocked_patterns.json") as f:
-        return json.loads(f.read())
+    with open("scripts/blocked_patterns.json", encoding="utf-8") as file:
+        return json.loads(file.read())
 
 
 def mark_blocked_patterns_as_priority_0():
