@@ -6,11 +6,13 @@ Will be done by manager since only manager has access to server.
 This could also be done at client side but I decided not to to save time.
 """
 from crawler.sql_models.server import Server
+import math
 
 SUCCESS_BONUS = 3
-RELEVANT_BONUS = 100
+RELEVANT_BONUS = 10
 THRESHOLD = 0.05
-UNDERTHRESHOLD_PENALTY = 5
+MIN_PRIORITY = -20
+MIN_SAMPLE = 5
 
 def server_importance(server_id: int):
     """
@@ -22,10 +24,17 @@ def server_importance(server_id: int):
     if server.total_done_jobs > 0:
         success_ratio = server.success_jobs / server.total_done_jobs
         relevant_ratio = server.relevant_documents / server.total_done_jobs
-        priority += SUCCESS_BONUS * (success_ratio - THRESHOLD) ** 3
-        priority += RELEVANT_BONUS * (relevant_ratio - THRESHOLD) ** 3
-        if success_ratio < THRESHOLD:
-            priority -= UNDERTHRESHOLD_PENALTY
-        if relevant_ratio < THRESHOLD:
-            priority -= UNDERTHRESHOLD_PENALTY
+        if server.total_done_jobs > MIN_SAMPLE:
+            priority += SUCCESS_BONUS * (success_ratio - THRESHOLD)**2
+            priority += RELEVANT_BONUS * (relevant_ratio - THRESHOLD)**2
+            if success_ratio < THRESHOLD:
+                priority += 5
+            if relevant_ratio < THRESHOLD:
+                priority -= math.log(success_ratio / (1 - (success_ratio + 0.5 * THRESHOLD)))
+        else:
+            if success_ratio < THRESHOLD:
+                priority -= 5
+            if relevant_ratio < THRESHOLD:
+                priority -= 3
+        priority = max(priority, -MIN_PRIORITY)
     return priority
