@@ -54,6 +54,7 @@ class Job(BaseModel):
         """
         self.parent_id = value.id
 
+    url_tokens = JSONField(default=[])
     anchor_text = LongTextField(default="")
     anchor_text_tokens = JSONField(default=[])
     surrounding_text = LongTextField(default="")

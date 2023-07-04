@@ -199,13 +199,14 @@ class Crawler:
             raise Exception(f"Error while marking job as failed: {response.text}")
 
     @staticmethod
-    def create_jobs_from_worker_to_master(relevant_links: list[str]):
+    def create_jobs_from_worker_to_master(relevant_links: list[URL]):
         """
         Creates jobs to be sent from the worker to the master.
         """
         jobs_batch = []
         for link in relevant_links:
             job = Job(url=link.url,
+                      url_tokens=link.url_tokens,
                       priority=link.priority,
                       anchor_text=link.anchor_text,
                       anchor_text_tokens=link.anchor_text_tokens,

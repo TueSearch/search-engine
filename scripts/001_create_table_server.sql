@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS servers
     relevant_documents BIGINT   DEFAULT 0,
     -- Python invisible fields
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
     -- Check constraints
     CHECK (total_done_jobs <= total_jobs),
     CHECK (success_jobs <= total_done_jobs),

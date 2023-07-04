@@ -33,5 +33,6 @@ CREATE TABLE IF NOT EXISTS documents
     -- Classification
     relevant                BOOLEAN  DEFAULT TRUE,
     -- Python invisible fields
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL
 ) ENGINE = RocksDB;

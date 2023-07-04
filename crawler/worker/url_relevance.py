@@ -28,10 +28,9 @@ infixes = NLP.Defaults.infixes + [r'\.']
 infix_regex = spacy.util.compile_infix_regex(infixes)
 NLP.tokenizer.infix_finditer = infix_regex.finditer
 
-CRAWL_EXCLUDED_EXTENSIONS = set(json.loads(
-    os.getenv("CRAWL_EXCLUDED_EXTENSIONS")))
+CRAWL_EXCLUDED_EXTENSIONS = utils.io.read_json_file("scripts/excluded_extensions.json")
 CRAWL_SURROUNDING_TEXT_LENGTH = int(os.getenv('CRAWL_SURROUNDING_TEXT_LENGTH'))
-TUEBINGEN_WRITING_STYLES = json.loads(os.getenv('TUEBINGEN_WRITING_STYLES'))
+TUEBINGEN_WRITING_STYLES = utils.io.read_json_file("scripts/tuebingen_writing_styles.json")
 
 
 @functools.lru_cache
