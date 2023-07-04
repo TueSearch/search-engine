@@ -16,6 +16,6 @@ def server_importance(server_id: int):
     server = Server.select().where(Server.id == server_id).get()
     priority += min(5, server.page_rank * 5)
     if server.total_jobs > 0:
-        priority += min(1, (server.success_jobs / server.total_jobs) * 1)
-        priority += min(3, (server.relevant_documents / server.total_jobs) * 3)
+        priority += min(1, (server.success_jobs / server.total_done_jobs) * 1)
+        priority += min(10, (server.relevant_documents / server.total_done_jobs) * 10)
     return priority

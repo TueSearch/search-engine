@@ -10,7 +10,7 @@ BEGIN
             WHERE id = NEW.server_id;
         END IF;
         UPDATE servers
-        set total_jobs = total_jobs + 1
+        set total_done_jobs = total_done_jobs + 1
         WHERE id = NEW.server_id;
     END IF;
 END;
