@@ -83,7 +83,7 @@ services:
       dockerfile: docker/backend.Dockerfile
     container_name: prod_manager
     restart: 'always'
-    command: '/home/tuesearch/.local/bin/gunicorn -w 8 -b 0.0.0.0:6000 crawler.manager.main:app'
+    command: '/home/tuesearch/.local/bin/gunicorn -w 1 -b 0.0.0.0:6000 crawler.manager.main:app'
     env_file:
       - .env
     ports:
