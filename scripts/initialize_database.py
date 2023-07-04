@@ -123,7 +123,7 @@ def mark_blocked_patterns_as_priority_0():
         LOG.info(f"Marking job with url pattern {block_pattern} as invalid")
         DATABASE.execute_sql(f"""UPDATE jobs
 SET priority = 0
-WHERE url LIKE '%{block_pattern}%';""")
+WHERE url LIKE '%%{block_pattern}%%';""")
         LOG.info(f"Finished marking useless url pattern {block_pattern}")
 
 
