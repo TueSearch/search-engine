@@ -102,13 +102,6 @@ def save_crawling_results(parent_job_id):
     new_document = Document(**new_document)
     new_document.save()
     LOG.info(f"Created document {new_document.id}")
-
-    # Update server's relevance
-    if new_document.relevant:
-        new_document_server = Server.select().where(Server.id == new_document.job["server_id"]).get()
-        new_document_server.relevant_documents += 1
-        new_document_server.save()
-
     # Create new servers from URLs if new servers were met while crawling.
     new_jobs_links = list(set(URL(job.url) for job in new_jobs))
     new_links_to_server_id = Server.create_servers_and_return_ids(new_jobs_links)
@@ -132,6 +125,13 @@ def save_crawling_results(parent_job_id):
 
     Job.update(done=True, success=True, being_crawled=False).where(Job.id == parent_job_id).execute()
     LOG.info("Updated parent job to done")
+
+    # Update server's relevance
+    if new_document.relevant:
+        new_document_server = Server.select().where(Server.id == new_document.job["server_id"]).get()
+        new_document_server.relevant_documents += 1
+        new_document_server.save()
+
     return "Data saved."
 
 

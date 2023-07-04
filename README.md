@@ -8,7 +8,6 @@ Tübingen.
 - [Remote set up for deployment](#remote-set-up-for-deployment)
 - [Crawler set up at local computer](#crawler-set-up-at-local-computer)
 - [Frontend](#frontend)
-- [Quality check](#quality-check)
 
 # Local set up for development
 
@@ -103,27 +102,6 @@ npm run dev
 ```
 
 4. Open the browser at `http://localhost:5000/`
-
-# Quality check
-
-Some regularly used SQL queries to check quality:
-
-- Test relevance ratio:
-
-```sql
-SELECT count(*) FROM `documents` where relevant = 1;
-SELECT count(*) FROM `documents` where relevant = 0;
-```
-
-- Update priority list:
-```sql
-SELECT j.url, j.priority from jobs as j join documents as d where j.id = d.job_id and d.relevant = 1;
-```
-
-- Update block list:
-```sql
-SELECT j.url, j.priority from jobs as j join documents as d where j.id = d.job_id and d.relevant = 0;
-```
 
 
 # Team Members
