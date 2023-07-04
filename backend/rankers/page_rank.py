@@ -64,9 +64,6 @@ def construct_page_rank_of_servers_from_directed_graph():
         LOG.info("Start constructing page rank")
         network_graph = read_directed_graph()
 
-        # Find isolated nodes
-        isolated_nodes = [node for node, degree in network_graph.degree() if degree == 0]
-
         ranking = nx.pagerank(network_graph,
                               max_iter=int(os.getenv("PAGERANK_MAX_ITER")),
                               personalization=utils.io.read_json_file("scripts/pagerank_personalization.json"))
@@ -82,12 +79,16 @@ def update_page_rank_of_servers_in_database():
     """
     Update the page rank of the servers.
     """
-    page_rank = read_page_rank()
-    LOG.info("Updating page rank")
-    for server in tqdm(Server.select().execute()):
-        try:
-            server.page_rank = page_rank.get(server.name, 0)
-            server.save()
-            LOG.info(f"Updated page rank of {server.name} to {server.page_rank}")
-        except Exception as e:
-            LOG.error(f"Error while updating page rank of {server.name}: {e}")
+    try:
+        page_rank = read_page_rank()
+        LOG.info("Updating page rank")
+        for server in tqdm(Server.select().execute()):
+            try:
+                server.page_rank = page_rank.get(server.name, 0)
+                server.save()
+                LOG.info(f"Updated page rank of {server.name} to {server.page_rank}")
+            except Exception as e:
+                LOG.error(f"Error while updating page rank of {server.name}: {e}")
+    except Exception as error:
+        LOG.error(f"Error while updating page rank: {error}")
+        traceback.print_exc()
