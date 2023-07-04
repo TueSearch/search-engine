@@ -11,7 +11,7 @@ import math
 SUCCESS_BONUS = 3
 RELEVANT_BONUS = 10
 THRESHOLD = 0.05
-MIN_PRIORITY = -20
+MIN_PRIORITY = -100
 MIN_SAMPLE = 5
 
 def server_importance(server_id: int):
@@ -41,6 +41,6 @@ def server_importance(server_id: int):
             if success_ratio < THRESHOLD:
                 priority -= 5
             if relevant_ratio < THRESHOLD:
-                priority -= 3
+                priority -= 5
         priority = max(priority, MIN_PRIORITY)
     return priority
