@@ -237,12 +237,14 @@ class Crawler:
                         self.save_crawling_results(self.new_document, self.new_jobs)
                     except Exception as exception:
                         LOG.error(f"Error while sending back to master: {exception} Try again")
+                        time.sleep(1)
                         continue
                 else:
                     try:
                         self.mark_job_as_failed()
                     except Exception as e:
                         LOG.error(f"Error while marking job as failed: {e}")
+                        time.sleep(1)
                         continue
                 self.new_jobs = None
                 self.new_document = None

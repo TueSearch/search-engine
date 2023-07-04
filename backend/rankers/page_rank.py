@@ -30,13 +30,12 @@ def construct_directed_link_graph_from_crawled_documents():
     LOG.info("Start constructing directed link graph")
     graph = nx.DiGraph()
     for from_document in tqdm(DocumentStreamer()):
-        from_server = Server.select().where(Server.id == from_document.server_id).get().name
+        from_server = Server.select().where(Server.id == from_document.job["server_id"]).get().name
         for to_job in Job.select().where((Job.parent_id == from_document.id)):
             to_server = URL(to_job.url).server_name
             if not graph.has_edge(from_server, to_server) and from_server != to_server:
-                graph.add_edge(from_server, to_server, weight=1)  # Add edge with weight 1
+                graph.add_edge(from_server, to_server, weight=1)
             elif from_server != to_server:
-                # Increment the weight of existing edge
                 graph[from_server][to_server]['weight'] += 1
     LOG.info("Finished constructing directed link graph")
     utils.io.write_pickle_file(graph, DIRECTED_LINK_GRAPH_FILE)
@@ -64,6 +63,10 @@ def construct_page_rank_of_servers_from_directed_graph():
     try:
         LOG.info("Start constructing page rank")
         network_graph = read_directed_graph()
+
+        # Find isolated nodes
+        isolated_nodes = [node for node, degree in network_graph.degree() if degree == 0]
+
         ranking = nx.pagerank(network_graph,
                               max_iter=int(os.getenv("PAGERANK_MAX_ITER")),
                               personalization=utils.io.read_json_file("scripts/pagerank_personalization.json"))

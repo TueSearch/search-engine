@@ -17,8 +17,7 @@ from crawler import utils
 
 load_dotenv()
 
-TUEBINGEN_WRITING_STYLES = set(json.loads(
-    os.getenv("TUEBINGEN_WRITING_STYLES")))
+TUEBINGEN_WRITING_STYLES = utils.io.read_json_file("scripts/tuebingen_writing_styles.json")
 CRAWL_ENGLISH_CLASSIFICATION_THRESHOLD = float(
     os.getenv("CRAWL_ENGLISH_CLASSIFICATION_THRESHOLD"))
 CRAWL_ENGLISH_CLASSIFICATION_MULTI_THRESHOLD = float(

@@ -101,6 +101,7 @@ def save_crawling_results(parent_job_id):
 
     # Create new document
     LOG.info(f"Creating document {new_document.id} of job {new_document.job_id}")
+    Job.update(done=True, success=True, being_crawled=False).where(Job.id == parent_job_id).execute()
     new_document = Document(**new_document)
     new_document.save()
     LOG.info(f"Created document {new_document.id}")
@@ -122,11 +123,9 @@ def save_crawling_results(parent_job_id):
         new_job["server_id"] = new_job_server_id
         new_job["parent_id"] = new_document.id
         new_job["priority"] = new_job.priority + servers_ids_to_priority[new_job_server_id]
-        new_job["priority"] = max(1, new_job["priority"]) # Not too low, just not too high
+        new_job["priority"] = max(1, new_job["priority"])  # Not too low, just not too high
     Job.insert_many(new_jobs).on_conflict_ignore().execute()
     LOG.info(f"Created {len(new_jobs)} new jobs for document {new_document.id}")
-
-    Job.update(done=True, success=True, being_crawled=False).where(Job.id == parent_job_id).execute()
     LOG.info("Updated parent job to done")
 
     return "Data saved."
