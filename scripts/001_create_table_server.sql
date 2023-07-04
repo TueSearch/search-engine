@@ -11,5 +11,9 @@ CREATE TABLE IF NOT EXISTS servers
     success_jobs       BIGINT   DEFAULT 0,
     relevant_documents BIGINT   DEFAULT 0,
     -- Python invisible fields
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    -- Check constraints
+    CHECK (total_done_jobs <= total_jobs),
+    CHECK (success_jobs <= total_done_jobs),
+    CHECK (relevant_documents <= success_jobs)
 ) ENGINE = RocksDB;
