@@ -88,7 +88,7 @@ def mark_job_as_fail(job_id):
 
 @app.route('/save_crawling_results/<int:parent_job_id>', methods=['POST'])
 @check_password
-@file_lock(lock_file_path="save_crawling_results.lock")
+@file_lock("save_crawling_results.lock")
 def save_crawling_results(parent_job_id):
     """
     Save the crawling results.
