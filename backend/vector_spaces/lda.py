@@ -34,7 +34,6 @@ def train_lda_vectorizer():
     This function trains a LDA model on the TF-IDF vectors of the documents.
     """
     lda_model = LatentDirichletAllocation(n_components=7, random_state=42, max_iter=10, learning_method='online')
-    LOG.info("Training count vectorizer...")
     vectorizer = CountVectorizer()
     LOG.info("Training LDA model...")
     for body in tqdm(DocumentBodyStringStreamer()):
