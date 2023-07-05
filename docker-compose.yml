@@ -116,6 +116,8 @@ services:
     command: 'python3 -m crawler.worker.main -n 50'
     env_file:
       - .env
+    environment:
+      - OMP_NUM_THREADS=1 # Make XGBoost work only with one thread.
     networks:
       - mysql_net
     volumes:
