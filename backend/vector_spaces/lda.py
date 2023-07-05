@@ -1,6 +1,7 @@
 """
 This module contains the LDA vector space model.
 """
+import functools
 import os
 
 import peewee
@@ -9,7 +10,7 @@ from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.feature_extraction.text import CountVectorizer
 from tqdm import tqdm
 
-from backend.streamers import DocumentBodyStringStreamer
+from backend.streamers import DocumentBodyStringStreamer, DocumentStreamer
 from backend.vector_spaces.tfidf import Tfidf
 from crawler import utils
 from crawler.sql_models.base import BaseModel, PickleField
@@ -36,11 +37,11 @@ def train_lda_vectorizer():
     """
     lda_model = LatentDirichletAllocation(n_components=7, random_state=42, max_iter=10, learning_method='online')
     LOG.info("Training count vectorizer...")
-    vectorizer = CountVectorizer(input=DocumentBodyStringStreamer())
+    vectorizer = CountVectorizer()
     LOG.info("Training LDA model...")
     for body in tqdm(DocumentBodyStringStreamer()):
         try:
-            vector = vectorizer.transform([body])
+            vector = vectorizer.fit_transform([body])
             lda_model.fit(vector)
         except Exception as error:
             LOG.error(f"Error while training LDA model: {error}")

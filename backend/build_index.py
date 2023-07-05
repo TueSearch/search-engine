@@ -53,7 +53,6 @@ class Indexer:
         """
         for document in tqdm(DocumentStreamer()):  # Iterate over the documents
             self.doc_ids.append(document.id)
-            LOG.info(f"Indexing {document.id}")
 
             for token in document.title_tokens:
                 self.index["title"][token].append(document.id)
