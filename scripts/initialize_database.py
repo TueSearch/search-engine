@@ -62,6 +62,7 @@ def insert_initial_jobs_into_databases(relevant_links: list['URL']):
                   surrounding_text_tokens=link.surrounding_text_tokens,
                   title_text=link.title_text,
                   title_text_tokens=link.title_text_tokens)
+        job.priority = max(1, job.priority)  # Not too low, just not too high
         jobs_batch.append(model_to_dict(job))
     Job.insert_many(jobs_batch).on_conflict_ignore().execute()
 
