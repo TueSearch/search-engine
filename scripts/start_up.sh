@@ -10,10 +10,10 @@ docker-compose up --build --exit-code-from train_url_classifier train_url_classi
 docker-compose up --build --exit-code-from initialize_database initialize_database
 docker-compose up -d --build manager
 curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:6000"
-if [ $# -ge 1 ] && [ "$1" = "test" ]; then
+if [ $# -ge 1 ] && [ "$1" = "bootstrap" ]; then
   docker-compose up --build --exit-code-from worker worker
 fi
-if [ $# -ge 1 ] && [ "$1" = "test" ]; then
+if [ $# -ge 1 ] && [ "$1" = "bootstrap" ]; then
   docker-compose up --build --exit-code-from build_index build_index
   docker-compose up --build --exit-code-from build_metrics build_metrics
 fi
@@ -23,7 +23,7 @@ curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4000/search?q=tubi
 curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4001/search?q=tubingen"
 docker-compose up --build -d frontend_server
 
-if [ $# -ge 1 ] && [ "$1" = "test" ]; then
+if [ $# -ge 1 ] && [ "$1" = "bootstrap" ]; then
   touch pytest-results.xml
   chmod 777 pytest-results.xml
   docker-compose up --build --exit-code-from run_unit_tests run_unit_tests

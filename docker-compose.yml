@@ -75,7 +75,7 @@ services:
       dockerfile: docker/backend.Dockerfile
     container_name: manager
     restart: 'always'
-    command: '/home/tuesearch/.local/bin/gunicorn -w 4 -b 0.0.0.0:6000 crawler.manager.main:app'
+    command: '/home/tuesearch/.local/bin/gunicorn -w 3 -b 0.0.0.0:6000 crawler.manager.main:app'
     ports:
       - '6000:6000'
     env_file:
@@ -90,6 +90,8 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
     restart: 'on-failure'
+    depends_on:
+      - train_url_classifier
     command: 'python3 -m crawler.worker.main -n 4'
     env_file:
       - .env
@@ -112,6 +114,8 @@ services:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
+    depends_on:
+      - train_url_classifier
     restart: 'unless-stopped'
     command: 'python3 -m crawler.worker.main -n 50'
     env_file:
