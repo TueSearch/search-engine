@@ -382,8 +382,8 @@ class URL:
 
         total_points += 0.001 * self.count_en_in_url
 
-        total_points += 5 * self.count_tuebingen_in_url
-        total_points += 3 * self.count_bingen_in_url
+        total_points += 3 * self.count_tuebingen_in_url
+        total_points += 2 * self.count_bingen_in_url
 
         total_points += 0.25 * self.count_bingen_in_anchor_text
         total_points += 0.5 * self.count_tuebingen_in_anchor_text
@@ -396,8 +396,8 @@ class URL:
 
         total_points += 0 if self.parent is None else get_document_approximated_relevance_score_for(self.url,
                                                                                                     self.parent)
-        total_points += 100 * self.get_initial_queue_list_appearance
-        total_points += 100 * int(self.contains_bonus_patterns)
+        total_points += 10 ** 9 * self.get_initial_queue_list_appearance
+        total_points += 50 * int(self.contains_bonus_patterns)
         return total_points
 
     @functools.cached_property

@@ -1,0 +1,42 @@
+"""
+https://stackoverflow.com/a/22156618
+
+Since requests' timeout parameter is not a really timeout,
+we need this solution.
+
+Usage:
+    Use only this module in the main thread, which is the case for the
+"""
+import signal
+
+import requests
+
+MAX_CONNECTION_LENGTH = 30
+
+
+class Timeout:
+    """ Timeout for use with the `with` statement. """
+
+    class TimeoutException(Exception):
+        """ Simple Exception to be called on timeouts. """
+        pass
+
+    def _timeout(signum, frame):
+        """ Raise an TimeoutException.
+
+        This is intended for use as a signal handler.
+        The signum and frame arguments passed to this are ignored.
+
+        """
+        raise Timeout.TimeoutException()
+
+    def __init__(self, timeout=MAX_CONNECTION_LENGTH):
+        self.timeout = timeout
+        signal.signal(signal.SIGALRM, Timeout._timeout)
+
+    def __enter__(self):
+        signal.alarm(self.timeout)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        signal.alarm(0)
+        raise requests.Timeout("The request took too long. Manually exit!")

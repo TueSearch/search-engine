@@ -19,6 +19,7 @@ from requests_html import HTMLSession
 from crawler import utils
 from crawler.worker import url_relevance
 from crawler.worker.document_relevance import is_document_relevant
+from crawler.worker.timeout import Timeout
 from crawler.worker.url_relevance import URL
 from crawler.sql_models.base import dotdict
 from crawler.sql_models.document import Document
@@ -37,7 +38,7 @@ CRAWL_TIMEOUT = int(os.getenv("CRAWL_TIMEOUT"))
 CRAWLER_WORKER_TIMEOUT = int(os.getenv("CRAWLER_WORKER_TIMEOUT"))
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9',
     'Accept-Language': 'en-US,en;q=0.9',
     'Referer': 'https://www.google.com/',
     'DNT': '1',  # Do Not Track
@@ -78,9 +79,7 @@ class Crawler:
         Generate a document from the HTML of a website.
         """
         document = utils.text.generate_text_document_from_html(html)
-        LOG.info("Generated document")
         document.relevant = is_document_relevant(URL(self.url), document)
-        LOG.info("Classified document's relevance")
         urls = url_relevance.URL.get_links(document, self.url)
         urls = [url for url in urls if url.is_relevant]
         if document.relevant:
@@ -94,44 +93,44 @@ class Crawler:
         """
         Try to obtain the HTML of a static website.
         """
-        session = requests.Session()
-        session.mount('http://', HTTPAdapter(max_retries=RETRIES))
-        session.mount('https://', HTTPAdapter(max_retries=RETRIES))
-        LOG.info(f"Start sending request to {self.current_job.url} with time out {CRAWL_TIMEOUT}")
-        response = session.get(self.current_job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS)
-        if not response.ok:
-            raise Exception(
-                f"Error while rendering static website. Response not ok: {response} for URL: {self.current_job.url}")
-        if "html" not in (data_type := response.headers.get("Content-Type")):
-            raise Exception(
-                f"Error while rendering static website. Only accept HTML. Got {data_type} for URL: {self.current_job.url}")
-        return response
+        with Timeout(timeout=15):
+            session = requests.Session()
+            session.mount('http://', HTTPAdapter(max_retries=RETRIES))
+            session.mount('https://', HTTPAdapter(max_retries=RETRIES))
+            LOG.info(f"Start sending request to {self.current_job.url} with time out {CRAWL_TIMEOUT}")
+            response = session.get(self.current_job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS, verify=False)
+            if not response.ok:
+                raise Exception(
+                    f"Error while rendering static website. Response not ok: {response} for URL: {self.current_job.url}")
+            if "html" not in (data_type := response.headers.get("Content-Type")):
+                raise Exception(
+                    f"Error while rendering static website. Only accept HTML. Got {data_type} for URL: {self.current_job.url}")
+            return response
 
     def try_to_obtain_dynamic_website_html(self):
         """
         Try to obtain the HTML of a dynamic website.
         """
-        session = HTMLSession(browser_args=["--no-sandbox"])
-        session.mount('http://', HTTPAdapter(max_retries=RETRIES))
-        session.mount('https://', HTTPAdapter(max_retries=RETRIES))
-        response = session.get(self.current_job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS)
-        response.html.render(timeout=CRAWL_RENDER_TIMEOUT)
-        if not response.ok:
-            raise Exception(
-                f"Error while rendering dynamic website. Response not ok: {response} for URL: {self.current_job.url}")
-        if "html" not in (data_type := response.headers.get("Content-Type")):
-            raise Exception(
-                f"Error while rendering dynamic website. Only accept HTML. Got {data_type} for URL: {self.current_job.url}")
-        return response
+        with Timeout():
+            session = HTMLSession(browser_args=["--no-sandbox"])
+            session.mount('http://', HTTPAdapter(max_retries=RETRIES))
+            session.mount('https://', HTTPAdapter(max_retries=RETRIES))
+            response = session.get(self.current_job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS, verify=False)
+            response.html.render(timeout=CRAWL_RENDER_TIMEOUT)
+            if not response.ok:
+                raise Exception(
+                    f"Error while rendering dynamic website. Response not ok: {response} for URL: {self.current_job.url}")
+            if "html" not in (data_type := response.headers.get("Content-Type")):
+                raise Exception(
+                    f"Error while rendering dynamic website. Only accept HTML. Got {data_type} for URL: {self.current_job.url}")
+            return response
 
     def crawl_assume_website_is_static(self) -> (Document, list[URL]):
         """
         Crawl the website, assuming it is static.
         """
         response = self.try_to_obtain_static_website_html()
-        LOG.info("Got static answer from server")
         html = response.text
-        LOG.info("Start generating static document")
         new_document = self.generate_document_from_html(html)
         return new_document
 
@@ -150,18 +149,14 @@ class Crawler:
         """
         new_document, urls = None, []
         try:  # First, try a cheaper static version.
-            LOG.info("Start static crawling")
             new_document, urls = self.crawl_assume_website_is_static()
-            LOG.info(f"Crawling static successed")
         except Exception as exception:
             LOG.error(f"Failed: Crawled static version of {self.current_job.url} unsucessfully: {str(exception)}")
             traceback.print_exc()
 
         if new_document is None or not new_document.relevant:
             try:  # If not successful, try static version with vanilla requests.
-                LOG.info("Start dynamic crawling")
                 new_document, urls = self.crawl_assume_website_is_dynamic()
-                LOG.info(f"Crawling dynamic successed")
             except Exception as exception:
                 LOG.error(f"Failed: Crawled dynamic version of {self.current_job.url} unsucessfully: {str(exception)}")
         return new_document, urls
@@ -235,12 +230,9 @@ class Crawler:
             try:
                 if self.current_job is None:
                     self.current_job = self.get_job()
-                    LOG.info(f"Get new job {self.current_job}")
                 if self.new_document is None or self.new_jobs is None:
-                    time.sleep(1)
-                    LOG.info(f"Crawl new job {self.current_job}")
+                    time.sleep(random.uniform(1, 2))
                     self.new_document, self.new_relevant_urls = self.crawl()
-                    LOG.info(f"Crawl finished {self.current_job}")
                     if self.new_document is not None:
                         self.new_jobs = Crawler.create_jobs_from_worker_to_master(relevant_links=self.new_relevant_urls)
                         self.new_document = json.dumps(model_to_dict(self.new_document))

@@ -8,7 +8,6 @@ from crawler import utils
 
 LOG = utils.get_logger(__file__)
 
-LOCK_FILE_PATH = os.environ.get('LOCK_FILE_PATH')
 LOCK_RETRY = int(os.environ.get('LOCK_RETRY'))
 LOCK_TIMEOUT = int(os.environ.get('LOCK_TIMEOUT'))
 LOCK_RETRY_INTERVAL = float(os.environ.get('LOCK_RETRY_INTERVAL'))
