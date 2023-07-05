@@ -78,7 +78,9 @@ class Crawler:
         Generate a document from the HTML of a website.
         """
         document = utils.text.generate_text_document_from_html(html)
+        LOG.info("Generated document")
         document.relevant = is_document_relevant(URL(self.url), document)
+        LOG.info("Classified document's relevance")
         urls = url_relevance.URL.get_links(document, self.url)
         urls = [url for url in urls if url.is_relevant]
         if document.relevant:
@@ -126,7 +128,9 @@ class Crawler:
         Crawl the website, assuming it is static.
         """
         response = self.try_to_obtain_static_website_html()
+        LOG.info("Got static answer from server")
         html = response.text
+        LOG.info("Start generating static document")
         new_document = self.generate_document_from_html(html)
         return new_document
 
