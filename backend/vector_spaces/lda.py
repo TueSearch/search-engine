@@ -40,7 +40,7 @@ def train_lda_vectorizer():
     LOG.info("Training LDA model...")
     for body in tqdm(DocumentBodyStringStreamer()):
         try:
-            vector = vectorizer.transform([body])[0]
+            vector = vectorizer.transform([body])
             lda_model.fit(vector)
         except Exception as error:
             LOG.error(f"Error while training LDA model: {error}")

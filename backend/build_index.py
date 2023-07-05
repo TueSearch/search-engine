@@ -57,47 +57,36 @@ class Indexer:
 
             for token in document.title_tokens:
                 self.index["title"][token].append(document.id)
-            LOG.info("Indexed title")
 
             for token in document.meta_description_tokens:
                 self.index["meta_description"][token].append(document.id)
-            LOG.info("Indexed meta_description")
 
             for token in document.meta_keywords_tokens:
                 self.index["meta_keywords"][token].append(document.id)
-            LOG.info("Indexed meta_keywords")
 
             for token in document.meta_author_tokens:
                 self.index["meta_author"][token].append(document.id)
-            LOG.info("Indexed meta_author")
 
             for token in document.h1_tokens:
                 self.index["h1"][token].append(document.id)
-            LOG.info("Indexed h1")
 
             for token in document.h2_tokens:
                 self.index["h2"][token].append(document.id)
-            LOG.info("Indexed h2")
 
             for token in document.h3_tokens:
                 self.index["h3"][token].append(document.id)
-            LOG.info("Indexed h3")
 
             for token in document.h4_tokens:
                 self.index["h4"][token].append(document.id)
-            LOG.info("Indexed h4")
 
             for token in document.h5_tokens:
                 self.index["h5"][token].append(document.id)
-            LOG.info("Indexed h5")
 
             for token in document.h6_tokens:
                 self.index["h6"][token].append(document.id)
-            LOG.info("Indexed h6")
 
             for token in document.body:
                 self.index["body"][token].append(document.id)
-            LOG.info("Indexed body")
 
         LOG.info("Finished indexing")
         utils.io.write_pickle_file((self.index, self.doc_ids), INDEX_FILE)
