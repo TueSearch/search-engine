@@ -1,23 +1,24 @@
 """
 This module contains utility functions for URL parsing.
 """
+import functools
 import json
 import os
 from urllib.parse import urljoin, urlparse, urlunparse
-import functools
+
 import spacy
 import tldextract
 import validators
 from bs4 import BeautifulSoup
-from url_normalize import url_normalize
 from dotenv import load_dotenv
+from url_normalize import url_normalize
 
 from crawler import utils
-from crawler.worker.document_relevance import get_document_approximated_relevance_score_for
 from crawler.sql_models.document import Document
-from crawler.utils.text import tokenize_get_lang, make_text_human_readable
-
 from crawler.utils import text
+from crawler.utils.text import make_text_human_readable
+from crawler.worker.document_relevance import get_document_approximated_relevance_score_for
+from crawler.worker.url_ml_predictor.predictor import ml_predict_url_relevance
 
 load_dotenv()
 
@@ -28,20 +29,20 @@ infixes = NLP.Defaults.infixes + [r'\.']
 infix_regex = spacy.util.compile_infix_regex(infixes)
 NLP.tokenizer.infix_finditer = infix_regex.finditer
 
-CRAWL_EXCLUDED_EXTENSIONS = utils.io.read_json_file("scripts/excluded_extensions.json")
+CRAWL_EXCLUDED_EXTENSIONS = utils.io.read_json_file("data/excluded_extensions.json")
 CRAWL_SURROUNDING_TEXT_LENGTH = int(os.getenv('CRAWL_SURROUNDING_TEXT_LENGTH'))
-TUEBINGEN_WRITING_STYLES = utils.io.read_json_file("scripts/tuebingen_writing_styles.json")
+TUEBINGEN_WRITING_STYLES = utils.io.read_json_file("data/tuebingen_writing_styles.json")
 
 
 @functools.lru_cache
 def get_blocked_patterns():
-    with open("scripts/blocked_patterns.json", "r") as f:
+    with open("data/blocked_patterns.json", "r") as f:
         return json.loads(f.read())
 
 
 @functools.lru_cache
 def get_bonus_patterns():
-    with open("scripts/bonus_patterns.json", "r") as f:
+    with open("data/bonus_patterns.json", "r") as f:
         return json.loads(f.read())
 
 
@@ -230,40 +231,6 @@ class URL:
         return test1() and test2()
 
     @functools.cached_property
-    def count_tuebingen_in_url(self) -> int:
-        """
-        Counts the number of times the word "tuebingen" appears in the URL.
-        """
-        count = 0
-        for token in self.url_tokens:
-            for tueb in TUEBINGEN_WRITING_STYLES:
-                if tueb in token:
-                    count += 1
-        return count
-
-    @functools.cached_property
-    def count_bingen_in_url(self) -> int:
-        """
-        Counts the number of times the word "bingen" appears in the URL.
-        """
-        count = 0
-        for token in self.url_tokens:
-            if "bingen" in token:
-                count += 1
-        return count
-
-    @functools.cached_property
-    def count_en_in_url(self) -> int:
-        """
-        Counts the number of times the word "en" appears in the URL.
-        """
-        count = 0
-        for token in tokenize_get_lang(self.url):
-            if "en" in token or "/en" in token or "/en/" in token or ".en" in token or ".en/" in token or ".en." in token:
-                count += 1
-        return count
-
-    @functools.cached_property
     def get_initial_queue_list_appearance(self) -> int:
         """
         Return a bonus if the URL is in the initial queue list.
@@ -272,75 +239,6 @@ class URL:
         count = 0
         for priority_url in get_seed_jobs():
             if priority_url in self.url:
-                count += 1
-        return count
-
-    @functools.cached_property
-    def count_tuebingen_in_anchor_text(self) -> int:
-        """
-        Counts the number of times the word "tuebingen" appears in the anchor text.
-        """
-        count = 0
-        for token in self.anchor_text_tokens:
-            for tueb in TUEBINGEN_WRITING_STYLES:
-                if tueb in token:
-                    count += 1
-        return count
-
-    @functools.cached_property
-    def count_bingen_in_anchor_text(self) -> int:
-        """
-        Counts the number of times the word "bingen" appears in the anchor text.
-        """
-        count = 0
-        for token in self.anchor_text_tokens:
-            if "bingen" in token:
-                count += 1
-        return count
-
-    @functools.cached_property
-    def count_tuebingen_in_surrounding_text(self) -> int:
-        """
-        Counts the number of times the word "tuebingen" appears in the surrounding text.
-        """
-        count = 0
-        for token in self.surrounding_text_tokens:
-            for tueb in TUEBINGEN_WRITING_STYLES:
-                if tueb in token:
-                    count += 1
-        return count
-
-    @functools.cached_property
-    def count_bingen_in_surrounding_text(self) -> int:
-        """
-        Counts the number of times the word "bingen" appears in the surrounding text.
-        """
-        count = 0
-        for token in self.surrounding_text_tokens:
-            if "bingen" in token:
-                count += 1
-        return count
-
-    @functools.cached_property
-    def count_tuebingen_in_title_text(self) -> int:
-        """
-        Counts the number of times the word "tuebingen" appears in the title text.
-        """
-        count = 0
-        for token in self.title_text_tokens:
-            for tueb in TUEBINGEN_WRITING_STYLES:
-                if tueb in token:
-                    count += 1
-        return count
-
-    @functools.cached_property
-    def count_bingen_in_title_text(self) -> int:
-        """
-        Counts the number of times the word "bingen" appears in the title text.
-        """
-        count = 0
-        for token in self.title_text_tokens:
-            if "bingen" in token:
                 count += 1
         return count
 
@@ -380,24 +278,12 @@ class URL:
 
         total_points = 0
 
-        total_points += 0.001 * self.count_en_in_url
-
-        total_points += 3 * self.count_tuebingen_in_url
-        total_points += 2 * self.count_bingen_in_url
-
-        total_points += 0.25 * self.count_bingen_in_anchor_text
-        total_points += 0.5 * self.count_tuebingen_in_anchor_text
-
-        total_points += 0.01 * self.count_bingen_in_title_text
-        total_points += 0.05 * self.count_tuebingen_in_title_text
-
-        total_points += 0.001 * self.count_bingen_in_surrounding_text
-        total_points += 0.05 * self.count_tuebingen_in_surrounding_text
-
         total_points += 0 if self.parent is None else get_document_approximated_relevance_score_for(self.url,
                                                                                                     self.parent)
-        total_points += 10 ** 9 * self.get_initial_queue_list_appearance
-        total_points += 50 * int(self.contains_bonus_patterns)
+        total_points += 10 ** 5 * self.get_initial_queue_list_appearance
+        total_points += 20 * int(self.contains_bonus_patterns)
+        total_points += 30 * ml_predict_url_relevance(self)
+
         return total_points
 
     @functools.cached_property

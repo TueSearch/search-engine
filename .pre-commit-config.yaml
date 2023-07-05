@@ -7,5 +7,5 @@ repos:
         pass_filenames: false
         always_run: true
         verbose: true
-        entry: ./scripts/startup.sh docker-compose.yml test
+        entry: ./scripts/startup.sh test
 

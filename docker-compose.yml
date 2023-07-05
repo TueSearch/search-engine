@@ -16,9 +16,7 @@ services:
     env_file:
       - .env
     volumes:
-      - tuesearch-percona-server:/var/lib/mysql
-      - ./docker/my.cnf:/etc/mysql/my.cnf:ro # Mount project's MySQL configuration file
-      - ./docker/mysql.cnf:/etc/mysql/conf.d/mysql.cnf:ro # Mount project's MySQL configuration file
+      - database_volume_1:/var/lib/mysql
     networks:
       - mysql_net
   ############################################################
@@ -35,6 +33,22 @@ services:
     ports:
       - '8080:80'
   ############################################################
+  # Train the URL classifier.
+  ############################################################
+  train_url_classifier:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: train_url_classifier
+    restart: 'on-failure'
+    command: 'python3 -m crawler.worker.url_ml_predictor.trainer'
+    env_file:
+      - .env
+    networks:
+      - mysql_net
+    volumes:
+      - volume_1:/opt/tuesearch
+  ############################################################
   # Initialize models.
   # Feed the models with initial jobs and initial documents.
   # Will run once.
@@ -48,23 +62,6 @@ services:
     command: 'python3 -m scripts.initialize_database'
     env_file:
       - .env
-    networks:
-      - mysql_net
-  ############################################################
-  # Test.
-  # Run tests
-  ############################################################
-  run_unit_tests:
-    build:
-      context: .
-      dockerfile: docker/backend.Dockerfile
-    container_name: run_unit_tests
-    restart: 'no'
-    command: './scripts/run-tests.sh'
-    env_file:
-      - .env
-    volumes:
-      - .:/app
     networks:
       - mysql_net
   ############################################################
@@ -97,7 +94,7 @@ services:
     networks:
       - mysql_net
     volumes:
-      - tuesearch:/opt/tuesearch
+      - volume_1:/opt/tuesearch
   ############################################################
   # Start the worker in loop.
   #
@@ -120,7 +117,7 @@ services:
     networks:
       - mysql_net
     volumes:
-      - tuesearch:/opt/tuesearch
+      - volume_1:/opt/tuesearch
   ############################################################
   # Build indexer.
   ############################################################
@@ -134,7 +131,7 @@ services:
     env_file:
       - .env
     volumes:
-      - tuesearch:/opt/tuesearch
+      - volume_1:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
@@ -150,7 +147,7 @@ services:
     env_file:
       - .env
     volumes:
-      - tuesearch:/opt/tuesearch
+      - volume_1:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
@@ -164,14 +161,12 @@ services:
     container_name: backend_server
     ports:
       - '4000:4000'
-    depends_on:
-      - mysql
     restart: 'always'
     command: 'python3 -m backend.app'
     env_file:
       - .env
     volumes:
-      - tuesearch:/opt/tuesearch
+      - volume_1:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
@@ -196,9 +191,6 @@ services:
       context: .
       dockerfile: docker/frontend.Dockerfile
     container_name: frontend_server
-    depends_on:
-      - backend_server
-      - mysql
     ports:
       - '5000:5000'
     restart: 'always'
@@ -207,8 +199,27 @@ services:
       - frontend/.env
     networks:
       - mysql_net
+  ############################################################
+  # Test.
+  # Run tests
+  ############################################################
+  run_unit_tests:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: run_unit_tests
+    restart: 'no'
+    command: './scripts/run-tests.sh'
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    networks:
+      - mysql_net
 volumes:
-  tuesearch-percona-server:
-  tuesearch:
+  database_volume_1:
+    external: true
+  volume_1:
+    external: true
 networks:
   mysql_net:

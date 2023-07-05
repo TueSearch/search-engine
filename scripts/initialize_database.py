@@ -52,6 +52,8 @@ def insert_initial_jobs_into_databases(relevant_links: list['URL']):
     link_to_server_id = Server.create_servers_and_return_ids(relevant_links)
     jobs_batch = []
     for link, server_id in link_to_server_id.items():
+        if Job.select().where(Job.url == link.url).exists():
+            continue
         job = Job(url=link.url,
                   server=server_id,
                   url_tokens=link.url_tokens,
@@ -72,7 +74,7 @@ def initialize_seed_with_serp():
     Initializes the database with the SERP.
     """
     batch = []
-    for result in utils.io.read_json_file("scripts/serp.json").values():
+    for result in utils.io.read_json_file("data/serp.json").values():
         for entry in result[("news" if "news" in result else "organic")]:
             url = URL(entry["link"])
             batch.append(url)
@@ -113,7 +115,7 @@ def get_seed_jobs():
     """
     Returns the seed jobs from the seeds.json file.
     """
-    with open("scripts/seeds.json", encoding="utf-8") as file:
+    with open("data/seeds.json", encoding="utf-8") as file:
         return json.loads(file.read())
 
 
@@ -131,7 +133,7 @@ def get_block_patterns():
     """
     Returns the seed jobs from the seeds.json file.
     """
-    with open("scripts/blocked_patterns.json", encoding="utf-8") as file:
+    with open("data/blocked_patterns.json", encoding="utf-8") as file:
         return json.loads(file.read())
 
 

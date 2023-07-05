@@ -19,7 +19,6 @@ class Timeout():
 
     class TimeoutException(Exception):
         """ Simple Exception to be called on timeouts. """
-        pass
 
     def _timeout(signum, frame):
         """ Raise an TimeoutException.

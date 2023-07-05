@@ -6,6 +6,8 @@ COPY requirements.txt .
 # Install the project dependencies
 RUN python3 -m pip install -r requirements.txt
 
+RUN python3 -m spacy download en_core_web_md
+
 # Copy backend
 COPY backend ./backend
 
@@ -15,4 +17,5 @@ COPY crawler ./crawler
 # Copy crawler
 COPY scripts ./scripts
 
-RUN python3 -m spacy download en_core_web_md
+# Copy data
+COPY data ./data

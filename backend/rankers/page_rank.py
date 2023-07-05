@@ -66,7 +66,7 @@ def construct_page_rank_of_servers_from_directed_graph():
 
         ranking = nx.pagerank(network_graph,
                               max_iter=int(os.getenv("PAGERANK_MAX_ITER")),
-                              personalization=utils.io.read_json_file("scripts/pagerank_personalization.json"))
+                              personalization=utils.io.read_json_file("data/pagerank_personalization.json"))
         LOG.info("Finished constructing page rank")
         utils.io.write_json_file(ranking, PAGERANK_FILE)
         LOG.info("Wrote page rank")

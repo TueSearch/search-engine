@@ -4,17 +4,23 @@ This project contains the source code of the final project from the course moder
 Tübingen.
 
 # Table of Contents
-- [Local set up for development](#local-set-up-for-development)
-- [Remote set up for deployment](#remote-set-up-for-deployment)
-- [Crawler set up at local computer](#crawler-set-up-at-local-computer)
+- [Crawler set up](#crawler-set-up)
 - [Frontend](#frontend)
 
-# Local set up for development
+# Crawler set up
+
+0. Create volumes
+
+
+```bash
+docker volume create database_volume_1
+docker volume create volume_1
+```
 
 1. Tear down everything
 
 ```bash
-./scripts/teardown.sh docker-compose.yml
+./scripts/teardown.sh
 ```
 
 2. Create output directories and initialize environment variables.
@@ -27,44 +33,23 @@ cp -rf example.frontend.env frontend/.env
 3. Start the project locally
 
 ```bash
-./scripts/startup.sh docker-compose.yml
-```
-
-# Remote set up for deployment
-
-3. Start the project on the server. Create external volumes
-
-```bash
-docker volume create prod_tuesearch_database
-docker volume create prod_tuesearch
-```
-
-Change passwords in `.env` and start the containers with
-
-```bash
-./scripts/startup.sh prod.docker-compose.yml
-```
-
-Analog, tear down with
-
-```bash
-./scripts/teardown.sh prod.docker-compose.yml
+./scripts/startup.sh
 ```
 
 # Crawler set up at local computer
 
 Important note: when stop a crawler, stop gracefully so it has time to unreserve its reserved jobs.
 
-1. Add the `.env` file from Discord to the root directory and start the crawler with
+1. Move the same `.env` file from server to local.
 
 ```bash
-docker-compose -f docker-compose.yml up loop_worker
+docker-compose up --build loop_worker
 ```
 
 2. To start more than once crawler, do
 
 ```bash
-docker-compose -f docker-compose.yml  up --build --scale loop_worker=2 loop_worker
+docker-compose up --build --scale loop_worker=2 loop_worker
 ```
 
 Change the number `2` to the number of crawlers you want to start. Start slowly and increase the number of crawlers
@@ -74,13 +59,7 @@ Be polite to other websites and use at most `4` crawlers at the same time to avo
 
 # Frontend
 
-1. Start mock up server
-
-```bash
-docker-compose -f docker-compose.yml up --build backend_mockup_server
-```
-
-and test the mock API at `localhost:4001/search?q=tubingen`
+1. Test the mock API at `localhost:4001/search?q=tubingen`
 
 2. Install dependencies
 
