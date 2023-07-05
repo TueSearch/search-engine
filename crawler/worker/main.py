@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from playhouse.shortcuts import model_to_dict
 from requests.adapters import HTTPAdapter, Retry
 from requests_html import HTMLSession
+from urllib3.exceptions import InsecureRequestWarning
 
 from crawler import utils
 from crawler.worker import url_relevance
@@ -24,6 +25,9 @@ from crawler.worker.url_relevance import URL
 from crawler.sql_models.base import dotdict
 from crawler.sql_models.document import Document
 from crawler.sql_models.job import Job
+import urllib3
+
+urllib3.disable_warnings(InsecureRequestWarning)
 
 load_dotenv()
 

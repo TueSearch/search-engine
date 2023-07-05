@@ -113,8 +113,6 @@ def get_document_approximated_relevance_score_for(url: 'URL', document: 'Documen
     if isinstance(url, str):
         from crawler.worker.url_relevance import URL
         url = URL(url)
-    if url.count_tuebingen_in_url > 0:
-        tubingen_score += 1
     if tubingen_score == 0:
         return -1
     url_relevance_score = 0

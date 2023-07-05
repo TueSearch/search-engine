@@ -27,4 +27,4 @@ def ml_predict_url_relevance(url: 'URL'):
     """
     xgb_classifier, vectorizer = read_model()
     features = prepare_urls_for_models([url.url_tokens], [url.anchor_text_tokens])
-    return xgb_classifier.predict(vectorizer.transform(features))[0]
+    return int(xgb_classifier.predict(vectorizer.transform(features))[0])
