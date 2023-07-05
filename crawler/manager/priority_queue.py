@@ -1,12 +1,20 @@
 """
 This module manages the priority queue of URLs to be crawled.
 """
+import os
+import random
+
+from dotenv import load_dotenv
 
 from crawler import utils
+from crawler.manager.lock import lock
 from crawler.sql_models.base import execute_query_and_return_objects, DATABASE
 from crawler.sql_models.job import Job
-from crawler.manager.lock import lock
+
 LOG = utils.get_logger(__file__)
+
+load_dotenv()
+PRIORITY_QUEUE_RANDOMIZED_PROBABILITY = float(os.getenv("PRIORITY_QUEUE_RANDOMIZED_PROBABILITY"))
 
 
 class PriorityQueue:
@@ -87,7 +95,10 @@ FROM jobs where done = 0 and being_crawled = 0 ORDER BY priority DESC LIMIT {n_j
 
         with DATABASE.atomic() as transaction:
             try:
-                jobs = list(PriorityQueue.get_one_highest_priority_job_from_each_server(n_jobs))
+                if random.random() < PRIORITY_QUEUE_RANDOMIZED_PROBABILITY:
+                    jobs = list(PriorityQueue.get_from_random_servers_one_highest_priority_job(n_jobs))
+                else:
+                    jobs = list(PriorityQueue.get_one_highest_priority_job_from_each_server(n_jobs))
                 LOG.info(f"Retrieved from database: {jobs}")
                 for job in jobs:
                     Job.update(being_crawled=True).where(Job.id == job.id).execute()
