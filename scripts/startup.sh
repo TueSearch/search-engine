@@ -19,9 +19,7 @@ docker-compose up --build -d backend_server
 docker-compose up --build -d backend_mockup_server
 curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4000/search?q=tubingen"
 curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4001/search?q=tubingen"
-if [ $# = 1 ]; then
-  docker-compose up --build -d frontend_server
-fi
+docker-compose up --build -d frontend_server
 
 if [ $# -ge 1 ] && [ "$1" = "test" ]; then
   touch pytest-results.xml
