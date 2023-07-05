@@ -47,7 +47,9 @@ services:
   # MySQL models
   ############################################################
   prod_mysql:
-    image: ghcr.io/tuesearch/search-engine/database-server:latest
+    build:
+      context: .
+      dockerfile: docker/database.Dockerfile
     container_name: prod_mysql
     restart: always
     env_file:
