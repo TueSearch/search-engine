@@ -145,14 +145,18 @@ class Crawler:
         """
         new_document, urls = None, []
         try:  # First, try a cheaper static version.
+            LOG.info("Start static crawling")
             new_document, urls = self.crawl_assume_website_is_static()
+            LOG.info(f"Crawling static successed")
         except Exception as exception:
             LOG.error(f"Failed: Crawled static version of {self.current_job.url} unsucessfully: {str(exception)}")
             traceback.print_exc()
 
         if new_document is None or not new_document.relevant:
             try:  # If not successful, try static version with vanilla requests.
+                LOG.info("Start dynamic crawling")
                 new_document, urls = self.crawl_assume_website_is_dynamic()
+                LOG.info(f"Crawling dynamic successed")
             except Exception as exception:
                 LOG.error(f"Failed: Crawled dynamic version of {self.current_job.url} unsucessfully: {str(exception)}")
         return new_document, urls
@@ -231,6 +235,7 @@ class Crawler:
                     time.sleep(1)
                     LOG.info(f"Crawl new job {self.current_job}")
                     self.new_document, self.new_relevant_urls = self.crawl()
+                    LOG.info(f"Crawl finished {self.current_job}")
                     if self.new_document is not None:
                         self.new_jobs = Crawler.create_jobs_from_worker_to_master(relevant_links=self.new_relevant_urls)
                         self.new_document = json.dumps(model_to_dict(self.new_document))
