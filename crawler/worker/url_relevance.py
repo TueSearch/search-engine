@@ -285,7 +285,7 @@ class URL:
         if ml_predict_url_relevance(self) == 1:
             total_points += 30
         else:
-            total_points -= 20
+            total_points -= 5
         return total_points
 
     @functools.cached_property
