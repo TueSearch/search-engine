@@ -60,7 +60,7 @@ def does_text_contain_tuebingen(text: str):
 
 @functools.lru_cache(maxsize=1)
 def get_always_keep_documents():
-    with open("scripts/always_keep_documents.json", "r") as f:
+    with open("data/always_keep_documents.json", "r") as f:
         return set(json.load(f))
 
 
