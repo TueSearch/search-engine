@@ -8,8 +8,8 @@ if [ "$1" == "docker-compose.yml" ]; then
      chmod 777 pytest-results.xml
   fi
   docker-compose -f "$1" down -v
-  docker-compose -f "$1" up --build -d mysql mysql
-  docker-compose -f "$1" up --build -d phpmyadmin phpmyadmin
+  docker-compose -f "$1" up --build -d mysql
+  docker-compose -f "$1" up --build -d phpmyadmin
   sleep 10
   docker-compose -f "$1" up --build --exit-code-from initialize_database initialize_database
   docker-compose -f "$1" up -d --build manager
@@ -24,13 +24,13 @@ if [ "$1" == "docker-compose.yml" ]; then
   fi
 elif [ "$1" == "prod.docker-compose.yml" ]; then
   docker-compose -f "$1" down
-  docker-compose -f "$1" up --build -d prod_mysql prod_mysql
+  docker-compose -f "$1" up --build -d prod_mysql
+  docker-compose -f "$1" up --build -d prod_phpmyadmin
   sleep 10
   docker-compose -f "$1" up --build --exit-code-from prod_initialize_database prod_initialize_database
   docker-compose -f "$1" up --build -d prod_backend_server
   docker-compose -f "$1" up --build -d prod_frontend_server
   docker-compose -f "$1" up --build -d prod_nginx
-  docker-compose -f "$1" up --build -d prod_phpmyadmin
   docker-compose -f "$1" up -d --build prod_manager
 else
   echo "Unknown docker-compose file: $1"
