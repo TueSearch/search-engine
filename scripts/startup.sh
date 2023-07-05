@@ -4,9 +4,7 @@ set -e
 
 docker-compose down -v
 docker-compose up --build -d mysql
-if [ $# = 1 ]; then
-  docker-compose up --build -d phpmyadmin
-fi
+docker-compose up --build -d phpmyadmin
 sleep 10
 docker-compose up --build --exit-code-from train_url_classifier train_url_classifier
 docker-compose up --build --exit-code-from initialize_database initialize_database
