@@ -6,8 +6,10 @@ import json
 import os
 
 import peewee
+import urllib3
 from dotenv import load_dotenv
 from playhouse.shortcuts import model_to_dict
+from urllib3.exceptions import InsecureRequestWarning
 
 from crawler import utils
 from crawler.manager.server_importance import server_importance
@@ -16,6 +18,9 @@ from crawler.worker.url_relevance import URL
 from crawler.sql_models.base import BaseModel, DATABASE
 from crawler.sql_models.job import Job
 from crawler.utils.log import get_logger
+
+# Disable the warning
+urllib3.disable_warnings(InsecureRequestWarning)
 
 load_dotenv()
 LOG = get_logger(__name__)
@@ -67,7 +72,6 @@ def initialize_seed_with_serp():
     """
     batch = []
     for result in utils.io.read_json_file("scripts/serp.json").values():
-        Job.insert_many(batch).on_conflict_ignore().execute()
         for entry in result[("news" if "news" in result else "organic")]:
             url = URL(entry["link"])
             batch.append(url)

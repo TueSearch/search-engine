@@ -14,7 +14,7 @@ import requests
 MAX_CONNECTION_LENGTH = 30
 
 
-class Timeout:
+class Timeout():
     """ Timeout for use with the `with` statement. """
 
     class TimeoutException(Exception):
@@ -30,7 +30,7 @@ class Timeout:
         """
         raise Timeout.TimeoutException()
 
-    def __init__(self, timeout=MAX_CONNECTION_LENGTH):
+    def __init__(self, timeout=30):
         self.timeout = timeout
         signal.signal(signal.SIGALRM, Timeout._timeout)
 
@@ -39,4 +39,4 @@ class Timeout:
 
     def __exit__(self, exc_type, exc_value, traceback):
         signal.alarm(0)
-        raise requests.Timeout("The request took too long. Manually exit!")
+        return exc_type is Timeout.TimeoutException

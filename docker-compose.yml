@@ -22,6 +22,19 @@ services:
     networks:
       - mysql_net
   ############################################################
+  # phpmyadmin
+  ############################################################
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    env_file:
+      - .env
+    restart: always
+    networks:
+      - mysql_net
+    ports:
+      - '8080:80'
+  ############################################################
   # Initialize models.
   # Feed the models with initial jobs and initial documents.
   # Will run once.

@@ -93,7 +93,7 @@ class Crawler:
         """
         Try to obtain the HTML of a static website.
         """
-        with Timeout(timeout=15):
+        with Timeout():
             session = requests.Session()
             session.mount('http://', HTTPAdapter(max_retries=RETRIES))
             session.mount('https://', HTTPAdapter(max_retries=RETRIES))
