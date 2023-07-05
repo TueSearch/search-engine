@@ -23,9 +23,6 @@ TFIDF_VECTORIZER_FILE = os.getenv("TFIDF_VECTORIZER_FILE")
 TFIDF_NGRAM_RANGE = tuple(json.loads(os.getenv("TFIDF_NGRAM_RANGE")))
 LOG = utils.get_logger(__file__)
 
-TFIDF_CANONICAL_ORDERING = ["title", "meta_description", "meta_keywords", "meta_author", "h1", "h2", "h3", "h4", "h5",
-                            "h6", "body"]
-
 
 class Tfidf(BaseModel):
     """

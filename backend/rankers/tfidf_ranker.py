@@ -6,19 +6,23 @@ from collections import defaultdict
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from backend.vector_spaces.tfidf import read_tfidf_vectorizers, Tfidf, TFIDF_CANONICAL_ORDERING
+from backend.vector_spaces.tfidf import read_tfidf_vectorizers, Tfidf
 from crawler import utils
 
 LOG = utils.get_logger(__file__)
 
 VECTORIZERS: dict[str, TfidfVectorizer] = read_tfidf_vectorizers()
-VECTOR_SPACE_WEIGHTS = dict(zip(TFIDF_CANONICAL_ORDERING, np.arange(1, len(VECTORIZERS) + 1)[::-1]))
+VECTOR_SPACE_WEIGHTS = {"title": 10, "meta_description": 5, "meta_keywords": 5, "meta_author": 5, "h1": 10, "h2": 8,
+                        "h3": 6, "h4": 4, "h5": 2,
+                        "h6": 1, "body": 1
+                        }
 
 
 class TFIDFRanker:
     """
     This class is responsible for ranking documents based on their TF-IDF scores.
     """
+
     def __init__(self, query_tokens: list[str], matches_in_vector_spaces: dict[str, list[int]]):
         self.query_tokens = query_tokens
         self.matches_in_vector_spaces = matches_in_vector_spaces
@@ -59,7 +63,8 @@ class TFIDFRanker:
             doc_vectors = tfidf.not_null_vectors()
             if vector_space_name in doc_vectors:
                 doc_vector = doc_vectors[vector_space_name]
-                LOG.info(f"Cosine similarity of {query_vector.shape=}, {type(query_vector)=}, {doc_vector.shape=}, {type(doc_vector)=}")
+                LOG.info(
+                    f"Cosine similarity of {query_vector.shape=}, {type(query_vector)=}, {doc_vector.shape=}, {type(doc_vector)=}")
                 cosine_sim = query_vector.multiply(doc_vector).sum()
                 LOG.info(f"{cosine_sim.shape=}, {type(cosine_sim)=}")
                 self.final_scores[tfidf.id] += weight * cosine_sim

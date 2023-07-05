@@ -33,12 +33,15 @@ def train_lda_vectorizer():
     This function trains a LDA model on the TF-IDF vectors of the documents.
     """
     lda_model = LatentDirichletAllocation(n_components=7, random_state=42, max_iter=10, learning_method='online')
+    LOG.info("Training LDA model...")
     for tfidf in tqdm(Tfidf.select()):
         try:
             lda_model.fit(tfidf.body)
         except Exception as error:
             LOG.error(f"Error while training LDA model: {error}")
+    LOG.info("Saving LDA model...")
     utils.io.write_pickle_file(lda_model, os.getenv('LDA_MODEL_FILE'))
+    LOG.info(f"Done saving LDA model at {os.getenv('LDA_MODEL_FILE')}.")
 
 
 def read_lda_model():
