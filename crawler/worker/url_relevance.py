@@ -282,8 +282,10 @@ class URL:
                                                                                                     self.parent)
         total_points += 10 ** 5 * self.get_initial_queue_list_appearance
         total_points += 20 * int(self.contains_bonus_patterns)
-        total_points += 30 * ml_predict_url_relevance(self)
-
+        if ml_predict_url_relevance(self) == 1:
+            total_points += 30
+        else:
+            total_points -= 20
         return total_points
 
     @functools.cached_property
