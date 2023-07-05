@@ -9,7 +9,7 @@ from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.feature_extraction.text import CountVectorizer
 from tqdm import tqdm
 
-from backend.streamers import DocumentBodyStringStreamer
+from backend.streamers import DocumentBodyStringStreamer, DocumentStreamer
 from crawler import utils
 from crawler.sql_models.base import BaseModel, PickleField
 
@@ -60,9 +60,11 @@ def lda_vectorize_indexed_documents():
     This function vectorizes a document using the LDA model.
     """
     vectorizer, lda_model = read_lda_model()
-    for body in tqdm(DocumentBodyStringStreamer()):
+    for doc in tqdm(DocumentStreamer()):
         try:
-            lda = Lda(probabilities=lda_model.transform(vectorizer.transform([body]))[0])
+            text = " ".join(doc.body_tokens)
+            count_vector = vectorizer.transform([text])
+            lda = Lda(id=doc.id, probabilities=lda_model.transform(count_vector)[0])
             lda.save()
         except Exception as error:
             LOG.error(f"Error while LDA-vectorizing document: {error}")
