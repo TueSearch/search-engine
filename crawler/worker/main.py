@@ -97,7 +97,7 @@ class Crawler:
         session = requests.Session()
         session.mount('http://', HTTPAdapter(max_retries=RETRIES))
         session.mount('https://', HTTPAdapter(max_retries=RETRIES))
-        LOG.info(f"Start sending request to {self.current_job.url}")
+        LOG.info(f"Start sending request to {self.current_job.url} with time out {CRAWL_TIMEOUT}")
         response = session.get(self.current_job.url, timeout=CRAWL_TIMEOUT, headers=HEADERS)
         if not response.ok:
             raise Exception(
