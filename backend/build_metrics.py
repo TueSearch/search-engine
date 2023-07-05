@@ -10,7 +10,8 @@ Usage:
 from dotenv import load_dotenv
 
 from backend.rankers import page_rank
-from backend.vector_spaces.tfidf import train_tf_idf_vectorizer, tfidf_vectorize_indexed_documents
+from backend.vector_spaces.lda import train_lda_vectorizer, lda_vectorize_indexed_documents
+from backend.vector_spaces.tfidf import train_tfidf_vectorizer, tfidf_vectorize_indexed_documents
 from crawler import utils
 from crawler.sql_models.base import connect_to_database
 
@@ -24,8 +25,13 @@ def main():
     Builds the ranker model.
     """
     connect_to_database()
-    train_tf_idf_vectorizer()
+
+    train_tfidf_vectorizer()
     tfidf_vectorize_indexed_documents()
+
+    train_lda_vectorizer()
+    lda_vectorize_indexed_documents()
+
     page_rank.construct_directed_link_graph_from_crawled_documents()
     page_rank.construct_page_rank_of_servers_from_directed_graph()
     page_rank.update_page_rank_of_servers_in_database()

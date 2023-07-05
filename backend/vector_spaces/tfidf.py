@@ -81,7 +81,7 @@ class Tfidf(BaseModel):
         return returned_vectors
 
 
-def train_tf_idf_vectorizer():
+def train_tfidf_vectorizer():
     """
     Train the TF-IDF vectorizer using the relevant document tokens.
 

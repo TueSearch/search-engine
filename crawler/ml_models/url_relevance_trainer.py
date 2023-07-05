@@ -53,10 +53,13 @@ def train_model():
         anchor_text_tokenized = column_anchor_text_tokenized.apply(lambda x: json.loads(x))
         return prepare_urls_for_models(url_tokenized, anchor_text_tokenized)
 
-    df = pd.read_csv("data/urls_relevance_dataset.csv")
+    x_data = []
+    y_data = []
+    for file in os.listdir("data/url_relevance_classification_data"):
+        df = pd.read_csv(f"data/url_relevance_classification_data/{file}")
+        x_data.extend(prepare_input_to_train(df['url_tokens'], df['anchor_text_tokens']))
+        y_data.extend(list(df['relevant']))
 
-    x_data = prepare_input_to_train(df['url_tokens'], df['anchor_text_tokens'])
-    y_data = df['relevant']
     X_train, X_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.2, random_state=42)
 
     # Create a CountVectorizer to convert text into numerical features

@@ -41,7 +41,7 @@ services:
       dockerfile: docker/backend.Dockerfile
     container_name: train_url_classifier
     restart: 'on-failure'
-    command: 'python3 -m crawler.worker.url_ml_predictor.trainer'
+    command: 'python3 -m crawler.ml_models.url_relevance_trainer'
     env_file:
       - .env
     networks:
@@ -213,7 +213,7 @@ services:
       dockerfile: docker/backend.Dockerfile
     container_name: run_unit_tests
     restart: 'no'
-    command: './scripts/run-tests.sh'
+    command: './scripts/run_tests.sh'
     env_file:
       - .env
     volumes:

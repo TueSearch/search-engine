@@ -13,8 +13,10 @@ curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:6000"
 if [ $# -ge 1 ] && [ "$1" = "test" ]; then
   docker-compose up --build --exit-code-from worker worker
 fi
-docker-compose up --build --exit-code-from build_index build_index
-docker-compose up --build --exit-code-from build_metrics build_metrics
+if [ $# -ge 1 ] && [ "$1" = "test" ]; then
+  docker-compose up --build --exit-code-from build_index build_index
+  docker-compose up --build --exit-code-from build_metrics build_metrics
+fi
 docker-compose up --build -d backend_server
 docker-compose up --build -d backend_mockup_server
 curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4000/search?q=tubingen"

@@ -20,7 +20,7 @@ docker volume create volume_1
 1. Tear down everything
 
 ```bash
-./scripts/teardown.sh
+./scripts/tear_down.sh
 ```
 
 2. Create output directories and initialize environment variables.
@@ -33,7 +33,7 @@ cp -rf example.frontend.env frontend/.env
 3. Start the project locally
 
 ```bash
-./scripts/startup.sh
+./scripts/start_up.sh
 ```
 
 # Crawler set up at local computer

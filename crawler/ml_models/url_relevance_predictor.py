@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 from crawler import utils
 from crawler.utils import get_logger
-from crawler.worker.url_ml_predictor.trainer import prepare_urls_for_models
+from crawler.ml_models.url_relevance_trainer import prepare_urls_for_models
 
 LOG = get_logger(__name__)
 load_dotenv()

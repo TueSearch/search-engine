@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS ldas
+(
+    id            BIGINT PRIMARY KEY,
+    probabilities LONGBLOB,
+    FOREIGN KEY (id) REFERENCES documents (id) ON DELETE CASCADE ON UPDATE CASCADE
+);
