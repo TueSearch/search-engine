@@ -7,10 +7,10 @@ This could also be done at client side but I decided not to to save time.
 """
 from crawler.sql_models.server import Server
 
-SUCCESS_BONUS = 20
-RELEVANT_BONUS = 20
+SUCCESS_BONUS = 10
+RELEVANT_BONUS = 10
 
-SUCCESS_PENALTY = 50
+SUCCESS_PENALTY = 150
 RELEVANT_PENALTY = 100
 
 THRESHOLD = 0.05
