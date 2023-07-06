@@ -5,6 +5,7 @@ Tübingen.
 
 # Table of Contents
 - [Crawler manager, backend, etc. set up](#crawler-manager-backend-etc-set-up)
+- [Taking care of index and models](#taking-care-of-index-and-models)
 - [Frontend](#frontend)
 
 # Crawler manager, backend, etc. set up
@@ -21,11 +22,7 @@ Tübingen.
 ./scripts/start_up.sh bootstrap
 ```
 
-Any further time
-
-```bash
-./scripts/start_up.sh
-```
+Any further time, the keyword `bootstrap` can be left out.
 
 3. Run the crawler
 
@@ -40,6 +37,34 @@ gracefully to see if everything works fine. Be polite to other websites and use 
 
 ```bash
 ./scripts/stop_crawlers.sh
+```
+
+# Taking care of index and models
+
+Regularly the index for the search engine must be updated. Also the prediction model for URL's relevance must be fed with new data.
+
+1. Update the index.
+
+```bash
+./scripts/update_index.sh
+```
+
+2. Update the mtrics.
+
+```bash
+./scripts/update_metrics.sh
+```
+
+3. Update the ML model and priority of jobs in the queue with new data. 
+
+```bash
+./scripts/update_priority.sh
+```
+
+4. Start the services, again
+
+```bash
+./scripts/start_up.sh
 ```
 
 # Frontend
