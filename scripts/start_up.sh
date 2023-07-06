@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
+# Run on host
 
 set -e
 
+if [ $# -ge 1 ] && [ "$1" = "bootstrap" ]; then
+  docker volume create database_volume_2
+  docker volume create volume_2
+fi
 docker-compose down -v
 docker-compose up --build -d mysql
 docker-compose up --build -d phpmyadmin
@@ -21,7 +26,7 @@ docker-compose up --build -d backend_server
 docker-compose up --build -d backend_mockup_server
 curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4000/search?q=tubingen"
 curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4001/search?q=tubingen"
-docker-compose up --build -d frontend_server
+#docker-compose up --build -d frontend_server
 
 if [ $# -ge 1 ] && [ "$1" = "bootstrap" ]; then
   touch pytest-results.xml

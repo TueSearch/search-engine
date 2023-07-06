@@ -24,7 +24,7 @@ load_dotenv()
 
 N_ESTIMATOR = int(os.getenv("CRAWLER_URL_ML_N_ESTIMATOR"))
 MAX_DEPTH = int(os.getenv("CRAWLER_URL_ML_MAX_DEPTH"))
-
+CRAWLER_URL_ML_CLASSIFIER_MIN_QUALITY = float(os.getenv("CRAWLER_URL_ML_CLASSIFIER_MIN_QUALITY"))
 
 def prepare_urls_for_models(url_tokens_batch: list[list[str]], anchor_text_tokens_batch: list[list[str]]) -> list[str]:
     """
@@ -60,30 +60,30 @@ def train_model():
         x_data.extend(prepare_input_to_train(df['url_tokens'], df['anchor_text_tokens']))
         y_data.extend(list(df['relevant']))
 
-    X_train, X_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.2, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.2, random_state=42)
 
     # Create a CountVectorizer to convert text into numerical features
     vectorizer = CountVectorizer()
 
     # Fit and transform the training data
-    X_train_vectorized = vectorizer.fit_transform(X_train)
-    X_test_vectorized = vectorizer.transform(X_test)
+    x_train_vectorized = vectorizer.fit_transform(x_train)
+    x_test_vectorized = vectorizer.transform(x_test)
 
     # Train an Extreme Gradient Boosting (XGBoost) classifier
     xgb_classifier = XGBClassifier(n_estimators=N_ESTIMATOR, max_depth=MAX_DEPTH)
-    xgb_classifier.fit(X_train_vectorized, y_train)
+    xgb_classifier.fit(x_train_vectorized, y_train)
 
     # Predict the relevance of the documents
-    y_pred = xgb_classifier.predict(X_test_vectorized)
+    y_pred = xgb_classifier.predict(x_test_vectorized)
 
     # Calculate evaluation metrics
     report_dict = classification_report(y_test, y_pred, output_dict=True)
     LOG.info("Training Report:")
     LOG.info(report_dict)
-    all_greater_than_09 = all(value > 0.9 for value in report_dict['weighted avg'].values())
+    all_greater_than_09 = all(value > CRAWLER_URL_ML_CLASSIFIER_MIN_QUALITY for value in report_dict['weighted avg'].values())
 
     if not all_greater_than_09:
-        raise Exception("Some metrics in the report are not greater than 0.9.")
+        raise Exception(f"Some metrics in the report are not greater than {CRAWLER_URL_ML_CLASSIFIER_MIN_QUALITY}.")
 
     # Train on every thing
     vectorizer = CountVectorizer()

@@ -77,7 +77,7 @@ services:
       dockerfile: docker/backend.Dockerfile
     container_name: update_priority
     restart: 'on-failure'
-    command: 'python3 -m scripts.update_priority'
+    command: 'python3 -m backend.update_priority'
     env_file:
       - .env
     networks:
@@ -151,7 +151,7 @@ services:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
-    container_name: build_index
+    container_name: update_index
     restart: 'on-failure'
     command: 'python3 -m backend.update_index'
     env_file:
@@ -207,7 +207,7 @@ services:
     ports:
       - '4001:4001'
     restart: 'always'
-    command: 'python3 -m scripts.mockup_server'
+    command: 'python3 -m backend.app_mock'
   ############################################################
   # Start frontend.
   # Persistent process.

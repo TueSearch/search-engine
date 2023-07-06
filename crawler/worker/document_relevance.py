@@ -60,8 +60,8 @@ def does_text_contain_tuebingen(text: str):
 
 @functools.lru_cache(maxsize=1)
 def get_always_keep_documents():
-    with open("data/always_keep_documents.json", "r") as f:
-        return set(json.load(f))
+    with open("data/always_keep_documents.json", "r", encoding="utf-8") as file:
+        return set(json.load(file))
 
 
 def has_lang_en(html_content: str) -> bool:

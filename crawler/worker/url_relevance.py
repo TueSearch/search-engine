@@ -17,7 +17,6 @@ from crawler import utils
 from crawler.sql_models.document import Document
 from crawler.utils import text
 from crawler.utils.text import make_text_human_readable
-from crawler.worker.document_relevance import get_document_approximated_relevance_score_for
 from crawler.ml_models.url_relevance_predictor import ml_predict_url_relevance
 
 load_dotenv()

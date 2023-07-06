@@ -9,8 +9,6 @@ Usage:
 """
 import signal
 
-import requests
-
 MAX_CONNECTION_LENGTH = 30
 
 
@@ -20,7 +18,7 @@ class Timeout():
     class TimeoutException(Exception):
         """ Simple Exception to be called on timeouts. """
 
-    def _timeout(signum, frame):
+    def _timeout(self, frame):
         """ Raise an TimeoutException.
 
         This is intended for use as a signal handler.

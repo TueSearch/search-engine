@@ -1,4 +1,5 @@
 #!/bin/bash
+# Run in container
 
 set -e
 python3 -m pylint --rcfile=.pylintrc crawler

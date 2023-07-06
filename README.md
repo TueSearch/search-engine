@@ -9,20 +9,13 @@ Tübingen.
 
 # Crawler manager, backend, etc. set up
 
-0. Create volumes and set up `.env` file.
-
-```bash
-docker volume create database_volume_2
-docker volume create volume_2
-```
-
 1. Tear down everything
 
 ```bash
 ./scripts/tear_down.sh
 ```
 
-2. Start the project. If the project is started for the first time on the computer, run 
+2. Start the project. If the project starts for the first time, run 
 
 ```bash
 ./scripts/start_up.sh bootstrap
@@ -37,11 +30,17 @@ Any further time
 3. Run the crawler
 
 ```bash
-docker-compose up --build --scale loop_worker=2 loop_worker
+./scripts/start_crawlers.sh 2
 ```
 
 Change the number `2` to the number of crawlers you want to start. Start slowly and increase the number of crawlers
 gracefully to see if everything works fine. Be polite to other websites and use at most `4` crawlers at the same time to avoid overloading the crawled websites.
+
+4. Stop the crawler
+
+```bash
+./scripts/stop_crawlers.sh
+```
 
 # Frontend
 
