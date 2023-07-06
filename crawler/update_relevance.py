@@ -17,9 +17,9 @@ def update_relevance_of_documents_in_database():
     """
     updated = 0
     LOG.info(f"Starting to update relevance of documents in database.")
-    query = Document.select()
-    total = query.count()
-    for document in query:
+    total =  Document.select().count()
+    LOG.info(f"Count {total}. This might take a while!")
+    for document in Document.select().iterator():
         url = document.job["url"]
         try:
             document.relevant = is_document_relevant(URL(url), document)

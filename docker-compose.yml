@@ -16,7 +16,7 @@ services:
     env_file:
       - .env
     volumes:
-      - database_volume_2:/var/lib/mysql
+      - prod_tuesearch_database:/var/lib/mysql
     networks:
       - mysql_net
   ############################################################
@@ -47,7 +47,7 @@ services:
     networks:
       - mysql_net
     volumes:
-      - volume_2:/opt/tuesearch
+      - prod_tuesearch:/opt/tuesearch
   ############################################################
   # Initialize models.
   # Feed the models with initial jobs and initial documents.
@@ -65,7 +65,7 @@ services:
     networks:
       - mysql_net
     volumes:
-      - volume_2:/opt/tuesearch
+      - prod_tuesearch:/opt/tuesearch
   ############################################################
   # Initialize models.
   # Feed the models with initial jobs and initial documents.
@@ -83,7 +83,7 @@ services:
     networks:
       - mysql_net
     volumes:
-      - volume_2:/opt/tuesearch
+      - prod_tuesearch:/opt/tuesearch
   ############################################################
   # Initialize models.
   # Feed the models with initial jobs and initial documents.
@@ -101,7 +101,7 @@ services:
     networks:
       - mysql_net
     volumes:
-      - volume_2:/opt/tuesearch
+      - prod_tuesearch:/opt/tuesearch
   ############################################################
   # Start manager.
   ############################################################
@@ -134,7 +134,7 @@ services:
     networks:
       - mysql_net
     volumes:
-      - volume_2:/opt/tuesearch
+      - prod_tuesearch:/opt/tuesearch
   ############################################################
   # Start the worker in loop.
   #
@@ -161,7 +161,7 @@ services:
     networks:
       - mysql_net
     volumes:
-      - volume_2:/opt/tuesearch
+      - prod_tuesearch:/opt/tuesearch
   ############################################################
   # Build indexer.
   ############################################################
@@ -175,7 +175,7 @@ services:
     env_file:
       - .env
     volumes:
-      - volume_2:/opt/tuesearch
+      - prod_tuesearch:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
@@ -191,7 +191,7 @@ services:
     env_file:
       - .env
     volumes:
-      - volume_2:/opt/tuesearch
+      - prod_tuesearch:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
@@ -210,7 +210,7 @@ services:
     env_file:
       - .env
     volumes:
-      - volume_2:/opt/tuesearch
+      - prod_tuesearch:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
@@ -278,9 +278,9 @@ services:
     networks:
       - mysql_net
 volumes:
-  database_volume_2:
+  prod_tuesearch_database:
     external: true
-  volume_2:
+  prod_tuesearch:
     external: true
 networks:
   mysql_net:
