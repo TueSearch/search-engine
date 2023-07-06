@@ -35,7 +35,7 @@ def server_importance(server_id: int):
     """
     priority = 0
     server = Server.select().where(Server.id == server_id).get()
-    priority += min(5, server.page_rank * 5)
+    priority += min(10, server.page_rank * 10)
     if server.total_done_jobs > 0:
         success_ratio = server.success_jobs / server.total_done_jobs
         relevant_ratio = server.relevant_documents / server.total_done_jobs

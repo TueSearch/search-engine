@@ -40,12 +40,6 @@ def get_blocked_patterns():
         return json.loads(f.read())
 
 
-@functools.lru_cache
-def get_bonus_patterns():
-    with open("data/bonus_patterns.json", "r") as f:
-        return json.loads(f.read())
-
-
 class URL:
     def __init__(self, url: str,
                  parent: Document = None,
@@ -241,16 +235,6 @@ class URL:
         return False
 
     @functools.cached_property
-    def contains_bonus_patterns(self) -> bool:
-        """
-        Check if the URL contains blocked patterns.
-        """
-        for pattern in get_bonus_patterns():
-            if pattern in self.url:
-                return True
-        return False
-
-    @functools.cached_property
     def priority(self) -> int:
         """
         Returns the priority of the URL.
@@ -266,13 +250,9 @@ class URL:
 
         total_points = 0
 
-        total_points += 0 if self.parent is None else get_document_approximated_relevance_score_for(self.url,
-                                                                                                    self.parent)
-        total_points += 20 * int(self.contains_bonus_patterns)
         if ml_predict_url_relevance(self) == 1:
             total_points += 30
-        else:
-            total_points -= 20
+
         return total_points
 
     @functools.cached_property
