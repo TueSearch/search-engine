@@ -57,7 +57,7 @@ def insert_initial_jobs_into_databases(relevant_links: list['URL']):
         job = Job(url=link.url,
                   server=server_id,
                   url_tokens=link.url_tokens,
-                  priority=server_importance(server_id) + URL(link.url).priority,
+                  priority=server_importance(server_id) + URL(link.url).priority + 10 ** 5,
                   anchor_text=link.anchor_text,
                   anchor_text_tokens=link.anchor_text_tokens,
                   surrounding_text=link.surrounding_text,

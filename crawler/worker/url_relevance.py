@@ -231,18 +231,6 @@ class URL:
         return test1() and test2()
 
     @functools.cached_property
-    def get_initial_queue_list_appearance(self) -> int:
-        """
-        Return a bonus if the URL is in the initial queue list.
-        """
-        from scripts.initialize_database import get_seed_jobs
-        count = 0
-        for priority_url in get_seed_jobs():
-            if priority_url in self.url:
-                count += 1
-        return count
-
-    @functools.cached_property
     def contains_blocked_patterns(self) -> bool:
         """
         Check if the URL contains blocked patterns.
@@ -280,7 +268,6 @@ class URL:
 
         total_points += 0 if self.parent is None else get_document_approximated_relevance_score_for(self.url,
                                                                                                     self.parent)
-        total_points += 10 ** 5 * self.get_initial_queue_list_appearance
         total_points += 20 * int(self.contains_bonus_patterns)
         if ml_predict_url_relevance(self) == 1:
             total_points += 30
