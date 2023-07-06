@@ -2,11 +2,9 @@
 This script updates the priority of all jobs in the database.
 """
 from playhouse.shortcuts import model_to_dict
-from tqdm import tqdm
 
 from crawler import utils
 from crawler.manager.server_importance import server_importance
-from crawler.ml_models import url_relevance_trainer
 from crawler.sql_models.job import Job
 from crawler.worker.url_relevance import URL
 
@@ -17,7 +15,8 @@ def update_priority_of_jobs_in_database():
     """
     Updates the priority of all jobs in the database.
     """
-    for job in tqdm(Job.select().where(Job.done == False)):
+    LOG.info(f"Starting to update priority of jobs in database.")
+    for job in Job.select().where(Job.done == False):
         try:
             before = job.priority
             job.priority = server_importance(job.server_id) + URL(job.url).priority
@@ -29,5 +28,4 @@ def update_priority_of_jobs_in_database():
 
 
 if __name__ == '__main__':
-    url_relevance_trainer.train_model()
     update_priority_of_jobs_in_database()
