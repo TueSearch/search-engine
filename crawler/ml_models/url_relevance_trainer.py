@@ -63,7 +63,7 @@ def train_model():
     x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.2, random_state=42)
 
     # Create a CountVectorizer to convert text into numerical features
-    vectorizer = CountVectorizer(min_df=2)
+    vectorizer = CountVectorizer(min_df=2, ngram_range=(1, 2))
 
     # Fit and transform the training data
     x_train_vectorized = vectorizer.fit_transform(x_train)
