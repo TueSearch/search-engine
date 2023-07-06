@@ -76,10 +76,15 @@ def has_lang_en(html_content: str) -> bool:
         return False
 
 
-def get_document_approximated_relevance_score_for(url: 'URL', document: 'Document'):
+def is_document_relevant(url: 'URL', document: 'Document'):
+    """Classify the relevance of a crawled document.
+
+    Args:
+        document (Document): The crawled document to be classified.
+    """
     for always_keep_document in get_always_keep_documents():
         if always_keep_document in str(url):
-            return 100
+            return True
 
     text_fields = [
         document.body,
@@ -100,28 +105,25 @@ def get_document_approximated_relevance_score_for(url: 'URL', document: 'Documen
         document.h6_tokens
     ]
 
+    # Must contain english content.
     english_score = int(has_lang_en(document.html))
     for field in text_fields:
         english_score += utils.text.do_text_contain_english_content(field)
     if english_score == 0:
-        return -1
+        return False
+
+    # Must contain Tübingen.
     tubingen_score = 0
     for field in json_fields:
         tubingen_score += do_tokens_contain_tuebingen(field)
     tubingen_score += int(does_text_contain_tuebingen(document.body))
+    if tubingen_score == 0:
+        return False
 
+    # Should not be blocked.
     if isinstance(url, str):
         from crawler.worker.url_relevance import URL
         url = URL(url)
     if url.contains_blocked_patterns:
         return -1
-    return english_score + tubingen_score
-
-
-def is_document_relevant(url: 'URL', document: 'Document'):
-    """Classify the relevance of a crawled document.
-
-    Args:
-        document (Document): The crawled document to be classified.
-    """
-    return get_document_approximated_relevance_score_for(url, document) >= 0
+    return 1

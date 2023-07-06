@@ -35,7 +35,7 @@ def prepare_urls_for_models(url_tokens_batch: list[list[str]], anchor_text_token
         url_tokens = [
             token.replace("/", " ").replace("https:", "").replace("http:", "").replace("www", "").replace("tuebingen",
                                                                                                           "tubingen").lower().replace(
-                "%c3%bc", "u").replace("_", " ").replace("-", " ").replace("&", " ").replace(",", " ") for token in url_tokens]
+                "%c3%bc", "u").replace("_", " ").replace("-", " ").replace("&", " ").replace(",", " ").replace("=", " ") for token in url_tokens]
         batch_return.append(" ".join(url_tokens) + " " + " ".join(anchor_text_tokens))
     return batch_return
 
@@ -63,7 +63,7 @@ def train_model():
     x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.2, random_state=42)
 
     # Create a CountVectorizer to convert text into numerical features
-    vectorizer = CountVectorizer()
+    vectorizer = CountVectorizer(min_df=2)
 
     # Fit and transform the training data
     x_train_vectorized = vectorizer.fit_transform(x_train)
