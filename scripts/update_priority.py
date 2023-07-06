@@ -6,10 +6,12 @@ from tqdm import tqdm
 
 from crawler import utils
 from crawler.manager.server_importance import server_importance
+from crawler.ml_models import url_relevance_trainer
 from crawler.sql_models.job import Job
 from crawler.worker.url_relevance import URL
 
 LOG = utils.get_logger(__name__)
+
 
 def update_priority_of_jobs_in_database():
     """
@@ -25,4 +27,5 @@ def update_priority_of_jobs_in_database():
 
 
 if __name__ == '__main__':
+    url_relevance_trainer.train_model()
     update_priority_of_jobs_in_database()

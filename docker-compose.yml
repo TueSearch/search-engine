@@ -67,6 +67,24 @@ services:
     volumes:
       - volume_1:/opt/tuesearch
   ############################################################
+  # Initialize models.
+  # Feed the models with initial jobs and initial documents.
+  # Will run once.
+  ############################################################
+  update_database:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: update_database
+    restart: 'on-failure'
+    command: 'python3 -m scripts.update_database'
+    env_file:
+      - .env
+    networks:
+      - mysql_net
+    volumes:
+      - volume_1:/opt/tuesearch
+  ############################################################
   # Start manager.
   ############################################################
   manager:
