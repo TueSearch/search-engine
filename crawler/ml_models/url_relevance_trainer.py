@@ -78,8 +78,9 @@ def train_model():
 
     # Calculate evaluation metrics
     report_dict = classification_report(y_test, y_pred, output_dict=True)
+    report = classification_report(y_test, y_pred)
     LOG.info("Training Report:")
-    LOG.info(report_dict)
+    LOG.info(report)
     all_greater_than_09 = all(value > CRAWLER_URL_ML_CLASSIFIER_MIN_QUALITY for value in report_dict['weighted avg'].values())
 
     if not all_greater_than_09:
