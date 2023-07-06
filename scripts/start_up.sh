@@ -14,8 +14,8 @@ if [ $# -ge 1 ] && [ "$1" = "bootstrap" ]; then
   docker-compose up --build --exit-code-from worker worker
 fi
 if [ $# -ge 1 ] && [ "$1" = "bootstrap" ]; then
-  docker-compose up --build --exit-code-from build_index build_index
-  docker-compose up --build --exit-code-from build_metrics build_metrics
+  docker-compose up --build --exit-code-from update_index update_index
+  docker-compose up --build --exit-code-from update_metrics update_metrics
 fi
 docker-compose up --build -d backend_server
 docker-compose up --build -d backend_mockup_server

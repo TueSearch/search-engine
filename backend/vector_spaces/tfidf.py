@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from sklearn.feature_extraction.text import TfidfVectorizer
 from tqdm import tqdm
 
-from backend.build_index import read_index_file
+from backend.update_index import read_index_file
 from backend.streamers import DocumentTitleStringStreamer, DocumentMetaDescriptionStringStreamer, \
     DocumentMetaKeywordsStringStreamer, DocumentMetaAuthorStringStreamer, DocumentH1StringStreamer, \
     DocumentH2StringStreamer, DocumentH3StringStreamer, DocumentH4StringStreamer, DocumentH5StringStreamer, \

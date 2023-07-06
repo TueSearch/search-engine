@@ -5,7 +5,7 @@ from collections import defaultdict
 
 from dotenv import load_dotenv
 
-from backend.build_index import read_index_file
+from backend.update_index import read_index_file
 from backend.rankers.tfidf_ranker import TFIDFRanker
 from crawler import utils
 from crawler.sql_models.document import Document

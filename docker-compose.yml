@@ -71,13 +71,13 @@ services:
   # Feed the models with initial jobs and initial documents.
   # Will run once.
   ############################################################
-  update_database:
+  update_priority:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
-    container_name: update_database
+    container_name: update_priority
     restart: 'on-failure'
-    command: 'python3 -m scripts.update_database'
+    command: 'python3 -m scripts.update_priority'
     env_file:
       - .env
     networks:
@@ -147,13 +147,13 @@ services:
   ############################################################
   # Build indexer.
   ############################################################
-  build_index:
+  update_index:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
     container_name: build_index
     restart: 'on-failure'
-    command: 'python3 -m backend.build_index'
+    command: 'python3 -m backend.update_index'
     env_file:
       - .env
     volumes:
@@ -161,15 +161,15 @@ services:
     networks:
       - mysql_net
   ############################################################
-  # Build metrics.
+  # Update metrics.
   ############################################################
-  build_metrics:
+  update_metrics:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
-    container_name: build_metrics
+    container_name: update_metrics
     restart: 'on-failure'
-    command: 'python3 -m backend.build_metrics'
+    command: 'python3 -m backend.update_metrics'
     env_file:
       - .env
     volumes:
