@@ -77,7 +77,7 @@ services:
       dockerfile: docker/backend.Dockerfile
     container_name: update_priority
     restart: 'on-failure'
-    command: 'python3 -m backend.update_priority'
+    command: 'python3 -m crawler.update_priority'
     env_file:
       - .env
     networks:
