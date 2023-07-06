@@ -12,8 +12,8 @@ Tübingen.
 0. Create volumes and set up `.env` file.
 
 ```bash
-docker volume create database_volume_1
-docker volume create volume_1
+docker volume create database_volume_2
+docker volume create volume_2
 ```
 
 1. Tear down everything

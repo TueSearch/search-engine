@@ -16,7 +16,7 @@ services:
     env_file:
       - .env
     volumes:
-      - database_volume_1:/var/lib/mysql
+      - database_volume_2:/var/lib/mysql
     networks:
       - mysql_net
   ############################################################
@@ -47,7 +47,7 @@ services:
     networks:
       - mysql_net
     volumes:
-      - volume_1:/opt/tuesearch
+      - volume_2:/opt/tuesearch
   ############################################################
   # Initialize models.
   # Feed the models with initial jobs and initial documents.
@@ -65,7 +65,7 @@ services:
     networks:
       - mysql_net
     volumes:
-      - volume_1:/opt/tuesearch
+      - volume_2:/opt/tuesearch
   ############################################################
   # Initialize models.
   # Feed the models with initial jobs and initial documents.
@@ -83,7 +83,7 @@ services:
     networks:
       - mysql_net
     volumes:
-      - volume_1:/opt/tuesearch
+      - volume_2:/opt/tuesearch
   ############################################################
   # Start manager.
   ############################################################
@@ -116,7 +116,7 @@ services:
     networks:
       - mysql_net
     volumes:
-      - volume_1:/opt/tuesearch
+      - volume_2:/opt/tuesearch
   ############################################################
   # Start the worker in loop.
   #
@@ -143,7 +143,7 @@ services:
     networks:
       - mysql_net
     volumes:
-      - volume_1:/opt/tuesearch
+      - volume_2:/opt/tuesearch
   ############################################################
   # Build indexer.
   ############################################################
@@ -157,7 +157,7 @@ services:
     env_file:
       - .env
     volumes:
-      - volume_1:/opt/tuesearch
+      - volume_2:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
@@ -173,7 +173,7 @@ services:
     env_file:
       - .env
     volumes:
-      - volume_1:/opt/tuesearch
+      - volume_2:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
@@ -192,7 +192,7 @@ services:
     env_file:
       - .env
     volumes:
-      - volume_1:/opt/tuesearch
+      - volume_2:/opt/tuesearch
     networks:
       - mysql_net
   ############################################################
@@ -243,9 +243,9 @@ services:
     networks:
       - mysql_net
 volumes:
-  database_volume_1:
+  database_volume_2:
     external: true
-  volume_1:
+  volume_2:
     external: true
 networks:
   mysql_net:
