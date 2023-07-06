@@ -35,7 +35,7 @@ def prepare_urls_for_models(url_tokens_batch: list[list[str]], anchor_text_token
         url_tokens = [
             token.replace("/", " ").replace("https:", "").replace("http:", "").replace("www", "").replace("tuebingen",
                                                                                                           "tubingen").lower().replace(
-                "%c3%bc", "u").replace("_", " ").replace("-", " ") for token in url_tokens]
+                "%c3%bc", "u").replace("_", " ").replace("-", " ").replace("&", " ").replace(",", " ") for token in url_tokens]
         batch_return.append(" ".join(url_tokens) + " " + " ".join(anchor_text_tokens))
     return batch_return
 
