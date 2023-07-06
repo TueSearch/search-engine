@@ -113,14 +113,9 @@ def get_document_approximated_relevance_score_for(url: 'URL', document: 'Documen
     if isinstance(url, str):
         from crawler.worker.url_relevance import URL
         url = URL(url)
-    if tubingen_score == 0:
-        return -1
-    url_relevance_score = 0
-    if url.contains_bonus_patterns:
-        url_relevance_score += 1
     if url.contains_blocked_patterns:
         return -1
-    return english_score + tubingen_score + url_relevance_score
+    return english_score + tubingen_score + int(url.is_relevant)
 
 
 def is_document_relevant(url: 'URL', document: 'Document'):
