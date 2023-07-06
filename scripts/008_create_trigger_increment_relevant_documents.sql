@@ -7,9 +7,5 @@ BEGIN
         UPDATE servers
         SET relevant_documents = relevant_documents + 1
         WHERE id = (SELECT server_id FROM jobs WHERE id = NEW.job_id);
-    ELSE
-        UPDATE servers
-        SET relevant_documents = relevant_documents - 1
-        WHERE id = (SELECT server_id FROM jobs WHERE id = NEW.job_id);
-END IF;
+    END IF;
 END;
