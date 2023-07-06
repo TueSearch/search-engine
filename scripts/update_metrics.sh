@@ -2,6 +2,5 @@
 # Run on host
 
 ./scripts/tear_down.sh
-docker-compose up --build -d mysql
-docker-compose up --build -d phpmyadmin
+./scripts/start_database.sh
 docker-compose up --build --exit-code-from update_metrics update_metrics

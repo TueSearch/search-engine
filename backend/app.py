@@ -16,7 +16,7 @@ Usage:
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from backend.fused_ranker import FusedRanker
-from crawler.sql_models.base import connect_to_database
+from crawler.sql_models.base import connect_to_database 
 
 app = Flask(__name__)
 cors = CORS(app)

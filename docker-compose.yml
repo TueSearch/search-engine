@@ -227,6 +227,23 @@ services:
     restart: 'always'
     command: 'python3 -m backend.app_mock'
   ############################################################
+  # Start statistic server.
+  # Persistent process.
+  ############################################################
+  backend_statistic_server:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: backend_statistic_server
+    ports:
+      - '4002:4002'
+    env_file:
+      - .env
+    restart: 'always'
+    command: 'python3 -m backend.app_statistic'
+    networks:
+      - mysql_net
+  ############################################################
   # Start frontend.
   # Persistent process.
   ############################################################

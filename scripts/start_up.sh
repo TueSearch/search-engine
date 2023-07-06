@@ -24,8 +24,10 @@ if [ $# -ge 1 ] && [ "$1" = "bootstrap" ]; then
 fi
 docker-compose up --build -d backend_server
 docker-compose up --build -d backend_mockup_server
+docker-compose up --build -d backend_statistic_server
 curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4000/search?q=tubingen"
 curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4001/search?q=tubingen"
+curl --retry 30 --retry-all-errors --retry-delay 1 "localhost:4002"
 #docker-compose up --build -d frontend_server
 
 if [ $# -ge 1 ] && [ "$1" = "bootstrap" ]; then

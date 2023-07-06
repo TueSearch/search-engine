@@ -107,16 +107,20 @@ def is_document_relevant(url: 'URL', document: 'Document'):
 
     # Must contain english content.
     english_score = int(has_lang_en(document.html))
-    for field in text_fields:
-        english_score += utils.text.do_text_contain_english_content(field)
     if english_score == 0:
-        return False
+        for field in text_fields:
+            english_score += utils.text.do_text_contain_english_content(field)
+        if english_score == 0:
+            return False
 
     # Must contain Tübingen.
     tubingen_score = 0
     for field in json_fields:
         tubingen_score += do_tokens_contain_tuebingen(field)
-    tubingen_score += int(does_text_contain_tuebingen(document.body))
+        if tubingen_score > 0:
+            break
+    if tubingen_score == 0:
+        tubingen_score += int(does_text_contain_tuebingen(document.body))
     if tubingen_score == 0:
         return False
 
@@ -125,5 +129,5 @@ def is_document_relevant(url: 'URL', document: 'Document'):
         from crawler.worker.url_relevance import URL
         url = URL(url)
     if url.contains_blocked_patterns:
-        return -1
-    return 1
+        return False
+    return True

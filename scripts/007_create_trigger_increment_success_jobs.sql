@@ -11,6 +11,10 @@ BEGIN
             UPDATE servers
             SET success_jobs = success_jobs + 1
             WHERE id = NEW.server_id;
+        ELSE
+            UPDATE servers
+            SET success_jobs = success_jobs - 1
+            WHERE id = NEW.server_id;
         END IF;
     END IF;
 END;

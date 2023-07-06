@@ -4,8 +4,12 @@ CREATE TRIGGER increment_relevant_documents
     FOR EACH ROW
 BEGIN
     IF NEW.relevant = TRUE THEN
-    UPDATE servers
-    SET relevant_documents = relevant_documents + 1
-    WHERE id = (SELECT server_id FROM jobs WHERE id = NEW.job_id);
+        UPDATE servers
+        SET relevant_documents = relevant_documents + 1
+        WHERE id = (SELECT server_id FROM jobs WHERE id = NEW.job_id);
+    ELSE
+        UPDATE servers
+        SET relevant_documents = relevant_documents - 1
+        WHERE id = (SELECT server_id FROM jobs WHERE id = NEW.job_id);
 END IF;
 END;

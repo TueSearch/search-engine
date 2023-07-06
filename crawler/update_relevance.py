@@ -16,19 +16,18 @@ def update_relevance_of_documents_in_database():
     Update erlevance of documents in database
     """
     updated = 0
-    LOG.info(f"Starting to update priority of jobs in database.")
-
-    Document.update(relevant=0).execute()
+    LOG.info(f"Starting to update relevance of documents in database.")
     query = Document.select()
     total = query.count()
     for document in query:
+        url = document.job["url"]
         try:
-            document.relevant = is_document_relevant(URL(document.job.url), document)
-            LOG.info(f"[{updated}/{total}] Relevance {document.relevant} of {document.job.url}")
+            document.relevant = is_document_relevant(URL(url), document)
+            LOG.info(f"[{updated}/{total}] Relevance {document.relevant} of {url}")
             document.save()
             updated += 1
         except Exception as e:
-            LOG.info("Error while updating relevant of job: " + str(model_to_dict(document)))
+            LOG.info("Error while updating relevant of document: " + url)
             LOG.info(e)
 
 

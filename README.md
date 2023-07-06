@@ -67,6 +67,8 @@ Regularly the index for the search engine must be updated. Also the prediction m
 ./scripts/start_up.sh
 ```
 
+5. To have a short insight into the data's quality, open `localhost:4002`.
+
 # Frontend
 
 1. Set up the mock API 
