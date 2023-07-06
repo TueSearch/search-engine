@@ -19,7 +19,9 @@ def update_priority_of_jobs_in_database():
     """
     for job in tqdm(Job.select().where(Job.done == False)):
         try:
+            before = job.priority
             job.priority = server_importance(job.server_id) + URL(job.url).priority
+            LOG.info("Updating priority of job: " + job.url + " from " + str(before) + " to " + str(job.priority))
             job.save()
         except Exception as e:
             LOG.info("Error while updating priority of job: " + str(model_to_dict(job)))
