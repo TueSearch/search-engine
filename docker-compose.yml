@@ -85,6 +85,24 @@ services:
     volumes:
       - volume_2:/opt/tuesearch
   ############################################################
+  # Initialize models.
+  # Feed the models with initial jobs and initial documents.
+  # Will run once.
+  ############################################################
+  update_relevance:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: update_relevance
+    restart: 'on-failure'
+    command: 'python3 -m crawler.update_relevance'
+    env_file:
+      - .env
+    networks:
+      - mysql_net
+    volumes:
+      - volume_2:/opt/tuesearch
+  ############################################################
   # Start manager.
   ############################################################
   manager:
