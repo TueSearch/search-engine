@@ -260,4 +260,4 @@ class URL:
         """
         Returns true if the URL is relevant.
         """
-        return self.priority > 0
+        return self.priority >= 0

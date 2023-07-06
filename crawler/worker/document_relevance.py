@@ -115,7 +115,7 @@ def get_document_approximated_relevance_score_for(url: 'URL', document: 'Documen
         url = URL(url)
     if url.contains_blocked_patterns:
         return -1
-    return english_score + tubingen_score + int(url.is_relevant)
+    return english_score + tubingen_score
 
 
 def is_document_relevant(url: 'URL', document: 'Document'):
@@ -124,4 +124,4 @@ def is_document_relevant(url: 'URL', document: 'Document'):
     Args:
         document (Document): The crawled document to be classified.
     """
-    return get_document_approximated_relevance_score_for(url, document) > 0
+    return get_document_approximated_relevance_score_for(url, document) >= 0
