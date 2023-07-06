@@ -39,7 +39,7 @@ def construct_directed_link_graph_from_crawled_documents():
                 graph.add_edge(from_server, to_server, weight=1)
             elif from_server != to_server:
                 graph[from_server][to_server]['weight'] += 1
-        LOG.info(f"[{updated}/{all}]")
+        LOG.info(f"[{updated}/{all}] n={graph.number_of_nodes()}, m={graph.number_of_edges()}")
         updated += 1
     LOG.info("Finished constructing directed link graph")
     utils.io.write_pickle_file(graph, DIRECTED_LINK_GRAPH_FILE)
@@ -65,8 +65,8 @@ def construct_page_rank_of_servers_from_directed_graph():
     Construct the page rank of the servers.
     """
     try:
-        LOG.info("Start constructing page rank")
         network_graph = read_directed_graph()
+        LOG.info(f"Start constructing page rank on graph: n={network_graph.number_of_nodes()}, m={network_graph.number_of_edges()}")
 
         ranking = nx.pagerank(network_graph, max_iter=int(os.getenv("PAGERANK_MAX_ITER")))
         LOG.info("Finished constructing page rank")
