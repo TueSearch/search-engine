@@ -21,13 +21,13 @@ def update_priority_of_jobs_in_database():
     updated = 0
     LOG.info(f"Starting to update priority of jobs in database.")
     
+    Job.update(priority = 0).where(Job.done == False)
     query = Job.select().where(Job.done == False)
     total = query.count()
     for job in query:
         try:
-            before = job.priority
             job.priority = server_importance(job.server_id) + URL(job.url).priority
-            LOG.info(f"[{updated}/{total}]Updating priority of job: " + job.url + " from " + str(before) + " to " + str(job.priority))
+            LOG.info(f"[{updated}/{total}] Updated priority of {job.url}")
             job.save()
             updated += 1
         except Exception as e:

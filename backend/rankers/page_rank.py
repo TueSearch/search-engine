@@ -29,7 +29,9 @@ def construct_directed_link_graph_from_crawled_documents():
     """
     LOG.info("Start constructing directed link graph")
     graph = nx.DiGraph()
-    for from_document in tqdm(DocumentStreamer()):
+    all = Server.select().count()
+    updated = 0
+    for from_document in DocumentStreamer():
         from_server = Server.select().where(Server.id == from_document.job["server_id"]).get().name
         for to_job in Job.select().where((Job.parent_id == from_document.id)):
             to_server = URL(to_job.url).server_name
@@ -37,6 +39,8 @@ def construct_directed_link_graph_from_crawled_documents():
                 graph.add_edge(from_server, to_server, weight=1)
             elif from_server != to_server:
                 graph[from_server][to_server]['weight'] += 1
+        LOG.info(f"[{updated}/{all}]")
+        updated += 1
     LOG.info("Finished constructing directed link graph")
     utils.io.write_pickle_file(graph, DIRECTED_LINK_GRAPH_FILE)
     LOG.info("Wrote directed link graph")
