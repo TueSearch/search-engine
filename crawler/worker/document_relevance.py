@@ -82,6 +82,13 @@ def is_document_relevant(url: 'URL', document: 'Document'):
     Args:
         document (Document): The crawled document to be classified.
     """
+    # Should not be blocked.
+    if isinstance(url, str):
+        from crawler.worker.url_relevance import URL
+        url = URL(url)
+    if url.contains_blocked_patterns:
+        return False
+    
     for always_keep_document in get_always_keep_documents():
         if always_keep_document in str(url):
             return True
@@ -120,14 +127,7 @@ def is_document_relevant(url: 'URL', document: 'Document'):
         if tubingen_score > 0:
             break
     if tubingen_score == 0:
-        tubingen_score += int(does_text_contain_tuebingen(document.body))
+        tubingen_score += int(does_text_contain_tuebingen(document.html))
     if tubingen_score == 0:
-        return False
-
-    # Should not be blocked.
-    if isinstance(url, str):
-        from crawler.worker.url_relevance import URL
-        url = URL(url)
-    if url.contains_blocked_patterns:
         return False
     return True
