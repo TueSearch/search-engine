@@ -4,8 +4,8 @@
 set -e
 
 if [ $# -ge 1 ] && [ "$1" = "bootstrap" ]; then
-  docker volume create database_volume_2
-  docker volume create volume_2
+  docker volume create database_volume_3
+  docker volume create volume_3
 fi
 docker-compose down -v
 docker-compose up --build -d mysql

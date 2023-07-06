@@ -115,11 +115,13 @@ class URL:
         Extracts the server name of a URL.
         """    
         extracted = tldextract.extract(self.url)
-        out = extracted.subdomain + '.' + extracted.domain + '.' + extracted.suffix
-        out_tokens = out.split(".")
-        if out_tokens[0] == "www":
-            return ".".join(out_tokens[1:])
-        return out
+        parts = [extracted.subdomain, extracted.domain, extracted.suffix]
+        parts = [part for part in parts if len(part) > 0]
+        parts = ".".join(parts)
+        parts = parts.split(".")
+        if parts[0] == "www":
+            return ".".join(parts[1:])
+        return ".".join(parts)
 
     @functools.cached_property
     def tld(self):
