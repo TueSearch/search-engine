@@ -78,7 +78,7 @@ def train_model():
 
     # Calculate evaluation metrics
     report_dict = classification_report(y_test, y_pred, output_dict=True)
-    LOG.info("Classification Report:")
+    LOG.info("Training Report:")
     LOG.info(report_dict)
     all_greater_than_09 = all(value > 0.9 for value in report_dict['weighted avg'].values())
 
@@ -90,7 +90,9 @@ def train_model():
     x_total = vectorizer.fit_transform(x_data)
     xgb_classifier = XGBClassifier(n_estimators=N_ESTIMATOR, max_depth=MAX_DEPTH)
     xgb_classifier.fit(x_total, y_data)
-
+    report = classification_report(y_data, xgb_classifier.predict(x_total))
+    LOG.info("Final model Report:")
+    LOG.info(report)
 
     utils.io.write_pickle_file((xgb_classifier, vectorizer), os.getenv("CRAWLER_URL_ML_CLASSIFIER_FILE"))
 
