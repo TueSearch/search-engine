@@ -25,6 +25,8 @@ load_dotenv()
 N_ESTIMATOR = int(os.getenv("CRAWLER_URL_ML_N_ESTIMATOR"))
 MAX_DEPTH = int(os.getenv("CRAWLER_URL_ML_MAX_DEPTH"))
 CRAWLER_URL_ML_CLASSIFIER_MIN_QUALITY = float(os.getenv("CRAWLER_URL_ML_CLASSIFIER_MIN_QUALITY"))
+COUNT_NGRAM_RANGE=tuple(eval(os.getenv("COUNT_NGRAM_RANGE")))
+COUNT_MIN_DF=int(os.getenv("COUNT_MIN_DF"))
 
 def prepare_urls_for_models(url_tokens_batch: list[list[str]], anchor_text_tokens_batch: list[list[str]]) -> list[str]:
     """
@@ -63,7 +65,7 @@ def train_model():
     x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.2, random_state=42)
 
     # Create a CountVectorizer to convert text into numerical features
-    vectorizer = CountVectorizer(min_df=2, ngram_range=(1, 2))
+    vectorizer = CountVectorizer(min_df=COUNT_MIN_DF, ngram_range=COUNT_NGRAM_RANGE)
 
     # Fit and transform the training data
     x_train_vectorized = vectorizer.fit_transform(x_train)
