@@ -1,6 +1,7 @@
 import SearchTueLogo from '@SearchTue/assets/images/logo.svg';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, TextField } from '@mui/material';
+import { Stack } from '@mui/system';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,6 +22,12 @@ export default function Home(): React.ReactElement {
     return () => clearTimeout(timeout);
   };
 
+  const handleKeyDownChange = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleSearchSubmit();
+    }
+  };
+
   const handleSearchSubmit = () => {
     navigate(`/search?q=${searchText}`);
   };
@@ -29,8 +36,15 @@ export default function Home(): React.ReactElement {
     <>
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3, justifyContent: 'center', alignItems: 'center', height: '500px' }}>
         <img src={SearchTueLogo} alt="RHC Logo" className="logo" height="auto" width={'300px'} color="white" data-tid="logo" />
-        <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-          <TextField label="Suche" variant="outlined" sx={{ mr: -1, minWidth: '350px' }} onChange={handleSearchTextChange} />
+        <Stack sx={{ display: 'flex', flexDirection: 'row' }}>
+          <TextField
+            label="Suche"
+            className="MainSearchBar"
+            variant="outlined"
+            sx={{ minWidth: { xs: '250px', md: '350px' } }}
+            onChange={handleSearchTextChange}
+            onKeyDown={handleKeyDownChange}
+          />
           <Button
             variant="contained"
             color="primary"
@@ -40,7 +54,7 @@ export default function Home(): React.ReactElement {
           >
             Suche
           </Button>
-        </Box>
+        </Stack>
       </Box>
     </>
   );

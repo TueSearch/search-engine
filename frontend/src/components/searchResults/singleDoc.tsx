@@ -1,6 +1,7 @@
 import { Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export interface SearchResultsDocument {
   id: number;
@@ -21,9 +22,11 @@ export const SingleDoc = ({ doc }: { doc: SearchResultsDocument }) => {
       <Typography variant="h6" data-tid="title">
         {doc.title}
       </Typography>
-      <Typography variant="body1" data-tid="url">
-        {doc.url}
-      </Typography>
+      <Link to={doc.url} target="_blank" rel="noopener noreferrer">
+        <Typography variant="body1" data-tid="url">
+          {doc.url}
+        </Typography>
+      </Link>
     </Box>
   );
 };

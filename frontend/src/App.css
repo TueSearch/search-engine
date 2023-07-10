@@ -5,3 +5,8 @@ a {
 .noUnderline {
   text-decoration: none;
 }
+
+.MainSearchBar fieldset {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
