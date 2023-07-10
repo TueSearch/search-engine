@@ -40,7 +40,6 @@ export default function Header(): React.ReactElement {
           <Typography variant="body2" component="div">
             {import.meta.env.VITE_APP_VERSION}
           </Typography>
-          
 
           <Box
             sx={{
