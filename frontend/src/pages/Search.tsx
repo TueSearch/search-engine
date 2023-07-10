@@ -57,7 +57,7 @@ export default function Search(): React.ReactElement {
   return (
     <>
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <Stack direction={'row'} gap={3}>
+        <Stack direction={{ xs: 'column', md: 'row' }} gap={3}>
           <Typography variant="h3" data-tid="title">
             Suchergebnisse
           </Typography>
@@ -66,7 +66,7 @@ export default function Search(): React.ReactElement {
               label="Suche"
               className="MainSearchBar"
               variant="outlined"
-              sx={{ minWidth: '350px' }}
+              sx={{ minWidth: { xs: '250px', md: '350px' } }}
               onChange={handleSearchTextChange}
               onKeyDown={handleKeyDownChange}
               value={searchText}

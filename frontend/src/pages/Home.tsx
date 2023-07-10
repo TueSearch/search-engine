@@ -41,7 +41,7 @@ export default function Home(): React.ReactElement {
             label="Suche"
             className="MainSearchBar"
             variant="outlined"
-            sx={{ minWidth: '350px' }}
+            sx={{ minWidth: { xs: '250px', md: '350px' } }}
             onChange={handleSearchTextChange}
             onKeyDown={handleKeyDownChange}
           />
