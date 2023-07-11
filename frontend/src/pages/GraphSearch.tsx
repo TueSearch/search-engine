@@ -1,6 +1,6 @@
 import { SearchResults } from '@SearchTue/components/SearchResults/singleDoc';
 import { ResultTile } from '@SearchTue/components/SearchResults/ResultTile';
-import { Searchbar } from '@SearchTue/components/GraphSearch/SearchBar';
+import { Searchbar } from '@SearchTue/components/GraphSearch/Searchbar';
 import { Box } from '@mui/material';
 import axios from 'axios';
 import React from 'react';
@@ -10,11 +10,11 @@ function SearchResultBox({ searchText, searchResults }: { searchText: string | n
   if (!searchText || searchText === '') {
     return null;
   }
-  return <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 3, margin: '10% auto 0 auto' }}>
+  return <div style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', margin: '50px auto 0 auto' }}>
     {searchResults !== null
       && searchResults?.results.length > 0
       && searchResults?.results.slice(0, 3).map((doc, index) => <ResultTile key={index} doc={doc} />)}
-  </Box>
+  </div>
 }
 
 export default function GraphSearch(): React.ReactElement {
@@ -45,7 +45,7 @@ export default function GraphSearch(): React.ReactElement {
 
   return (
     <>
-      <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'center', margin: '20px 0' }}>
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0' }}>
         <Searchbar
           searchText={searchText}
           onSearchTextChange={setSearchText}
@@ -55,7 +55,7 @@ export default function GraphSearch(): React.ReactElement {
           searchText={searchText}
           searchResults={searchResults}
         />
-      </Box>
+      </div>
     </>
   );
 }
