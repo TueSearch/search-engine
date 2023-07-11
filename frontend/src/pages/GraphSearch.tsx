@@ -1,15 +1,22 @@
-import { SearchResults, SingleDoc } from '@SearchTue/components/searchResults/singleDoc';
-import { ResultTile } from '@SearchTue/components/searchResults/ResultTile';
-import { Box, Button, TextField } from '@mui/material';
-import { Graph } from '@SearchTue/components/LinkGraph/Graph';
-import SearchIcon from '@mui/icons-material/Search';
+import { SearchResults } from '@SearchTue/components/SearchResults/singleDoc';
+import { ResultTile } from '@SearchTue/components/SearchResults/ResultTile';
+import { Searchbar } from '@SearchTue/components/GraphSearch/SearchBar';
+import { Box } from '@mui/material';
 import axios from 'axios';
 import React from 'react';
 
-/**
- * Search page
- * @return {React.ReactElement} The Search page.
- */
+
+function SearchResultBox({ searchText, searchResults }: { searchText: string | null, searchResults: SearchResults | null }) {
+  if (!searchText || searchText === '') {
+    return null;
+  }
+  return <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 3, margin: '10% auto 0 auto' }}>
+    {searchResults !== null
+      && searchResults?.results.length > 0
+      && searchResults?.results.slice(0, 3).map((doc, index) => <ResultTile key={index} doc={doc} />)}
+  </Box>
+}
+
 export default function GraphSearch(): React.ReactElement {
   const [searchText, setSearchText] = React.useState('');
 
@@ -21,23 +28,8 @@ export default function GraphSearch(): React.ReactElement {
     setSearchText(query);
   }, []);
 
-  React.useEffect(() => {
-    if (searchText === '') {
-      return;
-    }
-    axios
-      .get(`${import.meta.env.VITE_API_URL}/search?q=${searchText}`)
-      .then((response) => {
-        console.log(response.data);
-        setSearchResults(response.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, [searchText]);
-
   const handleSearchSubmit = () => {
-    if (searchText === '') {
+    if (!searchText || searchText === '') {
       return;
     }
     axios
@@ -54,19 +46,15 @@ export default function GraphSearch(): React.ReactElement {
   return (
     <>
       <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'center', margin: '20px 0' }}>
-        <Box sx={{ display: 'flex', flexDirection: 'row'}}>
-          <TextField label="Suche" variant="outlined" sx={{ mr: -1, minWidth: '350px' }} />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSearchSubmit}
-            sx={{ px: 3, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
-            startIcon={<SearchIcon />}
-          ></Button>
-        </Box>
-      </Box>
-      <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 3, margin: '10% auto 0 auto' }}>
-        {searchResults !== null && searchResults?.results.length > 0 && searchResults?.results.slice(0, 3).map((doc) => <ResultTile doc={doc} />)}
+        <Searchbar
+          searchText={searchText}
+          onSearchTextChange={setSearchText}
+          onSearchSubmit={handleSearchSubmit}
+        />
+        <SearchResultBox
+          searchText={searchText}
+          searchResults={searchResults}
+        />
       </Box>
     </>
   );

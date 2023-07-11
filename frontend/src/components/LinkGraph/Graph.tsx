@@ -1,9 +1,9 @@
 import { Typography } from '@mui/material';
 import { Box } from '@mui/system';
-import { SearchResultsDocument } from '@SearchTue/components/searchResults/singleDoc';
+import { SearchResultsDocument } from '@SearchTue/components/SearchResults/singleDoc';
 import React from 'react';
 
-export interface Graph {
+export interface GraphDto {
     resultNode: number;
     edges: Edge[];
     nodes: Node[];
@@ -21,7 +21,7 @@ export interface Node {
     // outgoingEdges: Edge[];
 }
 
-export const GraphElement = ({ graph }: { graph: Graph }) => {
+export const GraphElement = ({ graph }: { graph: GraphDto }) => {
   return (
     <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', width: '100%', borderBottom: '1px solid black', borderRadius: '10px', background: 'white'}}>
       <p>Root id: {graph.resultNode}</p>
