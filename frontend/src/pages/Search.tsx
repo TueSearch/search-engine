@@ -1,5 +1,9 @@
-import { SearchResults, SingleDoc } from '@SearchTue/components/SearchResults/singleDoc';
-import { Box, Typography } from '@mui/material';
+
+import { SearchResults, SingleDoc } from '@SearchTue/components/searchResults/singleDoc';
+import SearchIcon from '@mui/icons-material/Search';
+import { Box, Button, TextField, Typography } from '@mui/material';
+import { Stack } from '@mui/system';
+
 import axios from 'axios';
 import React from 'react';
 
@@ -10,6 +14,21 @@ import React from 'react';
 export default function Search(): React.ReactElement {
   const [searchText, setSearchText] = React.useState('');
 
+  const handleSearchTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // debounce the search
+    const value = event.target.value;
+    const timeout = setTimeout(() => {
+      setSearchText(value);
+    }, 500);
+    return () => clearTimeout(timeout);
+  };
+
+  const handleKeyDownChange = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleSearchSubmit();
+    }
+  };
+
   const [searchResults, setSearchResults] = React.useState<SearchResults | null>(null);
 
   React.useEffect(() => {
@@ -18,7 +37,7 @@ export default function Search(): React.ReactElement {
     setSearchText(query);
   }, []);
 
-  React.useEffect(() => {
+  const handleSearchSubmit = () => {
     if (searchText === '') {
       return;
     }
@@ -31,16 +50,42 @@ export default function Search(): React.ReactElement {
       .catch((error) => {
         console.log(error);
       });
+  };
+
+  React.useEffect(() => {
+    handleSearchSubmit();
   }, [searchText]);
 
   return (
     <>
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <Typography variant="h3" data-tid="title">
-          Suchergebnisse
-        </Typography>
+        <Stack direction={{ xs: 'column', md: 'row' }} gap={3}>
+          <Typography variant="h3" data-tid="title">
+            Suchergebnisse
+          </Typography>
+          <Stack sx={{ display: 'flex', flexDirection: 'row' }}>
+            <TextField
+              label="Suche"
+              className="MainSearchBar"
+              variant="outlined"
+              sx={{ minWidth: { xs: '250px', md: '350px' } }}
+              onChange={handleSearchTextChange}
+              onKeyDown={handleKeyDownChange}
+              value={searchText}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSearchSubmit}
+              sx={{ px: 3, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+              startIcon={<SearchIcon />}
+            >
+              Suche
+            </Button>
+          </Stack>
+        </Stack>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {searchResults !== null && searchResults.results !== undefined && searchResults.results.map((doc) => <SingleDoc doc={doc} key={doc.id} />)}
+          {searchResults !== null && searchResults.results !== undefined && searchResults.results.map((doc, index) => <SingleDoc doc={doc} key={`${doc.id}-${index}`} />)}
         </Box>
       </Box>
     </>
