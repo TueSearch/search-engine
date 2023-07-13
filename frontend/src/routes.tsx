@@ -27,7 +27,7 @@ export default function Routing(): React.ReactElement {
         },
         {
           path: '/graph-search',
-          element: <GraphSearch />
+          element: <GraphSearch />,
         },
         {
           path: '/search',

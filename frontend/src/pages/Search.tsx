@@ -1,4 +1,4 @@
-import { SearchResults, SingleDoc } from '@SearchTue/components/searchResults/SingleDoc';
+import { SearchResults, SingleDoc } from '@SearchTue/components/SearchResults/SingleDoc';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, TextField, Typography } from '@mui/material';
 import { Stack } from '@mui/system';

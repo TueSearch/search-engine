@@ -1,6 +1,5 @@
-import { Typography } from '@mui/material';
-import { Box } from '@mui/system';
-import { SearchResultsDocument } from '@SearchTue/components/searchResults/SingleDoc';
+import { SearchResultsDocument } from '@SearchTue/components/SearchResults/SingleDoc';
+import React from 'react';
 import { GraphCanvas } from 'reagraph';
 
 export interface GraphDto {
@@ -51,6 +50,7 @@ const edges = [
   },
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const GraphElement = ({ graph }: GraphElementProps) => {
   return (
     <div

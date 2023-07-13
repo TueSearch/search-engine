@@ -1,6 +1,6 @@
 import { Searchbar } from '@SearchTue/components/GraphSearch/Searchbar';
-import { ResultTile } from '@SearchTue/components/searchResults/ResultTile';
-import { SearchResults } from '@SearchTue/components/searchResults/SingleDoc';
+import { ResultTile } from '@SearchTue/components/SearchResults/ResultTile';
+import { SearchResults } from '@SearchTue/components/SearchResults/SingleDoc';
 import Box from '@mui/material/Box';
 import axios from 'axios';
 import React from 'react';

@@ -1,5 +1,5 @@
 import { GraphDto, GraphElement } from '@SearchTue/components/LinkGraph/Graph';
-import { SearchResultsDocument } from '@SearchTue/components/searchResults/SingleDoc';
+import { SearchResultsDocument } from '@SearchTue/components/SearchResults/SingleDoc';
 import useTheme from '@mui/material/styles/useTheme';
 import { Box } from '@mui/system';
 import React from 'react';
