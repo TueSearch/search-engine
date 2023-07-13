@@ -19,7 +19,7 @@ export default function Header(): React.ReactElement {
   const theme = useTheme();
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box component={'div'} sx={{ flexGrow: 1 }}>
       <AppBar position="static" enableColorOnDark={true}>
         <Toolbar
           sx={{
@@ -42,6 +42,7 @@ export default function Header(): React.ReactElement {
           </Typography>
 
           <Box
+            component={'div'}
             sx={{
               marginLeft: 'auto!important',
             }}

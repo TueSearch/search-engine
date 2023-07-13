@@ -14,6 +14,7 @@ export default function LoadingSuspense(): React.ReactElement {
   return (
     <>
       <Box
+        component={'div'}
         sx={{
           position: 'absolute',
           top: 0,
@@ -43,6 +44,7 @@ export function LoadingSuspenseSmall(): React.ReactElement {
   return (
     <>
       <Box
+        component={'div'}
         sx={{
           position: 'absolute',
           top: 0,

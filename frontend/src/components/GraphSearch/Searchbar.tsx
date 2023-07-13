@@ -1,6 +1,6 @@
 import SearchIcon from '@mui/icons-material/Search';
+import { IconButton, TextField } from '@mui/material';
 import InputAdornment from '@mui/material/InputAdornment';
-import { Box, IconButton, TextField } from '@mui/material';
 import React from 'react';
 
 interface SearchbarProps {
@@ -10,7 +10,6 @@ interface SearchbarProps {
 }
 
 export const Searchbar = ({ searchText, onSearchTextChange, onSearchSubmit }: SearchbarProps) => {
-
   const handleSearchSubmit = () => {
     onSearchSubmit();
   };

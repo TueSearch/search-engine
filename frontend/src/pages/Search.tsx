@@ -1,5 +1,4 @@
-
-import { SearchResults, SingleDoc } from '@SearchTue/components/searchResults/singleDoc';
+import { SearchResults, SingleDoc } from '@SearchTue/components/searchResults/SingleDoc';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, TextField, Typography } from '@mui/material';
 import { Stack } from '@mui/system';
@@ -58,7 +57,7 @@ export default function Search(): React.ReactElement {
 
   return (
     <>
-      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box component={'div'} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} gap={3}>
           <Typography variant="h3" data-tid="title">
             Suchergebnisse
@@ -84,7 +83,7 @@ export default function Search(): React.ReactElement {
             </Button>
           </Stack>
         </Stack>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box component={'div'} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {searchResults !== null && searchResults.results !== undefined && searchResults.results.map((doc, index) => <SingleDoc doc={doc} key={`${doc.id}-${index}`} />)}
         </Box>
       </Box>

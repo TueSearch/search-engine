@@ -9,7 +9,7 @@ export const Impressum = (): React.ReactElement => {
   const navigate = useNavigate();
   return (
     <>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 3 }}>
+      <Box component={'div'} sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 3 }}>
         <Grid container spacing={1} alignItems="center">
           <Grid item xs={2}>
             <IconButton color={'primary'} onClick={() => navigate('..', { relative: 'path' })}>
@@ -22,13 +22,13 @@ export const Impressum = (): React.ReactElement => {
           <Grid item xs={2} />
         </Grid>
         <Typography variant="h5">Angaben gemäß § 5 TMG</Typography>
-        <Box>
+        <Box component={'div'}>
           <Typography variant="body1">TueSearch</Typography>
           <Typography variant="body1">Sand 14</Typography>
           <Typography variant="body1">72074 Tübingen</Typography>
         </Box>
 
-        <Box>
+        <Box component={'div'}>
           <Typography variant="h5">Github Project</Typography>
           <Typography variant="body1">
             <Link to="https://github.com/TueSearch/search-engine">SearchTue</Link>

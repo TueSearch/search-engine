@@ -1,22 +1,26 @@
-import { SearchResults } from '@SearchTue/components/SearchResults/singleDoc';
-import { ResultTile } from '@SearchTue/components/SearchResults/ResultTile';
 import { Searchbar } from '@SearchTue/components/GraphSearch/Searchbar';
-import { Box } from '@mui/material';
+import { ResultTile } from '@SearchTue/components/searchResults/ResultTile';
+import { SearchResults } from '@SearchTue/components/searchResults/SingleDoc';
+import Box from '@mui/material/Box';
 import axios from 'axios';
 import React from 'react';
 
-
-function SearchResultBox({ searchText, searchResults }: { searchText: string | null, searchResults: SearchResults | null }) {
+const SearchResultBox = ({ searchText, searchResults }: { searchText: string | null; searchResults: SearchResults | null }) => {
   if (!searchText || searchText === '') {
     return null;
   }
-  return <div style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', margin: '50px auto 0 auto' }}>
-    {searchResults !== null
-      && searchResults?.results.length > 0
-      && searchResults?.results.slice(0, 3).map((doc, index) => <ResultTile key={index} doc={doc} />)}
-  </div>
-}
+  return (
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', margin: '50px auto 0 auto' }}>
+      {searchResults !== null && searchResults?.results.length > 0 && searchResults?.results.slice(0, 3).map((doc, index) => <ResultTile key={index} doc={doc} />)}
+    </div>
+  );
+};
 
+/**
+ * GraphSearch Page
+ *
+ * @return {React.ReactElement} GraphSearch Page
+ */
 export default function GraphSearch(): React.ReactElement {
   const [searchText, setSearchText] = React.useState('');
 
@@ -45,17 +49,10 @@ export default function GraphSearch(): React.ReactElement {
 
   return (
     <>
-      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0' }}>
-        <Searchbar
-          searchText={searchText}
-          onSearchTextChange={setSearchText}
-          onSearchSubmit={handleSearchSubmit}
-        />
-        <SearchResultBox
-          searchText={searchText}
-          searchResults={searchResults}
-        />
-      </div>
+      <Box component="div" sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0' }}>
+        <Searchbar searchText={searchText} onSearchTextChange={setSearchText} onSearchSubmit={handleSearchSubmit} />
+        <SearchResultBox searchText={searchText} searchResults={searchResults} />
+      </Box>
     </>
   );
 }

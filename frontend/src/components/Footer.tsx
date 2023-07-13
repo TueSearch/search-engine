@@ -13,7 +13,7 @@ export const Footer: FC = (): ReactElement => {
         <Grid container direction="column" alignItems="center">
           <Grid item xs={12}>
             <Typography variant="subtitle2" component="div">
-              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+              <Box component={'div'} sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                 <span>{`©${new Date().getFullYear()} `}</span>
                 {mobile ? (
                   <Link to="https://github.com/TueSearch/search-engine" target="_blank" className="noUnderline" rel="noreferrer" data-tid="authorLink">

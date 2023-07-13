@@ -47,6 +47,7 @@ export default function ErrorPage(): React.ReactElement {
 
   return (
     <Box
+      component={'div'}
       sx={{
         display: 'flex',
         flexDirection: 'column',

@@ -34,7 +34,7 @@ export default function Home(): React.ReactElement {
 
   return (
     <>
-      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3, justifyContent: 'center', alignItems: 'center', height: '500px' }}>
+      <Box component={'div'} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3, justifyContent: 'center', alignItems: 'center', height: '500px' }}>
         <img src={SearchTueLogo} alt="RHC Logo" className="logo" height="auto" width={'300px'} color="white" data-tid="logo" />
         <Stack sx={{ display: 'flex', flexDirection: 'row' }}>
           <TextField

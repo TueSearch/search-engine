@@ -14,6 +14,7 @@ export default function NotFound(): React.ReactElement {
 
   return (
     <Box
+      component={'div'}
       sx={{
         display: 'flex',
         flexDirection: 'column',
