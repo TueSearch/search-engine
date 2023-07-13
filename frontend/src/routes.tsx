@@ -2,6 +2,7 @@ import { Layout } from '@SearchTue/components/Layout';
 import ErrorPage from '@SearchTue/pages/ErrorPage';
 import Home from '@SearchTue/pages/Home';
 import { Impressum } from '@SearchTue/pages/Impressum';
+import GraphSearch from '@SearchTue/pages/GraphSearch';
 import Search from '@SearchTue/pages/Search';
 import LoadingSuspense from '@SearchTue/pages/loading';
 import React, { Suspense } from 'react';
@@ -23,6 +24,10 @@ export default function Routing(): React.ReactElement {
         {
           path: '/',
           element: <Home />,
+        },
+        {
+          path: '/graph-search',
+          element: <GraphSearch />,
         },
         {
           path: '/search',

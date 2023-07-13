@@ -12,7 +12,7 @@ export const Layout = () => {
       <Grid container spacing={0.5}>
         <Grid item xs={0} sm={1} />
         <Grid item xs={12} sm={10}>
-          <Box sx={{ pb: '50px', px: 2 }}>
+          <Box component={'div'} sx={{ pb: '50px', px: 2 }}>
             <Outlet />
           </Box>
         </Grid>
