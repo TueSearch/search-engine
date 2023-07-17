@@ -3,9 +3,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 export interface SearchResultsDocument {
-  id: number;
+  id: string;
   title: string;
   url: string;
+  body: string;
+  relevant: boolean;
 }
 
 export interface SearchResults {

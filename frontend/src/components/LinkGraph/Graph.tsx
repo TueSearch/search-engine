@@ -4,19 +4,22 @@ import { GraphCanvas } from 'reagraph';
 
 export interface GraphDto {
   resultNode: string;
-  edges: Edge[];
-  nodes: Node[];
+  edges: EdgeDto[];
+  nodes: NodeDto[];
 }
 
-export interface Edge {
+export interface EdgeDto {
   id: string;
   source: string;
   target: string;
+  label: string;
   doc: SearchResultsDocument;
 }
 
-export interface Node {
+export interface NodeDto {
   id: string;
+  label: string;
+  size?: number;
   // outgoingEdges: Edge[];
 }
 
@@ -64,7 +67,7 @@ export const GraphElement = ({ graph }: GraphElementProps) => {
         borderTopRightRadius: '10px',
       }}
     >
-      <GraphCanvas nodes={nodes} edges={edges} />
+      <GraphCanvas nodes={graph.nodes} edges={graph.edges} />
     </div>
   );
 };

@@ -1,8 +1,9 @@
-import { GraphDto, GraphElement } from '@SearchTue/components/LinkGraph/Graph';
+import { GraphDto, NodeDto, EdgeDto, GraphElement } from '@SearchTue/components/LinkGraph/Graph';
 import { SearchResultsDocument } from '@SearchTue/components/SearchResults/SingleDoc';
 import useTheme from '@mui/material/styles/useTheme';
 import { Box } from '@mui/system';
-import React from 'react';
+import axios from 'axios';
+import React, { useEffect } from 'react';
 
 interface ResultTileProps {
   doc: SearchResultsDocument;
@@ -11,6 +12,20 @@ interface ResultTileProps {
 export const ResultTile = ({ doc }: ResultTileProps) => {
   const theme = useTheme();
 
+  const [neighborDocs, setNeighborDocs] = React.useState<SearchResultsDocument[] | null>(null);
+
+  const [graph, setGraph] = React.useState<GraphDto>(
+    { resultNode: doc.id, edges: [], nodes: [] }
+  );
+
+  useEffect(() => {
+    getNearestNeighborLinks(doc.id, 3);
+  }, [doc.id]);
+
+  useEffect(() => {
+    buildGraph();
+  }, [neighborDocs]);
+
   const mockGraph: GraphDto = {
     resultNode: '1',
     edges: [
@@ -18,20 +33,80 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
         id: '0',
         source: '1',
         target: '2',
+        label: '1-2',
         doc: doc,
       },
     ],
     nodes: [
       {
         id: '2',
+        label: '2',
       },
     ],
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const buildGraph = (doc: SearchResultsDocument) => {
-    // TODO: build graph from doc
-    // Additional data needed --> Either make a new request to the backend or add the data to the search results
+  const buildGraph = () => {
+    // TODO: build graph from neighbor docs
+    console.log('Building graph from neighbor docs', neighborDocs);
+
+    if (!neighborDocs) {
+      return;
+    }
+
+    // iterate over neighbor docs and build graph
+    let nodes: NodeDto[] = neighborDocs.map((neighbor,index) => {
+      let label = neighbor.title;
+      try {
+        const url = new URL(neighbor.url);
+        label = url.hostname;
+      } catch (error) {
+        console.error(`Invalid URL: ${neighbor.url}`);
+      }
+      return {
+        // index is added to id to prevent duplicate ids, in case doc is returned multiple times
+        // FIXME: consider adding index only if id already exists
+        id: neighbor.id + index.toString(),
+        label: label,
+      }
+    });
+
+    let edges: EdgeDto[] = neighborDocs.map((neighbor, index) => ({
+      id: index.toString(),
+      source: neighbor.id + index.toString(),
+      target: doc.id.toString(),
+      label: neighbor.id + '-' + doc.id,
+      doc: neighbor
+    }));
+
+    nodes.push({
+      id: doc.id.toString(),
+      label: 'Result',
+      size: 25
+    });
+    console.log('Graph: ', nodes, edges)
+    setGraph({
+      resultNode: doc.id,
+      nodes: nodes,
+      edges: edges
+    });
+
+  };
+
+  const getNearestNeighborLinks = (doc_id: string, num: number) => {
+    console.log('Getting nearest neighbor links', doc_id, num)
+    if (!doc_id || doc_id === '') {
+      return;
+    }
+    axios
+      .get(`${import.meta.env.VITE_API_URL}/nearest/${doc_id}?num=${num}`)
+      .then((response) => {
+        setNeighborDocs(response.data.results);
+
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   return (
@@ -54,7 +129,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
           boxShadow: '0px 0px 64px 14px rgba(0,0,0,0.1)',
         }}
       >
-        <GraphElement graph={mockGraph} />
+        <GraphElement graph={graph} />
 
         <Box
           component={'div'}
