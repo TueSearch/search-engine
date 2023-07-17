@@ -6,6 +6,14 @@ FROM node:18-alpine
 # Set the working directory in the container
 WORKDIR /app
 
+# Set environment variables
+ARG VITE_API_URL
+ARG VITE_FRONTEND_PORT
+ARG VITE_APP_VERSION
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_FRONTEND_PORT=$VITE_FRONTEND_PORT
+ENV VITE_APP_VERSION=$VITE_APP_VERSION
+
 # Copy the package.json and package lockfile file into the container at /app
 COPY frontend/package*.json ./
 
