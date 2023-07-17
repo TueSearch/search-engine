@@ -47,6 +47,10 @@ jobs:
 
       - name: 🐋 Build and Push Docker Image
         uses: docker/build-push-action@v4
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_FRONTEND_PORT: ${{ secrets.VITE_FRONTEND_PORT }}
+          VITE_APP_VERSION: ${{ steps.get-latest-tag.outputs.tag }}
         with:
           context: .
           file: ./docker/frontend.Dockerfile
