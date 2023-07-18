@@ -12,18 +12,15 @@ import React from 'react';
  */
 export default function Search(): React.ReactElement {
   const [searchText, setSearchText] = React.useState('');
+  const [searchTextDebounced, setSearchTextDebounced] = React.useState(searchText);
 
   const handleSearchTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // debounce the search
-    const value = event.target.value;
-    const timeout = setTimeout(() => {
-      setSearchText(value);
-    }, 500);
-    return () => clearTimeout(timeout);
+    setSearchTextDebounced(event.currentTarget.value);
   };
 
   const handleKeyDownChange = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
+      setSearchText(searchTextDebounced);
       handleSearchSubmit();
     }
   };
@@ -31,9 +28,9 @@ export default function Search(): React.ReactElement {
   const [searchResults, setSearchResults] = React.useState<SearchResults | null>(null);
 
   React.useEffect(() => {
-    // set search text
     const query = window.location.search.split('=')[1];
     setSearchText(query);
+    setSearchTextDebounced(query);
   }, []);
 
   const handleSearchSubmit = () => {
@@ -70,7 +67,7 @@ export default function Search(): React.ReactElement {
               sx={{ minWidth: { xs: '250px', md: '350px' } }}
               onChange={handleSearchTextChange}
               onKeyDown={handleKeyDownChange}
-              value={searchText}
+              value={searchTextDebounced}
             />
             <Button
               variant="contained"
