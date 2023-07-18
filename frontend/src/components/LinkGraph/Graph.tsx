@@ -1,6 +1,6 @@
 import { SearchResultsDocument } from '@SearchTue/components/SearchResults/SingleDoc';
-import React from 'react';
-import { GraphCanvas } from 'reagraph';
+import React, { useRef, useEffect } from 'react';
+import { GraphCanvas, GraphCanvasRef, GraphNode, useSelection } from 'reagraph';
 
 export interface GraphDto {
   resultNode: string;
@@ -24,37 +24,34 @@ export interface NodeDto {
 }
 
 interface GraphElementProps {
+  handleNodeClick: (id: string) => void;
   graph: GraphDto;
 }
 
-const nodes = [
-  {
-    id: '1',
-    label: '1',
-  },
-  {
-    id: '2',
-    label: '2',
-  },
-];
-
-const edges = [
-  {
-    source: '1',
-    target: '2',
-    id: '1-2',
-    label: '1-2',
-  },
-  {
-    source: '2',
-    target: '1',
-    id: '2-1',
-    label: '2-1',
-  },
-];
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const GraphElement = ({ graph }: GraphElementProps) => {
+export const GraphElement = ({ graph, handleNodeClick }: GraphElementProps) => {
+
+  const graphRef = useRef<GraphCanvasRef | null>(null);
+  const {
+    selections,
+    actives,
+    onNodeClick,
+    onCanvasClick
+  } = useSelection({
+    ref: graphRef,
+    nodes: graph.nodes,
+    edges: graph.edges,
+    pathSelectionType: 'all'
+  });
+
+  useEffect(() => {
+    if (onNodeClick) {
+      handleNodeClick(selections[0]);
+    }
+  }, [onNodeClick]);
+  
+
   return (
     <div
       style={{
@@ -67,7 +64,7 @@ export const GraphElement = ({ graph }: GraphElementProps) => {
         borderTopRightRadius: '10px',
       }}
     >
-      <GraphCanvas nodes={graph.nodes} edges={graph.edges} />
+      <GraphCanvas ref={graphRef} nodes={graph.nodes} edges={graph.edges} selections={selections} actives={actives} onCanvasClick={onCanvasClick} onNodeClick={onNodeClick}  />
     </div>
   );
 };

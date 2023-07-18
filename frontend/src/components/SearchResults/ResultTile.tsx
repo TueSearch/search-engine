@@ -4,6 +4,7 @@ import useTheme from '@mui/material/styles/useTheme';
 import { Box } from '@mui/system';
 import axios from 'axios';
 import React, { useEffect } from 'react';
+import { GraphNode } from 'reagraph';
 
 interface ResultTileProps {
   doc: SearchResultsDocument;
@@ -82,7 +83,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
     nodes.push({
       id: doc.id.toString(),
       label: 'Result',
-      size: 25
+      size: 15
     });
     console.log('Graph: ', nodes, edges)
     setGraph({
@@ -109,6 +110,10 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
       });
   };
 
+  const handleNodeClick = (id: string) => {
+    console.log('Node clicked in parent component', id);
+  };
+
   return (
     <Box
       component={'div'}
@@ -129,7 +134,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
           boxShadow: '0px 0px 64px 14px rgba(0,0,0,0.1)',
         }}
       >
-        <GraphElement graph={graph} />
+        <GraphElement graph={graph} handleNodeClick={handleNodeClick} />
 
         <Box
           component={'div'}
