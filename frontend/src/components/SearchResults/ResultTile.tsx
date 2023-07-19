@@ -15,6 +15,8 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
 
   const [neighborDocs, setNeighborDocs] = React.useState<SearchResultsDocument[] | null>(null);
 
+  const [graphDocumentMap, setGraphDocumentMap] = React.useState<Map<string, SearchResultsDocument>>(new Map());
+
   const [graph, setGraph] = React.useState<GraphDto>(
     { resultNode: doc.id, edges: [], nodes: [] }
   );
@@ -57,6 +59,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
 
     // iterate over neighbor docs and build graph
     let nodes: NodeDto[] = neighborDocs.map((neighbor,index) => {
+      
       let label = neighbor.title;
       try {
         const url = new URL(neighbor.url);
@@ -64,27 +67,41 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
       } catch (error) {
         console.error(`Invalid URL: ${neighbor.url}`);
       }
+      
+      let id = neighbor.id.toString();
+      if (graphDocumentMap.has(id) || id === doc.id.toString()) {
+        id = id + index.toString();
+      }
+      graphDocumentMap.set(id, neighbor);
+
       return {
-        // index is added to id to prevent duplicate ids, in case doc is returned multiple times
-        // FIXME: consider adding index only if id already exists
-        id: neighbor.id + index.toString(),
+        id: id,
         label: label,
       }
     });
 
-    let edges: EdgeDto[] = neighborDocs.map((neighbor, index) => ({
-      id: index.toString(),
-      source: neighbor.id + index.toString(),
-      target: doc.id.toString(),
-      label: neighbor.id + '-' + doc.id,
-      doc: neighbor
-    }));
+    console.log('Nodes: ', nodes);
 
+    let edges: EdgeDto[] = Array.from(graphDocumentMap).map(([id, neighborDoc], index) => {
+      return {
+        id: index.toString(),
+        source: id,
+        target: doc.id.toString(),
+        label: id + '-' + doc.id,
+        doc: neighborDoc
+      };
+    });
+
+    console.log('Edges: ', edges);
+
+    // add result node
+    graphDocumentMap.set(doc.id.toString(), doc);
     nodes.push({
       id: doc.id.toString(),
       label: 'Result',
       size: 15
     });
+
     console.log('Graph: ', nodes, edges)
     setGraph({
       resultNode: doc.id,
@@ -112,6 +129,11 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
 
   const handleNodeClick = (id: string) => {
     console.log('Node clicked in parent component', id);
+    console.log("Map:", graphDocumentMap)
+    if (graphDocumentMap.has(id)) {
+      const doc = graphDocumentMap.get(id);
+      console.log('Doc: ', doc);
+    }
   };
 
   return (
