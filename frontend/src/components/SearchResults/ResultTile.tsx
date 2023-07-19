@@ -1,10 +1,12 @@
 import { GraphDto, NodeDto, EdgeDto, GraphElement } from '@SearchTue/components/LinkGraph/Graph';
 import { SearchResultsDocument } from '@SearchTue/components/SearchResults/SingleDoc';
+import { ResultDescriptionPopup } from './ResultDescriptionPopup';
 import useTheme from '@mui/material/styles/useTheme';
 import { Box } from '@mui/system';
 import axios from 'axios';
 import React, { useEffect } from 'react';
 import { GraphNode } from 'reagraph';
+import { set } from 'date-fns';
 
 interface ResultTileProps {
   doc: SearchResultsDocument;
@@ -14,12 +16,20 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
   const theme = useTheme();
 
   const [neighborDocs, setNeighborDocs] = React.useState<SearchResultsDocument[] | null>(null);
+  const [selectedDoc, setSelectedDoc] = React.useState<SearchResultsDocument>(doc);
 
   const [graphDocumentMap, setGraphDocumentMap] = React.useState<Map<string, SearchResultsDocument>>(new Map());
 
   const [graph, setGraph] = React.useState<GraphDto>(
     { resultNode: doc.id, edges: [], nodes: [] }
   );
+
+  const [mousePos, setMousePos] = React.useState<{ x: number, y: number }>({ x: 0, y: 0 });
+
+  const [xPos, setXPos] = React.useState<number>(0);
+  const [yPos, setYPos] = React.useState<number>(0);
+  const [popupVisible, setPopupVisible] = React.useState<boolean>(false);
+
 
   useEffect(() => {
     getNearestNeighborLinks(doc.id, 3);
@@ -29,23 +39,52 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
     buildGraph();
   }, [neighborDocs]);
 
-  const mockGraph: GraphDto = {
-    resultNode: '1',
-    edges: [
-      {
-        id: '0',
-        source: '1',
-        target: '2',
-        label: '1-2',
-        doc: doc,
-      },
-    ],
-    nodes: [
-      {
-        id: '2',
-        label: '2',
-      },
-    ],
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      setMousePos({ x: event.clientX, y: event.clientY });
+    };
+  
+    document.addEventListener('mousemove', handleMouseMove);
+  
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleDocumentClick = (event: MouseEvent) => {
+      if (popupVisible) {
+        setPopupVisible(false);
+      }
+    };
+  
+    document.addEventListener('click', handleDocumentClick);
+  
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [popupVisible]);
+
+  const handleNodeClick = (id: string) => {
+    console.log('Node clicked in parent component', id);
+    console.log("Map:", graphDocumentMap)
+    if (graphDocumentMap.has(id)) {
+      const doc = graphDocumentMap.get(id);
+      if (!doc) {
+        return;
+      }
+      setSelectedDoc(doc);
+      // Set xPos to mouse x position
+      setXPos(mousePos.x);
+      // Set yPos to mouse y position
+      setYPos(mousePos.y);
+
+      // timeout to prevent popup from closing immediately
+      setTimeout(() => {
+        setPopupVisible(true);
+      }, 100);
+      console.log('Doc: ', doc);
+    }
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -58,8 +97,8 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
     }
 
     // iterate over neighbor docs and build graph
-    let nodes: NodeDto[] = neighborDocs.map((neighbor,index) => {
-      
+    let nodes: NodeDto[] = neighborDocs.map((neighbor, index) => {
+
       let label = neighbor.title;
       try {
         const url = new URL(neighbor.url);
@@ -67,7 +106,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
       } catch (error) {
         console.error(`Invalid URL: ${neighbor.url}`);
       }
-      
+
       let id = neighbor.id.toString();
       if (graphDocumentMap.has(id) || id === doc.id.toString()) {
         id = id + index.toString();
@@ -127,15 +166,6 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
       });
   };
 
-  const handleNodeClick = (id: string) => {
-    console.log('Node clicked in parent component', id);
-    console.log("Map:", graphDocumentMap)
-    if (graphDocumentMap.has(id)) {
-      const doc = graphDocumentMap.get(id);
-      console.log('Doc: ', doc);
-    }
-  };
-
   return (
     <Box
       component={'div'}
@@ -180,6 +210,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut ac commodo mauris. Proin mollis felis nisi, ut pulvinar tortor cursus et. Ut pellentesque ipsum quis
         nunc efficitur, eu suscipit lorem malesuada.
       </p>
+      {popupVisible && <ResultDescriptionPopup xPos={xPos} yPos={yPos} doc={selectedDoc} />}
     </Box>
   );
 };

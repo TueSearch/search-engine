@@ -42,7 +42,8 @@ export const GraphElement = ({ graph, handleNodeClick }: GraphElementProps) => {
     ref: graphRef,
     nodes: graph.nodes,
     edges: graph.edges,
-    pathSelectionType: 'all'
+    pathSelectionType: 'all',
+    focusOnSelect: false,
   });
 
   useEffect(() => {
@@ -50,7 +51,6 @@ export const GraphElement = ({ graph, handleNodeClick }: GraphElementProps) => {
       handleNodeClick(selections[0]);
     }
   }, [onNodeClick]);
-  
 
   return (
     <div
