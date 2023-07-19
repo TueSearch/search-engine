@@ -1,4 +1,5 @@
 import React from 'react';
+import { ReactQueryDevtools } from 'react-query/devtools';
 import './App.css';
 
 import '@fontsource/roboto/300.css';
@@ -10,6 +11,7 @@ import { CssBaseline } from '@mui/material';
 import Routing from '@SearchTue/routes';
 
 import { ColorModeProvider } from '@SearchTue/hooks/useColorMode';
+import { QueryClient, QueryClientProvider } from 'react-query';
 /**
  *
  * App component
@@ -17,11 +19,26 @@ import { ColorModeProvider } from '@SearchTue/hooks/useColorMode';
  * @return {React.ReactElement} App component
  */
 function App(): React.ReactElement {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        retry: false,
+        cacheTime: 0,
+      },
+    },
+  });
+
   return (
-    <ColorModeProvider>
-      <CssBaseline />
-      <Routing />
-    </ColorModeProvider>
+    <>
+      <QueryClientProvider client={queryClient}>
+        <ColorModeProvider>
+          <CssBaseline />
+          <Routing />
+        </ColorModeProvider>
+        <ReactQueryDevtools />
+      </QueryClientProvider>
+    </>
   );
 }
 
