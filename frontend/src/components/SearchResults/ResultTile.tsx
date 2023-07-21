@@ -94,7 +94,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
     }
 
     // iterate over neighbor docs and build graph
-    let nodes: NodeDto[] = neighborDocs.map((neighbor, index) => {
+    const nodes: NodeDto[] = neighborDocs.map((neighbor, index) => {
       let label = neighbor.title;
       try {
         const url = new URL(neighbor.url);
@@ -117,7 +117,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
 
     console.log('Nodes: ', nodes);
 
-    let edges: EdgeDto[] = Array.from(graphDocumentMap).map(([id, neighborDoc], index) => {
+    const edges: EdgeDto[] = Array.from(graphDocumentMap).map(([id, neighborDoc], index) => {
       return {
         id: index.toString(),
         source: id,
@@ -145,13 +145,13 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
     });
   };
 
-  const getNearestNeighborLinks = (doc_id: string, num: number) => {
-    console.log('Getting nearest neighbor links', doc_id, num);
-    if (!doc_id || doc_id === '') {
+  const getNearestNeighborLinks = (docId: string, num: number) => {
+    console.log('Getting nearest neighbor links', docId, num);
+    if (!docId || docId === '') {
       return;
     }
     axios
-      .get(`${import.meta.env.VITE_API_URL}/nearest/${doc_id}?num=${num}`)
+      .get(`${import.meta.env.VITE_API_URL}/nearest/${docId}?num=${num}`)
       .then((response) => {
         setNeighborDocs(response.data.results);
       })
