@@ -50,6 +50,7 @@ def search():
                 'title': doc.title,
                 'body': doc.body,
                 'url': doc.job['url'],
+                'id': doc.id,
                 'relevant': doc.relevant
             }
             response['results'].append(result)
