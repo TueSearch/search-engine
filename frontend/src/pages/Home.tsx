@@ -36,7 +36,9 @@ export default function Home(): React.ReactElement {
     <>
       <Box component={'div'} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3, justifyContent: 'center', alignItems: 'center', height: '500px' }}>
         <img src={SearchTueLogo} alt="RHC Logo" className="logo" height="auto" width={'300px'} color="white" data-tid="logo" />
-        <Button variant='contained' onClick={() => navigate('/graph-search')}>BOOST MODE</Button>
+        <Button variant="contained" onClick={() => navigate('/graph-search')}>
+          BOOST MODE
+        </Button>
         <Stack sx={{ display: 'flex', flexDirection: 'row' }}>
           <TextField
             label="Suche"

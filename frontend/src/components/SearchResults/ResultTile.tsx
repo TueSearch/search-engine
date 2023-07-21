@@ -20,16 +20,13 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
 
   const [graphDocumentMap, setGraphDocumentMap] = React.useState<Map<string, SearchResultsDocument>>(new Map());
 
-  const [graph, setGraph] = React.useState<GraphDto>(
-    { resultNode: doc.id, edges: [], nodes: [] }
-  );
+  const [graph, setGraph] = React.useState<GraphDto>({ resultNode: doc.id, edges: [], nodes: [] });
 
-  const [mousePos, setMousePos] = React.useState<{ x: number, y: number }>({ x: 0, y: 0 });
+  const [mousePos, setMousePos] = React.useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const [xPos, setXPos] = React.useState<number>(0);
   const [yPos, setYPos] = React.useState<number>(0);
   const [popupVisible, setPopupVisible] = React.useState<boolean>(false);
-
 
   useEffect(() => {
     getNearestNeighborLinks(doc.id, 3);
@@ -43,9 +40,9 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
     const handleMouseMove = (event: MouseEvent) => {
       setMousePos({ x: event.clientX, y: event.clientY });
     };
-  
+
     document.addEventListener('mousemove', handleMouseMove);
-  
+
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
     };
@@ -57,9 +54,9 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
         setPopupVisible(false);
       }
     };
-  
+
     document.addEventListener('click', handleDocumentClick);
-  
+
     return () => {
       document.removeEventListener('click', handleDocumentClick);
     };
@@ -67,7 +64,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
 
   const handleNodeClick = (id: string) => {
     console.log('Node clicked in parent component', id);
-    console.log("Map:", graphDocumentMap)
+    console.log('Map:', graphDocumentMap);
     if (graphDocumentMap.has(id)) {
       const doc = graphDocumentMap.get(id);
       if (!doc) {
@@ -98,7 +95,6 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
 
     // iterate over neighbor docs and build graph
     let nodes: NodeDto[] = neighborDocs.map((neighbor, index) => {
-
       let label = neighbor.title;
       try {
         const url = new URL(neighbor.url);
@@ -116,7 +112,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
       return {
         id: id,
         label: label,
-      }
+      };
     });
 
     console.log('Nodes: ', nodes);
@@ -127,7 +123,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
         source: id,
         target: doc.id.toString(),
         label: id + '-' + doc.id,
-        doc: neighborDoc
+        doc: neighborDoc,
       };
     });
 
@@ -138,20 +134,19 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
     nodes.push({
       id: doc.id.toString(),
       label: 'Result',
-      size: 15
+      size: 15,
     });
 
-    console.log('Graph: ', nodes, edges)
+    console.log('Graph: ', nodes, edges);
     setGraph({
       resultNode: doc.id,
       nodes: nodes,
-      edges: edges
+      edges: edges,
     });
-
   };
 
   const getNearestNeighborLinks = (doc_id: string, num: number) => {
-    console.log('Getting nearest neighbor links', doc_id, num)
+    console.log('Getting nearest neighbor links', doc_id, num);
     if (!doc_id || doc_id === '') {
       return;
     }
@@ -159,7 +154,6 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
       .get(`${import.meta.env.VITE_API_URL}/nearest/${doc_id}?num=${num}`)
       .then((response) => {
         setNeighborDocs(response.data.results);
-
       })
       .catch((error) => {
         console.log(error);

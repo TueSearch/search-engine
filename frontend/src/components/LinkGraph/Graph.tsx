@@ -28,17 +28,10 @@ interface GraphElementProps {
   graph: GraphDto;
 }
 
-
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const GraphElement = ({ graph, handleNodeClick }: GraphElementProps) => {
-
   const graphRef = useRef<GraphCanvasRef | null>(null);
-  const {
-    selections,
-    actives,
-    onNodeClick,
-    onCanvasClick
-  } = useSelection({
+  const { selections, actives, onNodeClick, onCanvasClick } = useSelection({
     ref: graphRef,
     nodes: graph.nodes,
     edges: graph.edges,
@@ -64,7 +57,15 @@ export const GraphElement = ({ graph, handleNodeClick }: GraphElementProps) => {
         borderTopRightRadius: '10px',
       }}
     >
-      <GraphCanvas ref={graphRef} nodes={graph.nodes} edges={graph.edges} selections={selections} actives={actives} onCanvasClick={onCanvasClick} onNodeClick={onNodeClick}  />
+      <GraphCanvas
+        ref={graphRef}
+        nodes={graph.nodes}
+        edges={graph.edges}
+        selections={selections}
+        actives={actives}
+        onCanvasClick={onCanvasClick}
+        onNodeClick={onNodeClick}
+      />
     </div>
   );
 };

@@ -39,7 +39,7 @@ export default function GraphSearch(): React.ReactElement {
     axios
       .get(`${import.meta.env.VITE_API_URL}/search?q=${searchText}`)
       .then((response) => {
-        console.log('Search query response:', response)
+        console.log('Search query response:', response);
         setSearchResults(response.data);
       })
       .catch((error) => {
