@@ -7,7 +7,7 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Set environment variables
-ENV VITE_API_URL=http://tuesearch.philippalber.de:4000
+ENV VITE_API_URL=https://tuesearch.philippalber.de/api
 ENV VITE_FRONTEND_PORT=5000
 ENV VITE_APP_VERSION=1.0.0
 

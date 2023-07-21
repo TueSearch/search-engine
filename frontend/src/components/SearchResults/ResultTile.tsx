@@ -20,7 +20,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
 
   const [graphDocumentMap, setGraphDocumentMap] = React.useState<Map<string, SearchResultsDocument>>(new Map());
 
-  const [graph, setGraph] = React.useState<GraphDto>({ resultNode: doc.id, edges: [], nodes: [] });
+  const [graph, setGraph] = React.useState<GraphDto>({ resultNode: doc.id.toString(), edges: [], nodes: [] });
 
   const [mousePos, setMousePos] = React.useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
@@ -29,7 +29,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
   const [popupVisible, setPopupVisible] = React.useState<boolean>(false);
 
   useEffect(() => {
-    getNearestNeighborLinks(doc.id, 3);
+    getNearestNeighborLinks(doc.id.toString(), 3);
   }, [doc.id]);
 
   useEffect(() => {
@@ -139,7 +139,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
 
     console.log('Graph: ', nodes, edges);
     setGraph({
-      resultNode: doc.id,
+      resultNode: doc.id.toString(),
       nodes: nodes,
       edges: edges,
     });

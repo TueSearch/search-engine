@@ -1,10 +1,13 @@
+import { searchQuery } from '@SearchTue/api/searchQuery';
 import { SearchResults, SingleDoc } from '@SearchTue/components/SearchResults/SingleDoc';
+import { LoadingSuspenseSmall } from '@SearchTue/pages/loading';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, TextField, Typography } from '@mui/material';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 import { Stack } from '@mui/system';
-
-import axios from 'axios';
 import React from 'react';
+import { useQuery } from 'react-query';
 
 /**
  * Search page
@@ -12,47 +15,35 @@ import React from 'react';
  */
 export default function Search(): React.ReactElement {
   const [searchText, setSearchText] = React.useState('');
+  const [searchTextDebounced, setSearchTextDebounced] = React.useState(searchText);
+  const { isLoading, isFetching, isRefetching, isError, data, error, refetch } = useQuery<SearchResults | null, Error>(
+    ['search'],
+    async () => await searchQuery(searchText)
+  );
 
   const handleSearchTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // debounce the search
-    const value = event.target.value;
-    const timeout = setTimeout(() => {
-      setSearchText(value);
-    }, 500);
-    return () => clearTimeout(timeout);
+    setSearchTextDebounced(event.currentTarget.value);
   };
 
   const handleKeyDownChange = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
+      setSearchText(searchTextDebounced);
       handleSearchSubmit();
     }
   };
 
-  const [searchResults, setSearchResults] = React.useState<SearchResults | null>(null);
-
   React.useEffect(() => {
-    // set search text
     const query = window.location.search.split('=')[1];
     setSearchText(query);
+    setSearchTextDebounced(query);
   }, []);
 
-  const handleSearchSubmit = () => {
-    if (searchText === '') {
-      return;
-    }
-    axios
-      .get(`${import.meta.env.VITE_API_URL}/search?q=${searchText}`)
-      .then((response) => {
-        console.log(response.data);
-        setSearchResults(response.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+  const handleSearchSubmit = async () => {
+    setSearchText(searchTextDebounced);
   };
 
   React.useEffect(() => {
-    handleSearchSubmit();
+    refetch();
   }, [searchText]);
 
   return (
@@ -70,7 +61,7 @@ export default function Search(): React.ReactElement {
               sx={{ minWidth: { xs: '250px', md: '350px' } }}
               onChange={handleSearchTextChange}
               onKeyDown={handleKeyDownChange}
-              value={searchText}
+              value={searchTextDebounced}
             />
             <Button
               variant="contained"
@@ -83,10 +74,27 @@ export default function Search(): React.ReactElement {
             </Button>
           </Stack>
         </Stack>
+
+        <Stack direction={'column'} justifyContent={'center'} alignItems={'center'} gap={1}>
+          {isLoading || isFetching || (isRefetching && <LoadingSuspenseSmall />)}
+          {(isError || data === undefined || data === null) && (
+            <Alert severity="error">
+              <AlertTitle>Fehler </AlertTitle>
+              Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später nocheinmal
+              <Typography variant="caption" data-tid="error">
+                {error?.message}
+              </Typography>
+            </Alert>
+          )}
+          {data !== undefined && data !== null && data.results.length === 0 && <NothingFound />}
+        </Stack>
+
         <Box component={'div'} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {searchResults !== null && searchResults.results !== undefined && searchResults.results.map((doc, index) => <SingleDoc doc={doc} key={`${doc.id}-${index}`} />)}
+          {data !== undefined && data !== null && data.results.map((doc, index) => <SingleDoc doc={doc} key={`${doc.id}-${index}`} />)}
         </Box>
       </Box>
     </>
   );
 }
+
+const NothingFound = () => <Alert severity="info">Es wurden keine Ergebnisse gefunden</Alert>;
