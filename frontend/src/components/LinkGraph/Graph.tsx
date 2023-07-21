@@ -1,6 +1,6 @@
 import { SearchResultsDocument } from '@SearchTue/components/SearchResults/SingleDoc';
 import React, { useRef, useEffect } from 'react';
-import { GraphCanvas, GraphCanvasRef, GraphNode, useSelection } from 'reagraph';
+import { GraphCanvas, GraphCanvasRef, useSelection } from 'reagraph';
 
 export interface GraphDto {
   resultNode: string;

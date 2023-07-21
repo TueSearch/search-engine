@@ -1,7 +1,6 @@
 import { SearchResultsDocument } from '@SearchTue/components/SearchResults/SingleDoc';
-import { withTheme } from '@emotion/react';
 import { Divider } from '@mui/material';
-import React, { useState } from 'react';
+import React from 'react';
 
 interface ResultDescriptionPopup {
   xPos: number;
@@ -9,6 +8,7 @@ interface ResultDescriptionPopup {
   doc: SearchResultsDocument;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const ResultDescriptionPopup = ({ xPos, yPos, doc }: ResultDescriptionPopup) => (
   <div
     style={{

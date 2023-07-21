@@ -1,12 +1,10 @@
 import { GraphDto, NodeDto, EdgeDto, GraphElement } from '@SearchTue/components/LinkGraph/Graph';
 import { SearchResultsDocument } from '@SearchTue/components/SearchResults/SingleDoc';
-import { ResultDescriptionPopup } from './ResultDescriptionPopup';
+import { ResultDescriptionPopup } from '@SearchTue/components/SearchResults/ResultDescriptionPopup';
 import useTheme from '@mui/material/styles/useTheme';
 import { Box } from '@mui/system';
 import axios from 'axios';
 import React, { useEffect } from 'react';
-import { GraphNode } from 'reagraph';
-import { set } from 'date-fns';
 
 interface ResultTileProps {
   doc: SearchResultsDocument;
@@ -18,7 +16,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
   const [neighborDocs, setNeighborDocs] = React.useState<SearchResultsDocument[] | null>(null);
   const [selectedDoc, setSelectedDoc] = React.useState<SearchResultsDocument>(doc);
 
-  const [graphDocumentMap, setGraphDocumentMap] = React.useState<Map<string, SearchResultsDocument>>(new Map());
+  const [graphDocumentMap] = React.useState<Map<string, SearchResultsDocument>>(new Map());
 
   const [graph, setGraph] = React.useState<GraphDto>({ resultNode: doc.id.toString(), edges: [], nodes: [] });
 
@@ -49,7 +47,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
   }, []);
 
   useEffect(() => {
-    const handleDocumentClick = (event: MouseEvent) => {
+    const handleDocumentClick = () => {
       if (popupVisible) {
         setPopupVisible(false);
       }
