@@ -2,12 +2,14 @@ import { searchQuery } from '@SearchTue/api/searchQuery';
 import { SearchResults, SingleDoc } from '@SearchTue/components/SearchResults/SingleDoc';
 import { LoadingSuspenseSmall } from '@SearchTue/pages/loading';
 import SearchIcon from '@mui/icons-material/Search';
-import { Box, Button, TextField, Typography } from '@mui/material';
+import { Box, Button, TextField, Typography, Checkbox, FormControlLabel } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import { Stack } from '@mui/system';
 import React from 'react';
 import { useQuery } from 'react-query';
+
+
 
 /**
  * Search page
@@ -30,6 +32,12 @@ export default function Search(): React.ReactElement {
       setSearchText(searchTextDebounced);
       handleSearchSubmit();
     }
+  };
+
+  const [checked, setChecked] = React.useState(true);
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setChecked(event.target.checked);
   };
 
   React.useEffect(() => {
@@ -73,14 +81,20 @@ export default function Search(): React.ReactElement {
               Suche
             </Button>
           </Stack>
+            <FormControlLabel
+              control={<Checkbox checked={checked} onChange={handleChange} />}
+              label="English Probs"
+            />
         </Stack>
+
+
 
         <Stack direction={'column'} justifyContent={'center'} alignItems={'center'} gap={1}>
           {isLoading || isFetching || (isRefetching && <LoadingSuspenseSmall />)}
           {(isError || data === undefined || data === null) && (
             <Alert severity="error">
               <AlertTitle>Fehler </AlertTitle>
-              Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später nocheinmal
+              Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später noch einmal
               <Typography variant="caption" data-tid="error">
                 {error?.message}
               </Typography>
@@ -90,7 +104,7 @@ export default function Search(): React.ReactElement {
         </Stack>
 
         <Box component={'div'} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {data !== undefined && data !== null && data.results.map((doc, index) => <SingleDoc doc={doc} key={`${doc.id}-${index}`} />)}
+          {data !== undefined && data !== null && data.results.map((doc, index) => <SingleDoc show_eng_prob={checked} doc={doc} key={`${doc.id}-${index}`} />)}
         </Box>
       </Box>
     </>

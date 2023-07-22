@@ -22,11 +22,31 @@ export interface SearchResults {
   results: SearchResultsDocument[];
 }
 
-export const SingleDoc = ({ doc }: { doc: SearchResultsDocument }) => {
+interface SingleDocProps {
+  doc: SearchResultsDocument;
+  show_eng_prob: boolean;
+}
+
+
+
+export const SingleDoc = ({doc, show_eng_prob}: SingleDocProps) => {
   const mayBeDocTitle = doc.title !== '' ? doc.title : doc.url.split('//')[1].split('/')[0];
 
   const slicedDocTitle = mayBeDocTitle.slice(0, 100);
   const slicedDocTitleEllipsis = mayBeDocTitle.length > 100 ? '...' : '';
+
+  // calculate english probability
+  const english_prob = doc.is_english_prob*10;
+
+  const getColorFromProb = (prob: number) => {
+    if (prob < 3) {
+      return 'red';
+    } else if (prob < 6) {
+      return 'orange';
+    } else {
+      return 'green';
+    }
+  };
 
   // style for changing color to primary when hovering box
   const style = {
@@ -35,10 +55,14 @@ export const SingleDoc = ({ doc }: { doc: SearchResultsDocument }) => {
     },
   };
 
+
   return (
     <Stack direction={'column'} alignItems={'flex-start'} sx={{ p: 2 }}>
       <Link to={doc.url} target="_blank" rel="noopener noreferrer" className="noUnderline">
         <Box component={'div'} sx={style}>
+          {show_eng_prob && <Typography variant="caption" data-tid="probs" fontSize={'bigger'} color={getColorFromProb(doc.is_english_prob)}>
+            {english_prob}% English
+          </Typography>}
           <Typography variant="h6" data-tid="title">
             {slicedDocTitle}
             {slicedDocTitleEllipsis}
