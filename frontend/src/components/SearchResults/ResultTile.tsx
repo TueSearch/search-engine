@@ -27,7 +27,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
   const [popupVisible, setPopupVisible] = React.useState<boolean>(false);
 
   useEffect(() => {
-    getNearestNeighborLinks(doc.id.toString(), 3);
+    getNearestNeighborLinks(doc.id.toString(), 5);
   }, [doc.id]);
 
   useEffect(() => {
@@ -131,7 +131,8 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
     graphDocumentMap.set(doc.id.toString(), doc);
     nodes.push({
       id: doc.id.toString(),
-      label: 'Result',
+      label: '',
+
       size: 15,
     });
 
@@ -149,9 +150,14 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
       return;
     }
     axios
-      .get(`${import.meta.env.VITE_API_URL}/nearest/${docId}?num=${num}`)
+      .post(`${import.meta.env.VITE_API_URL}/semantic-api/search_documents_by_documents`, {
+        doc_id: docId,
+        num_docs: num,
+        is_english_prob: 9,
+      })
       .then((response) => {
-        setNeighborDocs(response.data.results);
+        console.log('Nearest neighbor response:', response);
+        setNeighborDocs(response.data.similar_docs);
       })
       .catch((error) => {
         console.log(error);
@@ -187,21 +193,19 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            justifyContent: 'center',
             borderBottomLeftRadius: '10px',
             borderBottomRightRadius: '10px',
             background: theme.palette.primary.main,
+            height: '100px',
           }}
         >
-          <p style={{ color: 'white', padding: '0px', margin: '0', fontSize: '1.5em' }}>{doc.title}</p>
+          <div style={{ color: 'white', padding: '10px', fontSize: '1.5em', cursor: 'pointer', textAlign: 'center' }} onClick={() => window.open(doc.url, '_blank')}>
+            {doc.title.length > 100 ? doc.title.slice(0, 100) + '...' : doc.title}
+          </div>
         </Box>
       </Box>
-      <p style={{ textAlign: 'center' }}>
-        This is going to be the abstract to the displayed result.
-        <br />
-        This is the URL: {doc.url} <br />
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut ac commodo mauris. Proin mollis felis nisi, ut pulvinar tortor cursus et. Ut pellentesque ipsum quis
-        nunc efficitur, eu suscipit lorem malesuada.
-      </p>
+      <p style={{ textAlign: 'center', height: '200px' }}>{doc.meta_description.length > 500 ? doc.meta_description.slice(0, 500) + '...' : doc.meta_description}</p>
       {popupVisible && <ResultDescriptionPopup xPos={xPos} yPos={yPos} doc={selectedDoc} />}
     </Box>
   );

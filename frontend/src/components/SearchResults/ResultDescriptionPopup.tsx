@@ -1,5 +1,5 @@
 import { SearchResultsDocument } from '@SearchTue/components/SearchResults/SingleDoc';
-import { Divider } from '@mui/material';
+import { Divider, Tooltip } from '@mui/material';
 import React from 'react';
 
 interface ResultDescriptionPopup {
@@ -23,20 +23,23 @@ export const ResultDescriptionPopup = ({ xPos, yPos, doc }: ResultDescriptionPop
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
+      gap: '10px',
     }}
   >
-    <div
-      style={{
-        fontSize: '1.3em',
-      }}
-    >
-      {doc.title}
-    </div>
-    <Divider />
-    <div>
-      <a href={doc.url} target="_blank" rel="noopener noreferrer">
-        {doc.url}
-      </a>
-    </div>
+    <Tooltip title={doc.url} placement="top-start">
+      <div
+        style={{
+          fontSize: '1.3em',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+        }}
+        onClick={() => window.open(doc.url, '_blank')}
+      >
+        {doc.title}
+      </div>
+    </Tooltip>
+    <Divider flexItem />
+    <div>{doc.meta_description}</div>
+    <div></div>
   </div>
 );
