@@ -23,15 +23,15 @@ export const ResultDescriptionPopup = ({ xPos, yPos, doc }: ResultDescriptionPop
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      gap: '10px'
+      gap: '10px',
     }}
   >
-    <Tooltip title={doc.url} placement='top-start'>
+    <Tooltip title={doc.url} placement="top-start">
       <div
         style={{
           fontSize: '1.3em',
           fontWeight: 'bold',
-          cursor: 'pointer'
+          cursor: 'pointer',
         }}
         onClick={() => window.open(doc.url, '_blank')}
       >
@@ -39,10 +39,7 @@ export const ResultDescriptionPopup = ({ xPos, yPos, doc }: ResultDescriptionPop
       </div>
     </Tooltip>
     <Divider flexItem />
-    <div>
-      {doc.meta_description}
-    </div>
-    <div>
-    </div>
+    <div>{doc.meta_description}</div>
+    <div></div>
   </div>
 );

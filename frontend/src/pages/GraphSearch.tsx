@@ -3,7 +3,6 @@ import { ResultTile } from '@SearchTue/components/SearchResults/ResultTile';
 import { SearchResults } from '@SearchTue/components/SearchResults/SingleDoc';
 import Box from '@mui/material/Box';
 import axios from 'axios';
-import { config } from 'dotenv';
 import React from 'react';
 
 const SearchResultBox = ({ searchText, searchResults }: { searchText: string | null; searchResults: SearchResults | null }) => {

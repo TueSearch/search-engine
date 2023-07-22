@@ -132,7 +132,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
     nodes.push({
       id: doc.id.toString(),
       label: '',
-      
+
       size: 15,
     });
 
@@ -150,14 +150,13 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
       return;
     }
     axios
-      .post(`${import.meta.env.VITE_API_URL}/semantic-api/search_documents_by_documents`,
-        {
-          doc_id: docId,
-          num_docs: num,
-          is_english_prob: 9
-        })
+      .post(`${import.meta.env.VITE_API_URL}/semantic-api/search_documents_by_documents`, {
+        doc_id: docId,
+        num_docs: num,
+        is_english_prob: 9,
+      })
       .then((response) => {
-        console.log('Nearest neighbor response:', response)
+        console.log('Nearest neighbor response:', response);
         setNeighborDocs(response.data.similar_docs);
       })
       .catch((error) => {
@@ -197,8 +196,8 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
             justifyContent: 'center',
             borderBottomLeftRadius: '10px',
             borderBottomRightRadius: '10px',
-            background: theme.palette.primary.main, 
-            height: '100px'
+            background: theme.palette.primary.main,
+            height: '100px',
           }}
         >
           <div style={{ color: 'white', padding: '10px', fontSize: '1.5em', cursor: 'pointer', textAlign: 'center' }} onClick={() => window.open(doc.url, '_blank')}>
@@ -206,9 +205,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
           </div>
         </Box>
       </Box>
-      <p style={{ textAlign: 'center', height: '200px' }}>
-        {doc.meta_description.length > 500 ? doc.meta_description.slice(0, 500) + '...' : doc.meta_description}
-      </p>
+      <p style={{ textAlign: 'center', height: '200px' }}>{doc.meta_description.length > 500 ? doc.meta_description.slice(0, 500) + '...' : doc.meta_description}</p>
       {popupVisible && <ResultDescriptionPopup xPos={xPos} yPos={yPos} doc={selectedDoc} />}
     </Box>
   );
