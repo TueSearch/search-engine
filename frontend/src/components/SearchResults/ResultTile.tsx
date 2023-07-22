@@ -131,7 +131,8 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
     graphDocumentMap.set(doc.id.toString(), doc);
     nodes.push({
       id: doc.id.toString(),
-      label: 'Result',
+      label: '',
+      
       size: 15,
     });
 
@@ -152,7 +153,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
       .post(`${import.meta.env.VITE_API_URL}/semantic-api/search_documents_by_documents`,
         {
           doc_id: docId,
-          num: num,
+          num_docs: num,
           is_english_prob: 9
         })
       .then((response) => {
@@ -206,7 +207,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
         </Box>
       </Box>
       <p style={{ textAlign: 'center', height: '200px' }}>
-        {doc.meta_description.length > 200 ? doc.meta_description.slice(0, 200) + '...' : doc.meta_description}
+        {doc.meta_description.length > 500 ? doc.meta_description.slice(0, 500) + '...' : doc.meta_description}
       </p>
       {popupVisible && <ResultDescriptionPopup xPos={xPos} yPos={yPos} doc={selectedDoc} />}
     </Box>
