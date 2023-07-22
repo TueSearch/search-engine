@@ -3,6 +3,7 @@ import { ResultTile } from '@SearchTue/components/SearchResults/ResultTile';
 import { SearchResults } from '@SearchTue/components/SearchResults/SingleDoc';
 import Box from '@mui/material/Box';
 import axios from 'axios';
+import { config } from 'dotenv';
 import React from 'react';
 
 const SearchResultBox = ({ searchText, searchResults }: { searchText: string | null; searchResults: SearchResults | null }) => {
@@ -37,7 +38,7 @@ export default function GraphSearch(): React.ReactElement {
       return;
     }
     axios
-      .get(`${import.meta.env.VITE_API_URL}/search?q=${searchText}`)
+      .get(`${import.meta.env.VITE_API_URL}/api/search?q=${searchText}`)
       .then((response) => {
         console.log('Search query response:', response);
         setSearchResults(response.data);
