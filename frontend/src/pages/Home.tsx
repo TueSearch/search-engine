@@ -29,7 +29,9 @@ export default function Home(): React.ReactElement {
   };
 
   const handleSearchSubmit = () => {
-    navigate(`/search?q=${searchText}`);
+    // convert search text to urlencoded
+    const uriText = encodeURIComponent(searchText);
+    navigate(`/search?q=${uriText}`);
   };
 
   return (
