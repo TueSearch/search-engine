@@ -9,8 +9,6 @@ import { Stack } from '@mui/system';
 import React from 'react';
 import { useQuery } from 'react-query';
 
-
-
 /**
  * Search page
  * @return {React.ReactElement} The Search page.
@@ -83,13 +81,8 @@ export default function Search(): React.ReactElement {
               Suche
             </Button>
           </Stack>
-            <FormControlLabel
-              control={<Checkbox checked={checked} onChange={handleChange} />}
-              label="English Probs"
-            />
+          <FormControlLabel control={<Checkbox checked={checked} onChange={handleChange} />} label="English Probs" />
         </Stack>
-
-
 
         <Stack direction={'column'} justifyContent={'center'} alignItems={'center'} gap={1}>
           {(isLoading || isFetching || isRefetching) && <LoadingSuspenseSmall />}
@@ -111,7 +104,7 @@ export default function Search(): React.ReactElement {
             !isRefetching &&
             data !== undefined &&
             data !== null &&
-            data.results.map((doc, index) => <SingleDoc show_eng_prob={checked} doc={doc} key={`${doc.id}-${index}`} />)}
+            data.results.map((doc, index) => <SingleDoc showEngProb={checked} doc={doc} key={`${doc.id}-${index}`} />)}
         </Box>
       </Box>
     </>
