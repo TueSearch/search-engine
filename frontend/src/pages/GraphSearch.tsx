@@ -38,7 +38,7 @@ export default function GraphSearch(): React.ReactElement {
     }
     setSearchResults(null);
     axios
-      .get(`${import.meta.env.VITE_API_URL}/api/search?q=${searchText}`)
+      .get(`https://tuesearch.philippalber.de/api/search?q=${searchText}`)
       .then((response) => {
         console.log('Search query response:', response);
         setSearchResults(response.data);

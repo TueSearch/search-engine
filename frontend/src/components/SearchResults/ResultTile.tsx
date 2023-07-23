@@ -150,7 +150,7 @@ export const ResultTile = ({ doc }: ResultTileProps) => {
       return;
     }
     axios
-      .post(`${import.meta.env.VITE_API_URL}/semantic-api/search_documents_by_documents`, {
+      .post(`https://tuesearch.philippalber.de/semantic-api/search_documents_by_documents`, {
         doc_id: docId,
         num_docs: num,
         is_english_prob: 9,
