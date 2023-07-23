@@ -6,6 +6,12 @@
 npm install
 ```
 
+and create environment files
+
+```bash
+cp example.frontend.env frontend/.env
+```
+
 2. Start the frontend
 
 ```bash
