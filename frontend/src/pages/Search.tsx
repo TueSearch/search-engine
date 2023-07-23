@@ -42,8 +42,9 @@ export default function Search(): React.ReactElement {
 
   React.useEffect(() => {
     const query = window.location.search.split('=')[1];
-    setSearchText(query);
-    setSearchTextDebounced(query);
+    const decodedQuery = decodeURIComponent(query);
+    setSearchText(decodedQuery);
+    setSearchTextDebounced(decodedQuery);
   }, []);
 
   const handleSearchSubmit = async () => {
@@ -51,6 +52,7 @@ export default function Search(): React.ReactElement {
   };
 
   React.useEffect(() => {
+    window.history.replaceState(null, '', `/search?q=${encodeURIComponent(searchTextDebounced)}`);
     refetch();
   }, [searchText]);
 
@@ -90,7 +92,7 @@ export default function Search(): React.ReactElement {
 
 
         <Stack direction={'column'} justifyContent={'center'} alignItems={'center'} gap={1}>
-          {isLoading || isFetching || (isRefetching && <LoadingSuspenseSmall />)}
+          {(isLoading || isFetching || isRefetching) && <LoadingSuspenseSmall />}
           {(isError || data === undefined || data === null) && (
             <Alert severity="error">
               <AlertTitle>Fehler </AlertTitle>
@@ -104,7 +106,12 @@ export default function Search(): React.ReactElement {
         </Stack>
 
         <Box component={'div'} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {data !== undefined && data !== null && data.results.map((doc, index) => <SingleDoc show_eng_prob={checked} doc={doc} key={`${doc.id}-${index}`} />)}
+          {!isLoading &&
+            !isFetching &&
+            !isRefetching &&
+            data !== undefined &&
+            data !== null &&
+            data.results.map((doc, index) => <SingleDoc show_eng_prob={checked} doc={doc} key={`${doc.id}-${index}`} />)}
         </Box>
       </Box>
     </>

@@ -17,3 +17,4 @@ pytest-results.xml
 out
 .prod.env
 .worker.env
+.vscode/

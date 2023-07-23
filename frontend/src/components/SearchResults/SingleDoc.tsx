@@ -11,6 +11,8 @@ export interface SearchResultsDocument {
   meta_description: string;
   meta_keywords: string;
   url: string;
+  body: string;
+  relevant: boolean;
   is_english_prob: number;
   is_german_prob: number;
 }
