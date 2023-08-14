@@ -42,7 +42,7 @@
     "zustand": "^4.3.9"
   },
   "devDependencies": {
-    "@playwright/test": "^1.36.1",
+    "@playwright/test": "^1.37.0",
     "@testing-library/react": "^14.0.0",
     "@types/node": "^20.4.2",
     "@types/react": "^18.2.15",
